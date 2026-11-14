@@ -61,7 +61,7 @@ update-desktop-database &>/dev/null || :
 gtk-update-icon-cache %{_datadir}/icons/hicolor &>/dev/null || :
 
 %files
-%license LICENSE
+%license LICENSE packaging/linux/METADATA_LICENSE
 %doc README.md THIRDPARTY_NOTICES.txt THIRD_PARTY_LICENSES.md
 %{_bindir}/pdfinity
 %{_datadir}/applications/com.stacksyncsolutions.pdfinity.desktop

@@ -381,6 +381,9 @@ if(UNIX AND NOT APPLE AND NOT ANDROID)
     install(FILES "${PROJECT_SOURCE_DIR}/LICENSE"
         DESTINATION share/licenses/pdfinity
     )
+    install(FILES "${PROJECT_SOURCE_DIR}/packaging/linux/METADATA_LICENSE"
+        DESTINATION share/licenses/pdfinity
+    )
     install(FILES "${PROJECT_SOURCE_DIR}/README.md" "${PROJECT_SOURCE_DIR}/THIRD_PARTY_LICENSES.md" "${PROJECT_SOURCE_DIR}/NOTICE"
         DESTINATION share/doc/pdfinity
     )

@@ -71,6 +71,7 @@ install -m 644 packaging/resources/pdfinity.svg "${STAGE_DIR}/usr/share/icons/hi
 install -m 644 LICENSE "${STAGE_DIR}/usr/share/doc/pdfinity/copyright"
 install -m 644 README.md "${STAGE_DIR}/usr/share/doc/pdfinity/README.md"
 install -m 644 THIRD_PARTY_LICENSES.md "${STAGE_DIR}/usr/share/doc/pdfinity/THIRD_PARTY_LICENSES.md"
+install -m 644 packaging/linux/METADATA_LICENSE "${STAGE_DIR}/usr/share/doc/pdfinity/METADATA_LICENSE"
 
 # 6. Build and validate package
 if command -v dpkg-deb >/dev/null 2>&1; then
