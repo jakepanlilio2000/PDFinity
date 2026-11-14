@@ -29,6 +29,7 @@ protected:
 
 private slots:
     void OnOpenFile();
+    void OnSaveDocument();
     void OnSettings();
     void OnAbout();
     void OnShowPlatformCapabilities();
@@ -88,6 +89,7 @@ private:
 
     // Actions
     QAction* m_openAction{nullptr};
+    QAction* m_saveAction{nullptr};
     QAction* m_shareAction{nullptr};
     QAction* m_printAction{nullptr};
     QAction* m_printPreviewAction{nullptr};

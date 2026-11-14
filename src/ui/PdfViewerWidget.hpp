@@ -25,6 +25,7 @@ class ContentEditingService;
 
 namespace pdfinity::ui {
 
+enum class AnnotationToolMode;
 class AnnotationToolbar;
 class ContentEditingToolbar;
 class XfaNoticeBanner;
@@ -52,6 +53,7 @@ public:
     void SetZoom(double zoom);
     void SetLayout(pdf_api::PageLayoutMode mode);
     void GoToPage(int pageIndex);
+    void SetAnnotationToolMode(AnnotationToolMode mode);
 
 public slots:
     void Print();

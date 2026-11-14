@@ -6,6 +6,7 @@
 #include <QLabel>
 #include <filesystem>
 #include "ui/MainWindow.hpp"
+#include "ui/shell/WorkflowRibbon.hpp"
 #include "ui/ThemeManager.hpp"
 #include "ui/AboutDialog.hpp"
 #include "ui/SettingsDialog.hpp"
@@ -26,6 +27,7 @@ private slots:
     void testOpenAndCloseDocumentTab();
     void testThemeSwitching();
     void testDialogs();
+    void testWorkflowRibbonWiring();
 };
 
 void TestShellSmoke::initTestCase() {
@@ -91,6 +93,28 @@ void TestShellSmoke::testDialogs() {
     auto* statusLabel = updateDialog.findChild<QLabel*>("statusLabel");
     QVERIFY(statusLabel != nullptr);
     QVERIFY(statusLabel->text().contains("latest certified build"));
+}
+
+void TestShellSmoke::testWorkflowRibbonWiring() {
+    MainWindow window;
+    auto* ribbon = window.findChild<WorkflowRibbon*>();
+    QVERIFY(ribbon != nullptr);
+
+    ribbon->SetActiveDocumentAvailable(false);
+
+    std::filesystem::path fixturePath = std::filesystem::path(PDFINITY_SOURCE_DIR) / "tests" / "fixtures" / "ordinary.pdf";
+    QVERIFY(std::filesystem::exists(fixturePath));
+    QVERIFY(window.OpenFileByPath(QString::fromStdString(fixturePath.string())));
+
+    // Emit Comment and View mode triggers to verify active wiring
+    emit ribbon->CommentHighlightClicked();
+    emit ribbon->CommentUnderlineClicked();
+    emit ribbon->CommentStrikeoutClicked();
+    emit ribbon->CommentNoteClicked();
+    emit ribbon->ViewPanClicked();
+    emit ribbon->ViewSelectClicked();
+
+    window.close();
 }
 
 QTEST_MAIN(TestShellSmoke)

@@ -432,6 +432,18 @@ void PdfViewerWidget::GoToPage(int pageIndex) {
     m_canvas->GoToPage(pageIndex);
 }
 
+void PdfViewerWidget::SetAnnotationToolMode(AnnotationToolMode mode) {
+    if (m_canvas) {
+        m_canvas->SetAnnotationToolMode(static_cast<int>(mode));
+    }
+    if (m_annotToolbar && m_annotToolbar->isHidden()) {
+        m_annotToolbar->show();
+        if (m_toggleAnnotAction) {
+            m_toggleAnnotAction->setChecked(true);
+        }
+    }
+}
+
 void PdfViewerWidget::Print() {
     services::PrintService::PrintDocument(this, m_doc);
 }

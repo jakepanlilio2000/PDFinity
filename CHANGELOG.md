@@ -11,6 +11,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.0.5] - 2026-11-14
+
+### Fixed
+- **Contextual Workflow Ribbon Action Slots Wiring [BUG-U3-01]:** Connected all View and Comment mode action signals (`ViewPanClicked`, `ViewSelectClicked`, `CommentHighlightClicked`, `CommentUnderlineClicked`, `CommentStrikeoutClicked`, `CommentNoteClicked`, `CommentDrawClicked`, `CommentShapesClicked`, `CommentCalloutClicked`, `CommentStampClicked`, `SaveClicked`) to live canvas annotation tool modes and atomic document persistence. Added regression coverage in `tests/ui/test_shell_smoke.cpp`.
+
+---
+
 ## [1.0.4] - 2026-11-14
 
 ### Added

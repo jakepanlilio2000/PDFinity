@@ -6,6 +6,7 @@
 #include "PdfViewerWidget.hpp"
 #include "HomeDashboardWidget.hpp"
 #include "shell/WorkflowRibbon.hpp"
+#include "AnnotationToolbar.hpp"
 #include "AboutDialog.hpp"
 #include "SettingsDialog.hpp"
 #include "ThemeManager.hpp"
@@ -121,6 +122,7 @@ void MainWindow::SetupUi() {
         if (m_workspace) m_workspace->ShowHomeTab();
     });
     connect(m_workflowRibbon, &WorkflowRibbon::OpenClicked, this, &MainWindow::OnOpenFile);
+    connect(m_workflowRibbon, &WorkflowRibbon::SaveClicked, this, &MainWindow::OnSaveDocument);
     connect(m_workflowRibbon, &WorkflowRibbon::PrintClicked, this, &MainWindow::OnPrint);
     connect(m_workflowRibbon, &WorkflowRibbon::ShareClicked, this, &MainWindow::OnShareDocument);
     connect(m_workflowRibbon, &WorkflowRibbon::FindClicked, this, &MainWindow::OnFind);
@@ -176,6 +178,57 @@ void MainWindow::SetupUi() {
     connect(m_workflowRibbon, &WorkflowRibbon::PreflightClicked, this, &MainWindow::OnOpenPreflightCompliance);
     connect(m_workflowRibbon, &WorkflowRibbon::ApplyRedactionsClicked, this, &MainWindow::OnApplyRedactions);
     connect(m_workflowRibbon, &WorkflowRibbon::EncryptClicked, this, &MainWindow::OnEncryptDocument);
+
+    connect(m_workflowRibbon, &WorkflowRibbon::ViewPanClicked, this, [this]() {
+        if (auto* v = m_workspace ? m_workspace->GetCurrentViewer() : nullptr) {
+            v->SetAnnotationToolMode(AnnotationToolMode::Select);
+        }
+    });
+    connect(m_workflowRibbon, &WorkflowRibbon::ViewSelectClicked, this, [this]() {
+        if (auto* v = m_workspace ? m_workspace->GetCurrentViewer() : nullptr) {
+            v->SetAnnotationToolMode(AnnotationToolMode::Select);
+        }
+    });
+    connect(m_workflowRibbon, &WorkflowRibbon::CommentHighlightClicked, this, [this]() {
+        if (auto* v = m_workspace ? m_workspace->GetCurrentViewer() : nullptr) {
+            v->SetAnnotationToolMode(AnnotationToolMode::Highlight);
+        }
+    });
+    connect(m_workflowRibbon, &WorkflowRibbon::CommentUnderlineClicked, this, [this]() {
+        if (auto* v = m_workspace ? m_workspace->GetCurrentViewer() : nullptr) {
+            v->SetAnnotationToolMode(AnnotationToolMode::Underline);
+        }
+    });
+    connect(m_workflowRibbon, &WorkflowRibbon::CommentStrikeoutClicked, this, [this]() {
+        if (auto* v = m_workspace ? m_workspace->GetCurrentViewer() : nullptr) {
+            v->SetAnnotationToolMode(AnnotationToolMode::Strikeout);
+        }
+    });
+    connect(m_workflowRibbon, &WorkflowRibbon::CommentNoteClicked, this, [this]() {
+        if (auto* v = m_workspace ? m_workspace->GetCurrentViewer() : nullptr) {
+            v->SetAnnotationToolMode(AnnotationToolMode::StickyNote);
+        }
+    });
+    connect(m_workflowRibbon, &WorkflowRibbon::CommentDrawClicked, this, [this]() {
+        if (auto* v = m_workspace ? m_workspace->GetCurrentViewer() : nullptr) {
+            v->SetAnnotationToolMode(AnnotationToolMode::FreehandInk);
+        }
+    });
+    connect(m_workflowRibbon, &WorkflowRibbon::CommentShapesClicked, this, [this]() {
+        if (auto* v = m_workspace ? m_workspace->GetCurrentViewer() : nullptr) {
+            v->SetAnnotationToolMode(AnnotationToolMode::Rectangle);
+        }
+    });
+    connect(m_workflowRibbon, &WorkflowRibbon::CommentCalloutClicked, this, [this]() {
+        if (auto* v = m_workspace ? m_workspace->GetCurrentViewer() : nullptr) {
+            v->SetAnnotationToolMode(AnnotationToolMode::FreeText);
+        }
+    });
+    connect(m_workflowRibbon, &WorkflowRibbon::CommentStampClicked, this, [this]() {
+        if (auto* v = m_workspace ? m_workspace->GetCurrentViewer() : nullptr) {
+            v->SetAnnotationToolMode(AnnotationToolMode::Stamp);
+        }
+    });
 
     CreateMenus();
     CreateToolBar();
@@ -305,6 +358,11 @@ void MainWindow::CreateMenus() {
     m_openAction = fileMenu->addAction(tr("&Open Document..."));
     m_openAction->setShortcut(QKeySequence::Open);
     connect(m_openAction, &QAction::triggered, this, &MainWindow::OnOpenFile);
+
+    m_saveAction = fileMenu->addAction(tr("&Save Document"));
+    m_saveAction->setShortcut(QKeySequence::Save);
+    m_saveAction->setEnabled(false);
+    connect(m_saveAction, &QAction::triggered, this, &MainWindow::OnSaveDocument);
 
     m_printAction = fileMenu->addAction(tr("&Print..."));
     m_printAction->setShortcut(QKeySequence::Print);
@@ -670,6 +728,36 @@ void MainWindow::OnOpenFile() {
     }
 }
 
+void MainWindow::OnSaveDocument() {
+    auto* doc = m_workspace ? m_workspace->GetCurrentDocument() : nullptr;
+    if (!doc || !doc->IsValid()) return;
+
+    std::filesystem::path currentPath = doc->GetPath();
+    if (currentPath.empty()) {
+        const auto& platform = app::AppContext::Instance().GetPlatform();
+        QString startDir = QString::fromStdString(platform.GetDocumentsDirectory().string());
+        QString dest = QFileDialog::getSaveFileName(
+            this,
+            tr("Save PDF Document"),
+            startDir,
+            tr("PDF Documents (*.pdf)")
+        );
+        if (dest.isEmpty()) return;
+        currentPath = dest.toStdString();
+    }
+
+    auto res = app::AppContext::Instance().GetLifecycleService().SaveCopy(*doc, currentPath);
+    if (res.has_value()) {
+        statusBar()->showMessage(tr("Document successfully saved."), 3000);
+    } else {
+        QMessageBox::warning(
+            this,
+            tr("Save Failed"),
+            tr("Failed to save document: %1").arg(QString::fromStdString(pdf_api::GetEngineErrorMessage(res.error)))
+        );
+    }
+}
+
 bool MainWindow::OpenFileByPath(const QString& filePath) {
     std::filesystem::path stdPath(filePath.toStdString());
     auto sanitized = security::PathSanitizer::Canonicalize(stdPath);
@@ -824,6 +912,7 @@ void MainWindow::OnToggleFullScreen() {
 }
 
 void MainWindow::OnDocumentCountChanged(int count) {
+    if (m_saveAction) m_saveAction->setEnabled(count > 0);
     m_closeTabAction->setEnabled(count > 0);
     m_closeAllTabsAction->setEnabled(count > 0);
 
