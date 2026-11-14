@@ -11,6 +11,37 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.1.0] — Enterprise Document Studio UI & Silent Desktop Launch - 2026-11-14
+
+### Added
+- **Silent Desktop Launch & CLI Automation Separation (Phase U1):**
+  - Native GUI binary subsystem configuration (`WIN32_EXECUTABLE`, `/SUBSYSTEM:WINDOWS /ENTRY:mainCRTStartup`, `MACOSX_BUNDLE`, and Linux `.desktop`) eliminating console/terminal flashes on desktop launch.
+  - Preserved full command-line batch and automation capabilities via dedicated `pdfinity-cli` binary and dual-subsystem console attachment.
+- **Crimson-Slate Enterprise Design System & Home Dashboard (Phase U2):**
+  - Modern studio color tokens supporting instant runtime switching between **Studio Dark** (`#18181B` chrome, `#222428` ribbon, `#111214` backdrop, `#27292E` card surface, `#DC2626` crimson accent) and **Studio Light** (`#F3F4F6` chrome, `#FFFFFF` ribbon, `#E5E7EB` backdrop).
+  - Pinned Tab 0 Home Dashboard with 8 primary workflow cards, recent document history with file size badges, and instant offline health telemetry.
+  - Comprehensive standalone crisp SVG vector icon resource catalog (`VectorIcons`).
+- **3-Pane Document Studio Workstation Shell (Phase U3):**
+  - Integrated `StudioTabBar` combining the pinned Home tab, closable document tabs with dirty indicators, page count tooltips, and overflow menus.
+  - 2-Tier grouped contextual `WorkflowRibbon` with 8 primary mode tabs (`All Tools`, `View`, `Comment`, `Edit`, `Organize`, `Fill & Sign`, `Protect & Redact`, `Convert & OCR`) and dynamic tool strips.
+  - Collapsible 44px `LeftNavRail` and 240px drawer with fast switching between Thumbnails, Bookmarks, Attachments, Layers, Comments, Signatures, and Preflight.
+  - Contextual `RightInspectorPanel` (280px) providing live property editing for markups, digital certificates, and ISO compliance.
+  - Splitter state persistence across application sessions.
+- **Elevated Document Sheet Rendering & Floating Canvas HUD (Phase U4):**
+  - High-DPI centered page elevation with multi-layered soft drop shadows over neutral pasteboard.
+  - Translucent rounded bottom control pill (`FloatingCanvasHud`) with idle ambient auto-fading, direct page spinbox navigation, select/hand pointer modes, zoom presets, layout spreads, and 90° clockwise rotation.
+  - Optional toggleable alignment rulers (`mm`, `in`, `pt`), alignment snap guides, and non-intrusive `StudioToast` notifications.
+- **Responsive Mobile & Android Studio UI Adaptation (Phase U5):**
+  - 3-Tier responsive breakpoint layout engine (`DesktopExpanded` ≥ 1100px, `TabletCompact` 700–1099px, `PhoneMobile` < 700px).
+  - Touch-optimized 52px `MobileTopAppBar`, 56px `MobileBottomNavBar`, and smooth slide-up `MobileBottomSheet` tools palette.
+  - Minimum 48dp x 48dp touch targets, pinch-to-zoom, swipe page turns, smart double-tap zoom (1.0x ↔ 1.5x), 12.0dp annotation handles, and virtual keyboard pan avoidance.
+  - Clean desktop capability gating for Android with Storage Access Framework (SAF) integration and synchronized `versionCode`.
+- **Showcase Screenshots & Documentation Refresh (Phase U6):**
+  - Generated high-resolution showcase screenshots (`studio-home.png`, `studio-workspace-dark.png`, `studio-tools-inspector.png`, `studio-mobile.png`).
+  - Updated `README.md` and `docs/USER_GUIDE.md` matching the new Studio workstation architecture.
+
+---
+
 ## [1.0.14] - 2026-11-14
 
 ### Fixed

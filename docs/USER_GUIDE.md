@@ -12,32 +12,43 @@ PDFinity is a high-assurance, offline-first PDF productivity suite built with mo
 
 ---
 
-## 2. Desktop Interface Overview
+## 2. Enterprise Document Studio Interface Overview
 
-When you launch PDFinity, you are greeted by the clean, theme-aware application shell:
+When you launch PDFinity, you are greeted by the modern, theme-aware Enterprise Document Studio 3-pane workstation:
 
 ```text
-+-----------------------------------------------------------------------------------+
-|  PDFinity - [sample_document.pdf]                                       -  o  x   |
-+-----------------------------------------------------------------------------------+
-|  File   Edit   View   Tools   Help                                                |
-+-----------------------------------------------------------------------------------+
-|  [Side Panel] | [◀] [ 1 ] / 20 [▶] | [－] 100% [＋] [Fit Width] [Fit Page] |      |
-|  [Layout: Continuous ▼] | [🔍 Find] | [🖨 Print...]                               |
-+-----------------------------------------------------------------------------------+
-| [Thumbnails] [Outline]  |                                                         |
-| +---------------------+ |                     PAGE 1                              |
-| | [ 1 ] Preview       | |    +-----------------------------------------------+    |
-| |                     | |    |                                               |    |
-| | [ 2 ] Preview       | |    |       PDFinity Architecture Overview          |    |
-| |                     | |    |                                               |    |
-| | [ 3 ] Preview       | |    |   High-speed offline reading experience...    |    |
-| |                     | |    |                                               |    |
-| +---------------------+ |    +-----------------------------------------------+    |
-+-----------------------------------------------------------------------------------+
-| Viewing: sample_document.pdf  | 100% | Windows 11 (Per-Monitor DPI v2) | OFFLINE  |
-+-----------------------------------------------------------------------------------+
++-----------------------------------------------------------------------------------------------------------------+
+|  PDFinity Studio - [contract_master_services_2026.pdf]                                              -   o   x   |
++-----------------------------------------------------------------------------------------------------------------+
+| [🏠 Home] | [● contract_master_services_2026.pdf (16 p.) ✕] | [+] [▾]                        [🔍] [🌓]          |
++-----------------------------------------------------------------------------------------------------------------+
+| All Tools | View | Comment [ACTIVE] | Edit | Organize | Fill & Sign | Protect & Redact | Convert & OCR             |
++-----------------------------------------------------------------------------------------------------------------+
+| [V] [H] | [Highlight] [Underline] [Strikeout] [Note] [Ink] [Shapes] [Stamp] | [Color] [Stroke] [Opacity]       |
++-----------------------------------------------------------------------------------------------------------------+
+| [📑] | THUMBNAILS (16)  |                                      | RIGHT INSPECTOR PANEL                          |
+| [🔖] | +--------------+ |                 PAGE 1               | +--------------------------------------------+ |
+| [📎] | | [ 1 ] Cover  | |   +--------------------------------+ | | Selection Properties (Highlight)           | |
+| [🥞] | +--------------+ |   |                                | | | - Color: Crimson Accent (#DC2626)          | |
+| [💬] | | [ 2 ] Index  | |   | MASTER SERVICES AGREEMENT      | | | - Opacity: 85% (Multiply)                  | |
+| [✍] | +--------------+ |   |                                | | | - Author: Jake Ashley Panlilio             | |
+| [⚖] | | [ 3 ] MSA    | |   | High-assurance offline PDF...  | | +--------------------------------------------+ |
+|      | +--------------+ |   +--------------------------------+ | | Standards Compliance & Signatures          | |
+|      |                  |   [▲ 3 / 16 ▼ | V H | - 125% + | ↷] | | ✓ PAdES-BES Cryptographic Signature Valid   | |
++------+------------------+--------------------------------------+------------------------------------------------+
+| Page 3 of 16  | Zoom: 125%  | ISO 32000-1  | Google PDFium & QPDF Dual-Engine           | 🔒 100% Offline Core  |
++-----------------------------------------------------------------------------------------------------------------+
 ```
+
+### Key Workstation Components:
+1. **Studio Tab Bar:** Combines pinned Home Dashboard (Tab 0) with closable document tabs, dirty-state indicators, page count tooltips, middle-click close, search trigger (`Ctrl+F`), and instant theme toggle.
+2. **2-Tier Grouped Workflow Ribbon:**
+   - *Mode Tabs:* `All Tools` | `View` | `Comment` | `Edit` | `Organize` | `Fill & Sign` | `Protect & Redact` | `Convert & OCR`.
+   - *Contextual Tool Strip:* Displays mode-specific tool buttons, typography controls, color pickers, and stroke/opacity adjustments.
+3. **Left Navigation Rail & Drawer (240px):** Fast access icon rail for Thumbnails, Bookmarks, Attachments, Layers, Comments, Signatures, and Preflight.
+4. **Elevated Viewport & Floating Canvas HUD:** Centered white page sheets with multi-layered drop shadows, optional alignment rulers/guides, and a translucent floating bottom control pill.
+5. **Right Contextual Tool & Property Inspector (280px):** Dynamic property editor for selected markup, PKCS#7 signature validation details, and ISO 19005 compliance audits.
+6. **Responsive Mobile Shell:** On mobile viewports (< 700px or Android handsets), desktop chrome seamlessly transforms into a 52px `MobileTopAppBar`, 56px `MobileBottomNavBar`, and smooth slide-up `MobileBottomSheet`.
 
 ---
 

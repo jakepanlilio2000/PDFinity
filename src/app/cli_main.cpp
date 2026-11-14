@@ -19,7 +19,7 @@
 
 namespace {
 void PrintCliHelp() {
-    std::cout << "PDFinity CLI 1.0.14 Stable\n"
+    std::cout << "PDFinity CLI 1.1.0 Stable\n"
               << "Published by StackSync Solutions (https://www.stacksyncsolutions.com/)\n"
               << "Lead Programmer: Jake Ashley Panlilio (https://github.com/jakepanlilio2000)\n\n"
               << "Usage: pdfinity-cli <command> [options] [arguments]\n\n"

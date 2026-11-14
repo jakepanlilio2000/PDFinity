@@ -175,6 +175,28 @@ def bump_all(root_dir, ver_info):
         r'(pkgver=)[0-9\.]+',
         rf'\g<1>{semver}'
     )
+    update_file(
+        os.path.join(root_dir, "packaging", "linux", "arch", "PKGBUILD"),
+        r'(source=\("https://github\.com/jakepanlilio2000/PDFinity/archive/)[^"]+(\.tar\.gz"\))',
+        rf'\g<1>{tag}\g<2>'
+    )
+    update_file(
+        os.path.join(root_dir, "packaging", "linux", "arch", "PKGBUILD"),
+        r'(-S "\$\{srcdir\}/PDFinity-)[^"]+(")',
+        rf'\g<1>{semver}\g<2>'
+    )
+
+    # 10b. packaging/linux/arch/.SRCINFO
+    update_file(
+        os.path.join(root_dir, "packaging", "linux", "arch", ".SRCINFO"),
+        r'(pkgver = )[0-9\.]+',
+        rf'\g<1>{semver}'
+    )
+    update_file(
+        os.path.join(root_dir, "packaging", "linux", "arch", ".SRCINFO"),
+        r'(source = https://github\.com/jakepanlilio2000/PDFinity/archive/)[^/]+(\.tar\.gz)',
+        rf'\g<1>{tag}\g<2>'
+    )
 
     # 11. packaging/linux/rpm/pdfinity.spec
     update_file(

@@ -6,8 +6,8 @@
 
 **Professional • Modular • Offline-First PDF Productivity Suite**
 
-[![Release](https://img.shields.io/badge/Release-1.0.14%20Stable-blue.svg)](https://github.com/jakepanlilio2000/PDFinity/releases/tag/v1.0.14)
-[![Version](https://img.shields.io/badge/Version-1.0.14-emerald.svg)](https://github.com/jakepanlilio2000/PDFinity/releases/tag/v1.0.14)
+[![Release](https://img.shields.io/badge/Release-1.1.0%20Stable-blue.svg)](https://github.com/jakepanlilio2000/PDFinity/releases/tag/v1.1.0)
+[![Version](https://img.shields.io/badge/Version-1.1.0-emerald.svg)](https://github.com/jakepanlilio2000/PDFinity/releases/tag/v1.1.0)
 [![License: MPL 2.0](https://img.shields.io/badge/License-MPL_2.0-brightgreen.svg)](LICENSE)
 [![C++ Standard](https://img.shields.io/badge/C%2B%2B-20-00599C.svg?logo=c%2B%2B)](https://en.wikipedia.org/wiki/C%2B%2B20)
 [![Qt Framework](https://img.shields.io/badge/Qt-6.8%2B%20LTS-41CD52.svg?logo=qt)](https://www.qt.io/)
@@ -55,15 +55,25 @@ Whether you are performing high-volume document triage, restructuring large publ
 
 ## Visual Showcase
 
-| Main Workspace (High-DPI Multi-Document View) | Page Organizer & Visual Assembly |
+| Studio Home Dashboard (Pinned Workspace) | 3-Pane Studio Workstation (Studio Dark) |
 | :---: | :---: |
-| [![Main Workspace](docs/screenshots/main-workspace.png)](docs/screenshots/main-workspace.png) | [![Page Organizer](docs/screenshots/page-organizer.png)](docs/screenshots/page-organizer.png) |
-| *Tabbed document viewer with continuous scrolling, dark/light themes, and search.* | *Drag-and-drop page assembly, rotation, split, merge, and page reordering.* |
+| [![Studio Home Dashboard](docs/screenshots/studio-home.png)](docs/screenshots/studio-home.png) | [![Studio Workstation](docs/screenshots/studio-workspace-dark.png)](docs/screenshots/studio-workspace-dark.png) |
+| *Pinned Home dashboard with quick action cards, recent documents, and offline health.* | *3-pane layout with 2-tier Workflow Ribbon, Left Rail & Drawer, and Elevated Sheet.* |
 
-| Cryptographic Signatures & Irreversible Redaction | Android Mobile Touch Interface |
+| Contextual Tools & Property Inspector | Responsive Mobile & Android Studio UI |
 | :---: | :---: |
-| [![Redaction & Signing](docs/screenshots/redaction-signing.png)](docs/screenshots/redaction-signing.png) | [![Android View](docs/screenshots/android-view.png)](docs/screenshots/android-view.png) |
-| *PKCS#7 x509 digital signing, certificate validation, and vector stream redaction.* | *Touch-optimized mobile workflow with Storage Access Framework (SAF).* |
+| [![Tools Inspector](docs/screenshots/studio-tools-inspector.png)](docs/screenshots/studio-tools-inspector.png) | [![Mobile Studio View](docs/screenshots/studio-mobile.png)](docs/screenshots/studio-mobile.png) |
+| *Right property inspector for annotations, PAdES signatures, and PDF/A compliance.* | *Touch-adapted mobile shell with 48dp targets, bottom nav, and sliding tool sheet.* |
+
+| Visual Page Organizer & Assembly | Cryptographic Redaction & Sanitization |
+| :---: | :---: |
+| [![Page Organizer](docs/screenshots/page-organizer.png)](docs/screenshots/page-organizer.png) | [![Redaction & Signing](docs/screenshots/redaction-signing.png)](docs/screenshots/redaction-signing.png) |
+| *Drag-and-drop page assembly, rotation, split, merge, and page reordering.* | *PKCS#7 x509 digital signing, certificate validation, and vector stream redaction.* |
+
+| Legacy Workspace Reference | Android SAF Integration |
+| :---: | :---: |
+| [![Main Workspace](docs/screenshots/main-workspace.png)](docs/screenshots/main-workspace.png) | [![Android View](docs/screenshots/android-view.png)](docs/screenshots/android-view.png) |
+| *Continuous scrolling viewer with search and dual-engine architecture.* | *Touch-optimized mobile workflow with Storage Access Framework (SAF).* |
 
 ---
 
