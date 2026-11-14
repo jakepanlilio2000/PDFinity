@@ -11,6 +11,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.0.3] - 2026-11-14
+
+### Fixed
+- **Brand Terminology Scrub in Security Documentation [BUG-U2-01]:** In `docs/SIGNATURES_AND_SECURITY.md`, scrubbed legacy third-party signature handler names and aligned with open ISO 32000-1 / ISO 32000-2 detached PKCS#7 signature terminology.
+
+---
+
 ## [1.0.2] - 2026-11-14
 
 ### Added

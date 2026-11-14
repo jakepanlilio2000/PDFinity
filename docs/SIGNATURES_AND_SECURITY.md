@@ -16,7 +16,7 @@ PDFinity provides two fundamentally separate signature capabilities to guarantee
 | :--- | :--- | :--- |
 | **Object Representation** | Page image/vector overlay | `/Type /Sig` dictionary + AcroForm field widget |
 | **Cryptographic Hash** | None | SHA-256 over document `/ByteRange` |
-| **Security Handler** | None | `/Filter /Adobe.PPKLite` / `/SubFilter /adbe.pkcs7.detached` |
+| **Security Handler** | None | Standard PKCS#7 Handler (`/SubFilter /adbe.pkcs7.detached`) |
 | **Tamper Detection** | Impossible | Cryptographically verified via PKCS#7 CMS digest |
 | **Key Material Required** | None | X.509 Certificate + RSA/ECC Private Key |
 | **UI Presentation** | Amber informational badge | Green security shield or Red tamper warning |
@@ -27,7 +27,7 @@ PDFinity provides two fundamentally separate signature capabilities to guarantee
 PDFinity implements digital signing using non-destructive **incremental updates** as mandated by ISO 32000-1 Section 12.8:
 - The original document bytes remain completely unaltered.
 - An incremental revision is appended containing:
-  1. `Signature Value Dictionary` (`/Type /Sig`, `/Filter /Adobe.PPKLite`, `/SubFilter /adbe.pkcs7.detached`, `/ByteRange`, `/Contents <hex>`)
+  1. `Signature Value Dictionary` (`/Type /Sig`, Standard PKCS#7 Handler, `/SubFilter /adbe.pkcs7.detached`, `/ByteRange`, `/Contents <hex>`)
   2. `Signature Field Annotation Widget` (`/Type /Annot`, `/Subtype /Widget`, `/FT /Sig`, `/V <sigObj>`, `/T (SignatureN)`)
   3. `AcroForm Dictionary` (`/Fields [...]`, `/SigFlags 3`)
   4. `Updated Root Catalog` referencing `/AcroForm` while preserving existing `/Pages` hierarchy and metadata
