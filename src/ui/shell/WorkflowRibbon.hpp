@@ -6,6 +6,7 @@
 #include <QWidget>
 #include <QTabWidget>
 #include <QToolButton>
+#include <QFrame>
 #include <vector>
 #include <functional>
 #include "ui/VectorIcons.hpp"

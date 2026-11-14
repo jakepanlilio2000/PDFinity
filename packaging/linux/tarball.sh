@@ -3,7 +3,7 @@
 set -euo pipefail
 
 BUILD_DIR="${1:-build/linux-x64-release}"
-VERSION="${2:-0.1.0}"
+VERSION="${2:-1.1.0}"
 DIST_DIR="dist"
 STAGE_DIR="${DIST_DIR}/PDFinity-${VERSION}-linux-x64"
 

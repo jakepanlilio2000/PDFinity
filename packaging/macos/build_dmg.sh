@@ -3,7 +3,7 @@
 set -euo pipefail
 
 BUILD_DIR="${1:-build/macos-release}"
-VERSION="${2:-0.1.0}"
+VERSION="${2:-1.1.0}"
 DIST_DIR="dist"
 APP_BUNDLE="${DIST_DIR}/PDFinity.app"
 DMG_PATH="${DIST_DIR}/PDFinity-${VERSION}-macOS.dmg"

@@ -13,10 +13,10 @@ if [ -n "${2:-}" ]; then
 elif [ -f "${REPO_ROOT}/CMakeLists.txt" ]; then
     VERSION=$(grep -E '^\s*VERSION\s+[0-9\.]+' "${REPO_ROOT}/CMakeLists.txt" | head -n 1 | awk '{print $2}')
     if [ -z "${VERSION}" ]; then
-        VERSION="0.1.8-Beta"
+        VERSION="1.1.0"
     fi
 else
-    VERSION="0.1.8-Beta"
+    VERSION="1.1.0"
 fi
 
 APP_DIR="dist/AppDir"

@@ -7,6 +7,7 @@
 #include <QLabel>
 #include <QPushButton>
 #include <QScrollArea>
+#include <QFrame>
 #include <QPropertyAnimation>
 
 namespace pdfinity::ui {

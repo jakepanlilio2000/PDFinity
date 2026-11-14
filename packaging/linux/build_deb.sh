@@ -6,7 +6,7 @@ set -euo pipefail
 # Lead Programmer: Jake Ashley Panlilio (https://github.com/jakepanlilio2000)
 
 BUILD_DIR="${1:-build/linux-x64-release}"
-VERSION="${2:-0.1.0}"
+VERSION="${2:-1.1.0}"
 ARCH="${3:-amd64}"
 DIST_DIR="dist"
 STAGE_DIR="dist/deb-staging"
@@ -41,7 +41,7 @@ if [ -f "${BUILD_DIR}/bin/PDFinity" ]; then
 else
     echo "Notice: ${BUILD_DIR}/bin/PDFinity not found. Generating staged placeholder binary for package validation."
     mkdir -p "${BUILD_DIR}/bin"
-    echo -e '#!/bin/sh\necho "PDFinity 0.1-Beta (StackSync Solutions)"' > "${BUILD_DIR}/bin/PDFinity"
+    echo -e '#!/bin/sh\necho "PDFinity 1.1.0 (StackSync Solutions)"' > "${BUILD_DIR}/bin/PDFinity"
     chmod 755 "${BUILD_DIR}/bin/PDFinity"
     install -m 755 "${BUILD_DIR}/bin/PDFinity" "${STAGE_DIR}/usr/bin/pdfinity"
 fi

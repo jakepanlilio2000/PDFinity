@@ -5,7 +5,7 @@ set -euo pipefail
 # Publisher: StackSync Solutions (https://www.stacksyncsolutions.com/)
 # Lead Programmer: Jake Ashley Panlilio (https://github.com/jakepanlilio2000)
 
-VERSION="${1:-0.1.0}"
+VERSION="${1:-1.1.0}"
 TOPDIR="$(pwd)/dist/rpmbuild"
 
 echo "=== Staging RPM build for PDFinity ${VERSION} ==="

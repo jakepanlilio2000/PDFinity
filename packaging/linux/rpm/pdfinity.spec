@@ -3,7 +3,7 @@ Version:        1.1.0
 Release:        1%{?dist}
 Summary:        Professional, modular, offline-first PDF productivity suite
 
-%global tag_version 0.1-beta
+%global tag_version 1.1.0
 
 License:        MPL-2.0
 URL:            https://www.stacksyncsolutions.com/
@@ -71,5 +71,5 @@ gtk-update-icon-cache %{_datadir}/icons/hicolor &>/dev/null || :
 %{_datadir}/icons/hicolor/scalable/apps/com.stacksyncsolutions.pdfinity.svg
 
 %changelog
-* Sat Nov 14 2026 Jake Ashley Panlilio <jakepanlilio2000@users.noreply.github.com> - 0.1.0-1
-- Initial public beta release under MPL-2.0.
+* Sat Nov 14 2026 Jake Ashley Panlilio <jakepanlilio2000@users.noreply.github.com> - 1.1.0-1
+- Stable release under MPL-2.0.
