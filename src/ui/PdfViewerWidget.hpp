@@ -16,6 +16,7 @@
 #include "PdfCanvasWidget.hpp"
 #include "NavigationSidebar.hpp"
 #include "PdfSearchBar.hpp"
+#include "shell/ResponsiveLayoutManager.hpp"
 #include <memory>
 
 namespace pdfinity::services {
@@ -63,6 +64,9 @@ public:
     void SetSnapGuidesVisible(bool visible);
     [[nodiscard]] bool AreSnapGuidesVisible() const;
     [[nodiscard]] FloatingCanvasHud* GetCanvasHud() const noexcept { return m_floatingHud; }
+
+    void SetViewportClass(ViewportClass vClass);
+    [[nodiscard]] ViewportClass GetViewportClass() const noexcept { return m_viewportClass; }
 
 public slots:
     void Print();
@@ -135,6 +139,7 @@ private:
 
     std::vector<pdf_api::TextSearchResult> m_currentMatches;
     int m_activeMatchIdx{-1};
+    ViewportClass m_viewportClass{ViewportClass::DesktopExpanded};
 };
 
 } // namespace pdfinity::ui

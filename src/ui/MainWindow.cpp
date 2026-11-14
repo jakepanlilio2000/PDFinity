@@ -7,6 +7,10 @@
 #include "HomeDashboardWidget.hpp"
 #include "viewer/StudioToast.hpp"
 #include "shell/WorkflowRibbon.hpp"
+#include "shell/MobileTopAppBar.hpp"
+#include "shell/MobileBottomNavBar.hpp"
+#include "shell/MobileBottomSheet.hpp"
+#include <QResizeEvent>
 #include "AnnotationToolbar.hpp"
 #include "AboutDialog.hpp"
 #include "SettingsDialog.hpp"
@@ -61,6 +65,9 @@ namespace pdfinity::ui {
 MainWindow::MainWindow(QWidget* parent) : QMainWindow(parent) {
     SetupUi();
     RestoreWindowState();
+    if (m_responsiveManager) {
+        m_responsiveManager->UpdateWidth(width());
+    }
 }
 
 void MainWindow::SetupUi() {
@@ -71,12 +78,98 @@ void MainWindow::SetupUi() {
     centralLayout->setContentsMargins(0, 0, 0, 0);
     centralLayout->setSpacing(0);
 
+    m_mobileTopBar = new MobileTopAppBar(centralContainer);
+    m_mobileTopBar->hide();
+
     m_workflowRibbon = new WorkflowRibbon(centralContainer);
     m_workspace = new DocumentWorkspace(centralContainer);
 
+    m_mobileBottomNav = new MobileBottomNavBar(centralContainer);
+    m_mobileBottomNav->hide();
+
+    centralLayout->addWidget(m_mobileTopBar);
     centralLayout->addWidget(m_workflowRibbon);
     centralLayout->addWidget(m_workspace, 1);
+    centralLayout->addWidget(m_mobileBottomNav);
     setCentralWidget(centralContainer);
+
+    m_mobileBottomSheet = new MobileBottomSheet(centralContainer);
+
+    m_responsiveManager = new ResponsiveLayoutManager(this);
+    connect(m_responsiveManager, &ResponsiveLayoutManager::ViewportClassChanged,
+            this, &MainWindow::OnViewportClassChanged);
+
+    // Wire Mobile Top App Bar
+    connect(m_mobileTopBar, &MobileTopAppBar::HomeClicked, this, [this]() {
+        if (m_workspace) m_workspace->ShowHomeTab();
+    });
+    connect(m_mobileTopBar, &MobileTopAppBar::SearchClicked, this, &MainWindow::OnFind);
+    connect(m_mobileTopBar, &MobileTopAppBar::ThemeToggleClicked, this, &MainWindow::OnToggleTheme);
+    connect(m_mobileTopBar, &MobileTopAppBar::SaveClicked, this, &MainWindow::OnSaveDocument);
+    connect(m_mobileTopBar, &MobileTopAppBar::ShareClicked, this, &MainWindow::OnShareDocument);
+    connect(m_mobileTopBar, &MobileTopAppBar::PrintClicked, this, &MainWindow::OnPrint);
+    connect(m_mobileTopBar, &MobileTopAppBar::PreflightClicked, this, &MainWindow::OnOpenPreflightCompliance);
+    connect(m_mobileTopBar, &MobileTopAppBar::SettingsClicked, this, &MainWindow::OnOpenSettings);
+    connect(m_mobileTopBar, &MobileTopAppBar::AboutClicked, this, &MainWindow::OnAbout);
+
+    // Wire Mobile Bottom Navigation Bar
+    connect(m_mobileBottomNav, &MobileBottomNavBar::ToolsClicked, this, [this]() {
+        if (!m_mobileBottomSheet) return;
+        auto* sheetContent = new QWidget();
+        auto* grid = new QGridLayout(sheetContent);
+        grid->setContentsMargins(8, 8, 8, 8);
+        grid->setSpacing(8);
+
+        auto makeToolBtn = [this](const QString& title, const QString& icon, auto slotFunc) {
+            auto* b = new QPushButton(QString("%1 %2").arg(icon, title));
+            b->setStyleSheet("QPushButton { min-height: 48px; min-width: 48px; font-size: 13px; font-weight: 600; padding: 6px 12px; background: #27292E; border: 1px solid #34373E; border-radius: 6px; color: #F4F4F5; text-align: left; } QPushButton:hover { background: #DC2626; color: white; }");
+            connect(b, &QPushButton::clicked, this, [this, slotFunc]() {
+                m_mobileBottomSheet->HideSheet();
+                (this->*slotFunc)();
+            });
+            return b;
+        };
+
+        grid->addWidget(makeToolBtn(tr("Organize Pages"), "📑", &MainWindow::OnOrganizePages), 0, 0);
+        grid->addWidget(makeToolBtn(tr("Merge PDF"), "🗂", &MainWindow::OnMergeDocuments), 0, 1);
+        grid->addWidget(makeToolBtn(tr("Split PDF"), "✂", &MainWindow::OnSplitDocument), 1, 0);
+        grid->addWidget(makeToolBtn(tr("Edit Content"), "✏", &MainWindow::OnToggleContentEditor), 1, 1);
+        grid->addWidget(makeToolBtn(tr("Form Inspector"), "📋", &MainWindow::OnOpenFormInspector), 2, 0);
+        grid->addWidget(makeToolBtn(tr("OCR Studio"), "🔍", &MainWindow::OnOpenOcrStudio), 2, 1);
+        grid->addWidget(makeToolBtn(tr("Optimizer"), "⚡", &MainWindow::OnOpenOptimizer), 3, 0);
+        grid->addWidget(makeToolBtn(tr("Intelligence"), "🧠", &MainWindow::OnOpenDocumentIntelligence), 3, 1);
+
+        m_mobileBottomSheet->ShowSheet(tr("Document Tools Palette"), sheetContent);
+    });
+
+    connect(m_mobileBottomNav, &MobileBottomNavBar::CommentClicked, this, &MainWindow::OnToggleAnnotationStudio);
+    connect(m_mobileBottomNav, &MobileBottomNavBar::PagesClicked, this, &MainWindow::OnOrganizePages);
+    connect(m_mobileBottomNav, &MobileBottomNavBar::SignClicked, this, &MainWindow::OnVisualSignDocument);
+    connect(m_mobileBottomNav, &MobileBottomNavBar::MoreClicked, this, [this]() {
+        if (!m_mobileBottomSheet) return;
+        auto* sheetContent = new QWidget();
+        auto* layout = new QVBoxLayout(sheetContent);
+        layout->setContentsMargins(8, 8, 8, 8);
+        layout->setSpacing(6);
+
+        auto makeMoreBtn = [this](const QString& title, const QString& icon, auto slotFunc) {
+            auto* b = new QPushButton(QString("%1 %2").arg(icon, title));
+            b->setStyleSheet("QPushButton { min-height: 48px; min-width: 48px; font-size: 13px; font-weight: 600; padding: 6px 12px; background: #27292E; border: 1px solid #34373E; border-radius: 6px; color: #F4F4F5; text-align: left; } QPushButton:hover { background: #DC2626; color: white; }");
+            connect(b, &QPushButton::clicked, this, [this, slotFunc]() {
+                m_mobileBottomSheet->HideSheet();
+                (this->*slotFunc)();
+            });
+            return b;
+        };
+
+        layout->addWidget(makeMoreBtn(tr("Sanitize Document"), "🧹", &MainWindow::OnSanitizeDocument));
+        layout->addWidget(makeMoreBtn(tr("Encrypt / Password Protect"), "🔒", &MainWindow::OnEncryptDocument));
+        layout->addWidget(makeMoreBtn(tr("Digital Signatures (PKCS#7)"), "✍", &MainWindow::OnDigitalSignDocument));
+        layout->addWidget(makeMoreBtn(tr("Preflight & PDF Standards"), "⚖", &MainWindow::OnOpenPreflightCompliance));
+        layout->addWidget(makeMoreBtn(tr("Settings & Appearance"), "⚙", &MainWindow::OnOpenSettings));
+
+        m_mobileBottomSheet->ShowSheet(tr("More Actions & Studio Tools"), sheetContent);
+    });
 
     connect(m_workspace, &DocumentWorkspace::OpenFileRequested, this, &MainWindow::OnOpenFile);
     connect(m_workspace, &DocumentWorkspace::FileSelected, this, &MainWindow::OpenFileByPath);
@@ -794,6 +887,9 @@ bool MainWindow::OpenFileByPath(const QString& filePath) {
     bool success = m_workspace->OpenDocumentTab(sanitized.value());
     if (success) {
         m_statusDocLabel->setText(tr("Viewing: %1").arg(QFileInfo(filePath).fileName()));
+        if (m_mobileTopBar) {
+            m_mobileTopBar->SetDocumentTitle(QFileInfo(filePath).fileName());
+        }
     }
     return success;
 }
@@ -943,8 +1039,16 @@ void MainWindow::OnDocumentCountChanged(int count) {
 
     if (count == 0) {
         m_statusDocLabel->setText(tr("Ready"));
+        if (m_mobileTopBar) {
+            m_mobileTopBar->SetDocumentTitle(tr("PDFinity Studio"));
+        }
     } else {
         m_statusDocLabel->setText(tr("%1 document(s) open").arg(count));
+        if (m_mobileTopBar && m_workspace) {
+            if (auto* doc = m_workspace->GetCurrentDocument()) {
+                m_mobileTopBar->SetDocumentTitle(QString::fromStdString(doc->GetPath().filename().string()));
+            }
+        }
     }
 }
 
@@ -1467,6 +1571,32 @@ bool MainWindow::OnRemoteSensitiveActionConfirmation(const std::string& clientNa
         QMessageBox::Yes | QMessageBox::No, QMessageBox::No
     );
     return (ret == QMessageBox::Yes);
+}
+
+void MainWindow::OnViewportClassChanged(ViewportClass newClass, ViewportClass /*oldClass*/) {
+    if (newClass == ViewportClass::PhoneMobile) {
+        if (m_workflowRibbon) m_workflowRibbon->hide();
+        if (m_mobileTopBar) m_mobileTopBar->show();
+        if (m_mobileBottomNav) m_mobileBottomNav->show();
+    } else {
+        if (m_mobileTopBar) m_mobileTopBar->hide();
+        if (m_mobileBottomNav) m_mobileBottomNav->hide();
+        if (m_workflowRibbon) m_workflowRibbon->show();
+        if (m_mobileBottomSheet) m_mobileBottomSheet->HideSheet();
+    }
+    if (m_workspace) {
+        m_workspace->SetViewportClass(newClass);
+    }
+}
+
+void MainWindow::resizeEvent(QResizeEvent* event) {
+    QMainWindow::resizeEvent(event);
+    if (m_responsiveManager) {
+        m_responsiveManager->UpdateWidth(event->size().width());
+    }
+    if (m_mobileBottomSheet) {
+        m_mobileBottomSheet->Reposition();
+    }
 }
 
 } // namespace pdfinity::ui

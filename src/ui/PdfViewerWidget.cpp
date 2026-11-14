@@ -19,6 +19,8 @@
 #include <QHBoxLayout>
 #include <QKeyEvent>
 #include <QScrollBar>
+#include <QInputMethod>
+#include <QGuiApplication>
 #include <cmath>
 
 namespace pdfinity::ui {
@@ -220,6 +222,19 @@ void PdfViewerWidget::SetupUi() {
 
     mainLayout->addWidget(m_splitter);
     ApplySettingsState();
+
+    if (auto* im = QGuiApplication::inputMethod()) {
+        connect(im, &QInputMethod::keyboardRectangleChanged, this, [this]() {
+            if (!m_scrollArea || !QGuiApplication::inputMethod()->isVisible()) return;
+            QRectF kbRect = QGuiApplication::inputMethod()->keyboardRectangle();
+            if (kbRect.height() > 50) {
+                int overlap = static_cast<int>(kbRect.height());
+                m_scrollArea->verticalScrollBar()->setValue(
+                    m_scrollArea->verticalScrollBar()->value() + overlap / 2
+                );
+            }
+        });
+    }
 
     // Connect search service
     connect(m_searchService.get(), &services::DocumentSearchService::SearchCompleted,
@@ -509,6 +524,36 @@ void PdfViewerWidget::SetSnapGuidesVisible(bool visible) {
 
 bool PdfViewerWidget::AreSnapGuidesVisible() const {
     return m_canvas ? m_canvas->AreSnapGuidesVisible() : false;
+}
+
+void PdfViewerWidget::SetViewportClass(ViewportClass vClass) {
+    m_viewportClass = vClass;
+
+    if (vClass == ViewportClass::PhoneMobile) {
+        if (m_leftRail) m_leftRail->hide();
+        if (m_inspector) m_inspector->hide();
+        if (m_floatingHud) m_floatingHud->hide();
+        if (m_splitter) {
+            m_splitter->setSizes({0, std::max(200, width()), 0});
+        }
+    } else if (vClass == ViewportClass::TabletCompact) {
+        if (m_leftRail) {
+            m_leftRail->show();
+            m_leftRail->SetDrawerExpanded(false);
+        }
+        if (m_inspector) m_inspector->hide();
+        if (m_floatingHud) m_floatingHud->show();
+        if (m_splitter) {
+            m_splitter->setSizes({44, std::max(400, width() - 44), 0});
+        }
+    } else { // DesktopExpanded
+        if (m_leftRail) m_leftRail->show();
+        if (m_inspector) m_inspector->show();
+        if (m_floatingHud) m_floatingHud->show();
+        if (m_splitter) {
+            m_splitter->setSizes({44, std::max(600, width() - 44 - 280), 280});
+        }
+    }
 }
 
 std::vector<int> PdfViewerWidget::GetSplitterSizes() const {

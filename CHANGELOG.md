@@ -11,6 +11,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.0.12] - 2026-11-14
+
+### Added
+- **Responsive Breakpoint Layout Engine (`ResponsiveLayoutManager`):**
+  - Centralized 3-tier viewport adaptation system:
+    * `DesktopExpanded` (width >= 1100px): Full 3-pane Studio workstation layout (Left Rail + Drawer, Top Workflow Ribbon, Right Tool/Property Inspector, Floating Bottom HUD).
+    * `TabletCompact` (700px <= width < 1100px): Auto-collapses left drawer and right inspector into compact margins, maximizing document canvas reading width.
+    * `PhoneMobile` (width < 700px or Android handset): Replaces desktop ribbon with touch-optimized `MobileTopAppBar` and 56px `MobileBottomNavBar`.
+- **Mobile Top App Bar (`MobileTopAppBar`):**
+  - Touch-friendly 52px top bar featuring Home/Back navigation button, middle-elided document filename header, quick Search trigger, theme switcher, and overflow action menu (Save, Share, Print, Preflight, Settings, About).
+- **Mobile Bottom Navigation Bar (`MobileBottomNavBar`):**
+  - 56px bottom navigation bar with 48dp x 48dp minimum touch targets for primary studio workflows: *Tools*, *Comment*, *Pages*, *Fill & Sign*, and *More*.
+- **Mobile Studio Bottom Sheet (`MobileBottomSheet`):**
+  - Smooth animated slide-over bottom sheet with drag handle, title bar, 48dp close button, and card-based touch buttons for tools palette and studio actions.
+- **Touch Gestures & Virtual Keyboard Panning:**
+  - Added smart double-tap zoom (toggling between 1.0x and 1.5x zoom) and enlarged annotation corner resize handles to 12.0dp for finger manipulation.
+  - Connected `QInputMethod::keyboardRectangleChanged` so active document forms and inputs smoothly pan above the on-screen software keyboard.
+- **Platform Capability Gating:**
+  - Desktop-only controls (stdio MCP server toggles, desktop CLI references) cleanly hidden on mobile viewports without empty separators or disabled items.
+
+---
+
 ## [1.0.11] - 2026-11-14
 
 ### Fixed

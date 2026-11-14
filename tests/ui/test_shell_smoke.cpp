@@ -17,6 +17,10 @@
 #include "ui/viewer/FloatingCanvasHud.hpp"
 #include "ui/viewer/CanvasRulerOverlay.hpp"
 #include "ui/viewer/StudioToast.hpp"
+#include "ui/shell/ResponsiveLayoutManager.hpp"
+#include "ui/shell/MobileTopAppBar.hpp"
+#include "ui/shell/MobileBottomNavBar.hpp"
+#include "ui/shell/MobileBottomSheet.hpp"
 #include "application/AppContext.hpp"
 
 using namespace pdfinity::ui;
@@ -38,6 +42,7 @@ private slots:
     void testShellSplitterPersistence();
     void testRightInspectorSelectionSync();
     void testFloatingCanvasHudAndRulers();
+    void testResponsiveLayoutAndMobileStudio();
 };
 
 void TestShellSmoke::initTestCase() {
@@ -266,6 +271,57 @@ void TestShellSmoke::testFloatingCanvasHudAndRulers() {
 
     // Verify StudioToast creation & auto-dismiss
     StudioToast::Show(&window, "HUD Verified", "Elevated viewport HUD test passed.", ToastType::Success, 500);
+
+    window.close();
+}
+
+void TestShellSmoke::testResponsiveLayoutAndMobileStudio() {
+    // 1. Breakpoint classification engine
+    QCOMPARE(ResponsiveLayoutManager::ClassifyWidth(1400), ViewportClass::DesktopExpanded);
+    QCOMPARE(ResponsiveLayoutManager::ClassifyWidth(1100), ViewportClass::DesktopExpanded);
+    QCOMPARE(ResponsiveLayoutManager::ClassifyWidth(1099), ViewportClass::TabletCompact);
+    QCOMPARE(ResponsiveLayoutManager::ClassifyWidth(700), ViewportClass::TabletCompact);
+    QCOMPARE(ResponsiveLayoutManager::ClassifyWidth(699), ViewportClass::PhoneMobile);
+    QCOMPARE(ResponsiveLayoutManager::ClassifyWidth(360), ViewportClass::PhoneMobile);
+    QCOMPARE(ResponsiveLayoutManager::GetMinTouchTargetSize(), 48);
+
+    // 2. Mobile UI components
+    QWidget parentWidget;
+    parentWidget.resize(400, 700);
+
+    MobileTopAppBar topBar(&parentWidget);
+    topBar.SetDocumentTitle("MobileDocument.pdf");
+    QCOMPARE(topBar.GetDocumentTitle(), QString("MobileDocument.pdf"));
+    QVERIFY(topBar.minimumHeight() >= 48);
+
+    MobileBottomNavBar bottomNav(&parentWidget);
+    QVERIFY(bottomNav.minimumHeight() >= 48);
+
+    MobileBottomSheet sheet(&parentWidget);
+    QWidget* dummyContent = new QWidget();
+    sheet.ShowSheet("Tool Options", dummyContent);
+    QVERIFY(sheet.IsVisible());
+    sheet.HideSheet();
+    QVERIFY(!sheet.IsVisible());
+
+    // 3. Full Studio window responsive transitions
+    MainWindow window;
+    std::filesystem::path fixturePath = std::filesystem::path(PDFINITY_SOURCE_DIR) / "tests" / "fixtures" / "ordinary.pdf";
+    QVERIFY(std::filesystem::exists(fixturePath));
+    QVERIFY(window.OpenFileByPath(QString::fromStdString(fixturePath.string())));
+
+    auto* viewer = window.findChild<PdfViewerWidget*>();
+    QVERIFY(viewer != nullptr);
+
+    // Test viewport adaptations
+    viewer->SetViewportClass(ViewportClass::TabletCompact);
+    QCOMPARE(viewer->GetViewportClass(), ViewportClass::TabletCompact);
+
+    viewer->SetViewportClass(ViewportClass::PhoneMobile);
+    QCOMPARE(viewer->GetViewportClass(), ViewportClass::PhoneMobile);
+
+    viewer->SetViewportClass(ViewportClass::DesktopExpanded);
+    QCOMPARE(viewer->GetViewportClass(), ViewportClass::DesktopExpanded);
 
     window.close();
 }

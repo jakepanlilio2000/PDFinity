@@ -5,6 +5,7 @@
 #include "AnnotationToolbar.hpp"
 #include "AnnotationPropertiesDialog.hpp"
 #include "viewer/StudioToast.hpp"
+#include "shell/ResponsiveLayoutManager.hpp"
 #include "services/AnnotationCommandManager.hpp"
 #include "services/AnnotationService.hpp"
 #include "application/Logger.hpp"
@@ -356,7 +357,7 @@ void PdfCanvasWidget::paintEvent(QPaintEvent* event) {
 
             // Draw corner handles
             p.setBrush(QColor(37, 99, 235));
-            const double handleSize = 6.0;
+            const double handleSize = ResponsiveLayoutManager::IsMobilePlatform() ? 12.0 : 6.0;
             p.drawRect(QRectF(annotScreenRect.left() - handleSize/2, annotScreenRect.top() - handleSize/2, handleSize, handleSize));
             p.drawRect(QRectF(annotScreenRect.right() - handleSize/2, annotScreenRect.top() - handleSize/2, handleSize, handleSize));
             p.drawRect(QRectF(annotScreenRect.left() - handleSize/2, annotScreenRect.bottom() - handleSize/2, handleSize, handleSize));
@@ -811,7 +812,13 @@ void PdfCanvasWidget::mouseDoubleClickEvent(QMouseEvent* event) {
     if (m_selectedAnnotIndex >= 0 && m_selectedAnnotPageIndex >= 0) {
         OpenSelectedAnnotationProperties();
     } else {
-        QWidget::mouseDoubleClickEvent(event);
+        // Smart double-tap zoom: toggle between standard view and 1.5x zoom
+        if (m_zoomScale < 1.35) {
+            SetZoomScale(1.50);
+        } else {
+            SetZoomScale(1.00);
+        }
+        event->accept();
     }
 }
 

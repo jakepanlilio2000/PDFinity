@@ -4,6 +4,7 @@
 #pragma once
 
 #include "application/AppConfig.hpp"
+#include "shell/ResponsiveLayoutManager.hpp"
 #include <QMainWindow>
 #include <QString>
 
@@ -15,6 +16,9 @@ namespace pdfinity::ui {
 class DocumentWorkspace;
 class RedactionToolbar;
 class WorkflowRibbon;
+class MobileTopAppBar;
+class MobileBottomNavBar;
+class MobileBottomSheet;
 
 class MainWindow : public QMainWindow {
     Q_OBJECT
@@ -71,6 +75,10 @@ private slots:
     void OnOpenMcpManager();
     void OnOpenRemoteManager();
     void OnShareDocument();
+    void OnViewportClassChanged(ViewportClass newClass, ViewportClass oldClass);
+
+protected:
+    void resizeEvent(QResizeEvent* event) override;
 
 private:
     void SetupUi();
@@ -86,6 +94,10 @@ private:
     DocumentWorkspace* m_workspace{nullptr};
     WorkflowRibbon* m_workflowRibbon{nullptr};
     RedactionToolbar* m_redactionToolbar{nullptr};
+    ResponsiveLayoutManager* m_responsiveManager{nullptr};
+    MobileTopAppBar* m_mobileTopBar{nullptr};
+    MobileBottomNavBar* m_mobileBottomNav{nullptr};
+    MobileBottomSheet* m_mobileBottomSheet{nullptr};
 
     // Actions
     QAction* m_openAction{nullptr};

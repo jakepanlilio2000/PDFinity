@@ -10,6 +10,7 @@
 #include <unordered_map>
 #include "domain/DocumentModel.hpp"
 #include "shell/StudioTabBar.hpp"
+#include "shell/ResponsiveLayoutManager.hpp"
 
 class QStackedWidget;
 class QListWidget;
@@ -40,6 +41,7 @@ public:
     void RefreshRecentFilesList();
     void SaveSession();
     void RestoreSession();
+    void SetViewportClass(ViewportClass vClass);
 
 signals:
     void OpenFileRequested();
@@ -88,6 +90,7 @@ private:
     QListWidget* m_recentListWidget{nullptr};
 
     std::unordered_map<int, std::unique_ptr<domain::DocumentModel>> m_openDocuments;
+    ViewportClass m_currentViewportClass{ViewportClass::DesktopExpanded};
 };
 
 } // namespace pdfinity::ui

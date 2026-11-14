@@ -250,6 +250,14 @@ add_library(pdfinity_ui STATIC
     ui/shell/LeftNavRail.cpp
     ui/shell/RightInspectorPanel.hpp
     ui/shell/RightInspectorPanel.cpp
+    ui/shell/ResponsiveLayoutManager.hpp
+    ui/shell/ResponsiveLayoutManager.cpp
+    ui/shell/MobileTopAppBar.hpp
+    ui/shell/MobileTopAppBar.cpp
+    ui/shell/MobileBottomNavBar.hpp
+    ui/shell/MobileBottomNavBar.cpp
+    ui/shell/MobileBottomSheet.hpp
+    ui/shell/MobileBottomSheet.cpp
     ui/MainWindow.hpp
     ui/MainWindow.cpp
 )

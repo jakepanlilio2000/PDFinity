@@ -326,6 +326,8 @@ bool DocumentWorkspace::OpenDocumentTab(const std::filesystem::path& filePath, c
         connect(insp, &RightInspectorPanel::BatchCenterTriggered, this, &DocumentWorkspace::BatchCenterRequested);
     }
 
+    viewer->SetViewportClass(m_currentViewportClass);
+
     int newIndex = m_tabWidget->addTab(viewer, fileName);
     m_tabWidget->setTabToolTip(newIndex, qPath);
     if (viewer->GetDocument()) {
@@ -467,6 +469,17 @@ void DocumentWorkspace::dropEvent(QDropEvent* event) {
         }
     }
     event->acceptProposedAction();
+}
+
+void DocumentWorkspace::SetViewportClass(ViewportClass vClass) {
+    m_currentViewportClass = vClass;
+    if (m_tabWidget) {
+        for (int i = 0; i < m_tabWidget->count(); ++i) {
+            if (auto* viewer = qobject_cast<PdfViewerWidget*>(m_tabWidget->widget(i))) {
+                viewer->SetViewportClass(vClass);
+            }
+        }
+    }
 }
 
 } // namespace pdfinity::ui

@@ -1,5 +1,5 @@
 Name:           pdfinity
-Version:        1.0.11
+Version:        1.0.12
 Release:        1%{?dist}
 Summary:        Professional, modular, offline-first PDF productivity suite
 
