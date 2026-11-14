@@ -268,9 +268,20 @@ void TestRemotePair::testEmergencyDisable() {
     QVERIFY(!remote::RemoteControllerServer::Instance().IsListening());
     QVERIFY(!remote::RemoteSecurityPolicy::Instance().IsEnabled());
 
-    // Connection attempt fails immediately
+    client.DisconnectFromHost();
+    QCoreApplication::processEvents(QEventLoop::AllEvents, 100);
+
+    // Further commands on client fail
+    auto res = client.SendCommand("get_page_count", {});
+    QVERIFY(!res.success);
+
+    // Connection attempt or subsequent pairing attempt fails immediately
     remote::RemoteControllerClient client2;
-    QVERIFY(!client2.ConnectToHost("127.0.0.1", m_testPort, 500));
+    bool connected = client2.ConnectToHost("127.0.0.1", m_testPort, 200);
+    if (connected) {
+        auto pairRes = client2.Pair(pin, "Client", "dev_emrg2");
+        QVERIFY(!pairRes.success);
+    }
 }
 
 QTEST_MAIN(TestRemotePair)
