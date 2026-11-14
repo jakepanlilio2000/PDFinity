@@ -69,6 +69,15 @@ void DocumentWorkspace::SetupUi() {
     }
 
     connect(m_tabWidget, &QTabWidget::tabCloseRequested, this, &DocumentWorkspace::OnTabCloseRequested);
+    connect(m_tabWidget, &QTabWidget::currentChanged, this, [this](int index) {
+        if (index <= 0) {
+            emit CurrentDocumentChanged(tr("PDFinity Studio"));
+        } else {
+            if (auto* doc = GetCurrentDocument()) {
+                emit CurrentDocumentChanged(QString::fromStdString(doc->GetPath().filename().string()));
+            }
+        }
+    });
 
     mainLayout->addWidget(m_tabWidget);
     m_tabWidget->setCurrentIndex(0);

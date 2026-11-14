@@ -47,6 +47,7 @@ signals:
     void OpenFileRequested();
     void FileSelected(const QString& filePath);
     void DocumentCountChanged(int count);
+    void CurrentDocumentChanged(const QString& title);
     void ToggleThemeRequested();
 
     // Forwarded Tool Requests (from Viewport Inspector & Tools)

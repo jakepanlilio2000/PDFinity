@@ -11,6 +11,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.0.13] - 2026-11-14
+
+### Fixed
+- **Mobile Top App Bar Tab Switching Synchronization [BUG-U5-01]:**
+  - Connected `StudioTabBar::currentChanged` in `DocumentWorkspace` to emit `CurrentDocumentChanged(title)`, synchronizing active document titles and status bar indicators immediately upon tab changes and returning to `"PDFinity Studio"` when viewing the Home dashboard.
+  - Added regression test coverage in `tests/ui/test_shell_smoke.cpp`.
+- **Mobile Bottom Sheet Signal Accumulation & Content Lifecycle [BUG-U5-02]:**
+  - Bound `m_slideAnimation::finished` dismiss handler once in `MobileBottomSheet` constructor instead of creating cumulative lambda connections on every invocation of `HideSheet()`.
+  - Added cleanup for previous custom widget contents via `deleteLater()` in `ShowSheet()`, preventing child widget leaks during palette navigation.
+  - Added regression test coverage in `tests/ui/test_shell_smoke.cpp`.
+
+---
+
 ## [1.0.12] - 2026-11-14
 
 ### Added

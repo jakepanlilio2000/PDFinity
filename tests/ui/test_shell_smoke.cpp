@@ -304,11 +304,23 @@ void TestShellSmoke::testResponsiveLayoutAndMobileStudio() {
     sheet.HideSheet();
     QVERIFY(!sheet.IsVisible());
 
+    // Verify multiple sheet presentations do not leak content or duplicate animation connections [BUG-U5-02]
+    QWidget* dummyContent2 = new QWidget();
+    sheet.ShowSheet("More Options", dummyContent2);
+    QVERIFY(sheet.IsVisible());
+    sheet.HideSheet();
+    QVERIFY(!sheet.IsVisible());
+
     // 3. Full Studio window responsive transitions
     MainWindow window;
     std::filesystem::path fixturePath = std::filesystem::path(PDFINITY_SOURCE_DIR) / "tests" / "fixtures" / "ordinary.pdf";
     QVERIFY(std::filesystem::exists(fixturePath));
     QVERIFY(window.OpenFileByPath(QString::fromStdString(fixturePath.string())));
+
+    // Verify Mobile Top App Bar title sync [BUG-U5-01]
+    auto* topBarChild = window.findChild<MobileTopAppBar*>();
+    QVERIFY(topBarChild != nullptr);
+    QCOMPARE(topBarChild->GetDocumentTitle(), QString("ordinary.pdf"));
 
     auto* viewer = window.findChild<PdfViewerWidget*>();
     QVERIFY(viewer != nullptr);

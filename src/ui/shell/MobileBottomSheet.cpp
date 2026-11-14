@@ -96,12 +96,18 @@ void MobileBottomSheet::SetupUi() {
 
     m_slideAnimation = new QPropertyAnimation(this, "geometry", this);
     m_slideAnimation->setDuration(250);
+    connect(m_slideAnimation, &QPropertyAnimation::finished, this, [this]() {
+        if (!m_isOpen) {
+            hide();
+        }
+    });
 }
 
 void MobileBottomSheet::ShowSheet(const QString& title, QWidget* content) {
     m_titleLabel->setText(title);
     if (m_currentContent) {
         m_contentScrollArea->takeWidget();
+        m_currentContent->deleteLater();
     }
     m_currentContent = content;
     if (content) {
@@ -134,9 +140,6 @@ void MobileBottomSheet::HideSheet() {
         m_slideAnimation->stop();
         m_slideAnimation->setStartValue(geometry());
         m_slideAnimation->setEndValue(QRect(0, p->height(), width(), height()));
-        connect(m_slideAnimation, &QPropertyAnimation::finished, this, [this]() {
-            if (!m_isOpen) hide();
-        });
         m_slideAnimation->start();
     } else {
         hide();

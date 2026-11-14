@@ -174,6 +174,18 @@ void MainWindow::SetupUi() {
     connect(m_workspace, &DocumentWorkspace::OpenFileRequested, this, &MainWindow::OnOpenFile);
     connect(m_workspace, &DocumentWorkspace::FileSelected, this, &MainWindow::OpenFileByPath);
     connect(m_workspace, &DocumentWorkspace::DocumentCountChanged, this, &MainWindow::OnDocumentCountChanged);
+    connect(m_workspace, &DocumentWorkspace::CurrentDocumentChanged, this, [this](const QString& title) {
+        if (m_mobileTopBar) {
+            m_mobileTopBar->SetDocumentTitle(title);
+        }
+        if (m_statusDocLabel) {
+            if (m_workspace && m_workspace->GetCurrentViewer()) {
+                m_statusDocLabel->setText(tr("Viewing: %1").arg(title));
+            } else {
+                m_statusDocLabel->setText(tr("Ready"));
+            }
+        }
+    });
     connect(m_workspace, &DocumentWorkspace::ToggleThemeRequested, this, &MainWindow::OnToggleTheme);
 
     // Wire Workspace Forwarded Tool Triggers (from right inspector)
