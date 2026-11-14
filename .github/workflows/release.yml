@@ -1,4 +1,5 @@
 name: PDFinity Multi-Platform Release
+run-name: PDFinity ${{ inputs.release_tag || github.ref_name }} ${{ inputs.mode || 'release' }} ${{ inputs.probe_parent }}
 
 on:
   push:
@@ -13,6 +14,11 @@ on:
       source_sha:
         description: Full immutable commit SHA (must match workflow source and tag)
         required: true
+        type: string
+      probe_parent:
+        description: Internal GITHUB_TOKEN dispatch probe parent run (leave empty)
+        required: false
+        default: ''
         type: string
       mode:
         description: Rehearsal never creates, edits or publishes a release
@@ -395,27 +401,50 @@ jobs:
   publish-release:
     name: Consolidate, draft, verify downloads and publish
     needs: [preflight, build-windows, build-linux, build-macos, build-android]
-    if: inputs.mode != 'rehearsal'
+    if: >-
+      always() && needs.preflight.result == 'success' &&
+      (inputs.mode == 'rehearsal' ||
+      (needs.build-windows.result == 'success' && needs.build-linux.result == 'success' &&
+      needs.build-macos.result == 'success' && needs.build-android.result == 'success'))
     runs-on: ubuntu-latest
     timeout-minutes: 30
     environment: release
     permissions:
       contents: write
-      actions: read
+      actions: write # Only this publishing job can explicitly dispatch the no-write probe.
     steps:
+      - name: Prove repository GITHUB_TOKEN explicitly triggers a safe workflow
+        if: inputs.mode == 'rehearsal' && inputs.probe_parent == ''
+        env:
+          GH_TOKEN: ${{ github.token }}
+          WORKFLOW_REF: ${{ github.ref_name }}
+          RELEASE_TAG: ${{ needs.preflight.outputs.tag }}
+          RELEASE_SHA: ${{ needs.preflight.outputs.sha }}
+        run: >-
+          gh workflow run release.yml --repo jakepanlilio2000/PDFinity --ref "$WORKFLOW_REF"
+          --field release_tag="$RELEASE_TAG" --field source_sha="$RELEASE_SHA"
+          --field mode=rehearsal --field probe_parent="$GITHUB_RUN_ID"
+      - name: Record child probe completion
+        if: inputs.mode == 'rehearsal' && inputs.probe_parent != ''
+        env:
+          PARENT_RUN: ${{ inputs.probe_parent }}
+        run: echo "GITHUB_TOKEN workflow_dispatch child executed; parent=$PARENT_RUN; no release writes."
       - name: Checkout verified release source
+        if: inputs.mode != 'rehearsal'
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
           ref: ${{ needs.preflight.outputs.sha }}
           fetch-depth: 0
           persist-credentials: false
       - name: Download all build artifacts without flattening
+        if: inputs.mode != 'rehearsal'
         uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
         with:
           pattern: pdfinity-${{ needs.preflight.outputs.version }}-*
           path: release-input/
           merge-multiple: false
       - name: Validate entire contract, upload draft, verify, then promote
+        if: inputs.mode != 'rehearsal'
         env:
           GH_TOKEN: ${{ github.token }}
           RELEASE_TAG: ${{ needs.preflight.outputs.tag }}

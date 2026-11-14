@@ -9,6 +9,7 @@ ROOT = pathlib.Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / 'scripts'))
 import release_gate as gate
 REAL_CI_GATE = gate.ci_gate
+REAL_IDENTITY = gate.identity
 
 
 class RecordingAPI:
@@ -110,3 +111,24 @@ class TransactionTests(unittest.TestCase):
         api.request = read
         with self.assertRaisesRegex(ValueError, 'lacks all successful'):
             REAL_CI_GATE(api, 'a' * 40)
+
+    def test_real_release_rejects_different_workflow_recipe(self):
+        with patch.object(gate, 'git', return_value='b' * 40):
+            with self.assertRaisesRegex(ValueError, 'Workflow source differs'):
+                REAL_IDENTITY(RecordingAPI(), 'v1.1.0', 'a' * 40)
+
+    def test_read_only_rehearsal_records_separate_recipe(self):
+        api = RecordingAPI()
+        def read(url, **kwargs):
+            if url == '':
+                return {'full_name': gate.REPO, 'default_branch': 'main'}
+            if '/git/ref/' in url:
+                return {'object': {'type': 'commit', 'sha': 'a' * 40}}
+            if '/compare/' in url:
+                return {'status': 'ahead'}
+            raise AssertionError(url)
+        api.request = read
+        with patch.object(gate, 'git', side_effect=lambda *args: 'b' * 40 if args[0] == 'rev-parse' else 'https://github.com/' + gate.REPO), \
+             patch.object(gate, 'validate_versions', return_value='1.1.0'):
+            self.assertEqual(REAL_IDENTITY(api, 'v1.1.0', 'a' * 40, rehearsal=True), '1.1.0')
+        self.assertEqual(api.writes, [])

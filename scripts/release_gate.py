@@ -69,10 +69,16 @@ def tag_sha(api, tag):
     raise ValueError('Tag nesting limit exceeded')
 
 
-def identity(api, tag, sha):
+def identity(api, tag, sha, rehearsal=False):
     require(re.fullmatch(r'v(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)', tag), 'Stable vMAJOR.MINOR.PATCH tag required')
     require(re.fullmatch('[0-9a-f]{40}', sha), 'Full source SHA required')
-    require(git('rev-parse', 'HEAD') == sha, 'Workflow source differs from candidate SHA')
+    workflow_sha = git('rev-parse', 'HEAD')
+    # Rehearsal tests an explicitly identified recipe against an existing merged tag.
+    # It skips every build/publish step. Real release transactions must use identical SHAs.
+    if rehearsal:
+        print(f'REHEARSAL RECIPE: workflow_sha={workflow_sha}; tagged_source_sha={sha}; no packages built')
+    else:
+        require(workflow_sha == sha, 'Workflow source differs from candidate SHA')
     remote = git('remote', 'get-url', 'origin').removesuffix('.git')
     require(remote in ('https://github.com/' + REPO, 'git@github.com:' + REPO), 'Wrong origin repository')
     repo = api.request('')
@@ -188,7 +194,7 @@ def main():
     try:
         api = API()
         if args.operation == 'preflight':
-            v = identity(api, args.tag, args.sha)
+            v = identity(api, args.tag, args.sha, rehearsal=args.rehearsal)
             if not args.rehearsal:
                 print('Required CI: ' + ci_gate(api, args.sha))
                 existing = api.request('/releases/tags/' + args.tag)
