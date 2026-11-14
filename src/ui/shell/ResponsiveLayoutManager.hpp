@@ -21,6 +21,7 @@ public:
     static constexpr int BreakpointTablet = 700;
     static constexpr int BreakpointDesktop = 1100;
     static constexpr int MinTouchTargetDp = 48;
+    [[nodiscard]] static constexpr int GetMinTouchTargetSize() noexcept { return MinTouchTargetDp; }
 
     explicit ResponsiveLayoutManager(QObject* parent = nullptr);
     ~ResponsiveLayoutManager() override = default;

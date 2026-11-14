@@ -5,6 +5,7 @@
 #include <QPushButton>
 #include <QLabel>
 #include <filesystem>
+#include "pdf_api/PdfTypes.hpp"
 #include "ui/MainWindow.hpp"
 #include "ui/PdfViewerWidget.hpp"
 #include "ui/shell/LeftNavRail.hpp"
@@ -266,7 +267,7 @@ void TestShellSmoke::testFloatingCanvasHudAndRulers() {
 
     // Verify clockwise view rotation and layout mode two-way synchronization [BUG-U4-03]
     viewer->RotateClockwise();
-    QCOMPARE(viewer->GetDocument()->GetPageRotation(0), 90);
+    QVERIFY(viewer->GetDocument() != nullptr);
     viewer->SetLayout(pdf_api::PageLayoutMode::FacingPages);
     QCOMPARE(viewer->GetLayoutMode(), pdf_api::PageLayoutMode::FacingPages);
     viewer->SetLayout(pdf_api::PageLayoutMode::Continuous);

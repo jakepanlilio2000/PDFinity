@@ -7,10 +7,12 @@
 #include "app/McpCliHandler.hpp"
 #include "app/RemoteCliHandler.hpp"
 #include "services/DocumentAssemblyService.hpp"
+#include "services/DocumentLifecycleService.hpp"
 #include "services/OcrService.hpp"
 #include "services/RedactionService.hpp"
 #include "services/SignatureService.hpp"
 #include "domain/DocumentModel.hpp"
+#include "pdf_api/IPdfEngine.hpp"
 #include "security/PathSanitizer.hpp"
 #include <iostream>
 #include <string>
@@ -166,7 +168,14 @@ int HandleOcr(int argc, char* argv[]) {
         return 1;
     }
 
-    auto docRes = pdfinity::domain::DocumentModel::Open(input);
+    auto engine = pdfinity::app::AppContext::Instance().GetPdfEngine();
+    if (!engine) {
+        std::cerr << "Fatal Error: PDF Engine is unavailable.\n";
+        return 1;
+    }
+
+    pdfinity::services::DocumentLifecycleService lifecycle(engine);
+    auto docRes = lifecycle.OpenDocument(input);
     if (!docRes) {
         std::cerr << "Failed to open document: " << pdf_api::GetEngineErrorMessage(docRes.error) << "\n";
         return 1;
@@ -205,7 +214,14 @@ int HandleRedact(int argc, char* argv[]) {
         return 1;
     }
 
-    auto docRes = pdfinity::domain::DocumentModel::Open(input);
+    auto engine = pdfinity::app::AppContext::Instance().GetPdfEngine();
+    if (!engine) {
+        std::cerr << "Fatal Error: PDF Engine is unavailable.\n";
+        return 1;
+    }
+
+    pdfinity::services::DocumentLifecycleService lifecycle(engine);
+    auto docRes = lifecycle.OpenDocument(input);
     if (!docRes) {
         std::cerr << "Failed to open document: " << pdf_api::GetEngineErrorMessage(docRes.error) << "\n";
         return 1;
@@ -216,15 +232,18 @@ int HandleRedact(int argc, char* argv[]) {
 
     int pageCount = docRes.value->GetPageCount();
     for (int p = 0; p < pageCount; ++p) {
-        auto matches = docRes.value->SearchText(p, pattern, false, false);
-        for (const auto& m : matches) {
-            pdf_api::RedactionMark mark;
-            mark.markId = "cli_mark_" + std::to_string(p) + "_" + std::to_string(m.characterIndex);
-            mark.pageIndex = p;
-            mark.boundingBox = m.boundingBox;
-            mark.overlayText = "[REDACTED]";
-            mark.reason = "CLI Automated Sanitize";
-            redaction.AddRedactionMark(mark);
+        auto searchRes = docRes.value->SearchPageText(p, pattern, false, false);
+        if (!searchRes) continue;
+        for (const auto& m : searchRes.value) {
+            for (const auto& r : m.rects) {
+                pdf_api::RedactionMark mark;
+                mark.id = "cli_mark_" + std::to_string(p) + "_" + std::to_string(m.charIndex);
+                mark.pageIndex = p;
+                mark.rect = r;
+                mark.overlayText = "[REDACTED]";
+                mark.reason = "CLI Automated Sanitize";
+                redaction.AddRedactionMark(mark);
+            }
         }
     }
 

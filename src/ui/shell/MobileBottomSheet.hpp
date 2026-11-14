@@ -22,6 +22,7 @@ public:
     void ShowSheet(const QString& title, QWidget* content);
     void HideSheet();
     [[nodiscard]] bool IsOpen() const noexcept { return m_isOpen; }
+    [[nodiscard]] bool IsVisible() const noexcept { return m_isOpen; }
     void Reposition();
 
 signals:
