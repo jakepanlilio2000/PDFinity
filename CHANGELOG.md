@@ -11,10 +11,47 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.0.0] - 2026-11-14 (Official Stable Release)
+
+### Added
+- **First Official Stable Release:** Production-ready release of PDFinity across Windows x64, Linux distributions (.deb, Arch, RPM, AppImage, Flatpak), macOS, and Android (API 28-35).
+- **Multi-Platform Desktop & Mobile Packaging:** Native installer and portable packaging for Windows (Inno Setup / WiX MSI / Portable ZIP), Linux (Debian, Arch Linux, RPM, AppImage, Flatpak), macOS App Bundle, and Android APK/AAB with Storage Access Framework (SAF) integration.
+- **Audited Security & Reliability:** 100% pass on all 51 automated unit, integration, UI, and security test suites. Verified zero broad-storage permissions on Android, thread-safe MCP stdio communication, encrypted remote controller pairing, and cryptographically verified digital signatures (PKCS#7).
+
+---
+
 ## [0.1.10-Beta] - 2026-11-14
 
 ### Fixed
 - **Transformation Job Queue Concurrency & Token Safety [BUG-005]:** In `src/services/TransformationJobQueue.cpp`, eliminated raw pointer capture across mutex lock scope in `RunJobSynchronously`, encapsulated `executeFunc` copy inside `m_mutex`, and guaranteed non-null cancellation token resolution to prevent use-after-free and data races under concurrent job enqueuing and pruning. Added regression test `testJobQueueConcurrencyAndTokenSafety` in `test_transformation_pipeline.cpp`.
+
+---
+
+## [0.1.9-beta] - 2026-11-14
+
+### Fixed
+- **Flatpak Manifest Duplicate Key & Dynamic AppImage Versioning [BUG-004]:** In `packaging/linux/flatpak/com.stacksyncsolutions.pdfinity.yml`, eliminated duplicate `app-id` key adhering to strict YAML 1.2 rules. In `packaging/linux/appimage/build-appimage.sh`, replaced hardcoded fallback version with dynamic project version extraction from `CMakeLists.txt`.
+
+---
+
+## [0.1.8-beta] - 2026-11-14
+
+### Fixed
+- **Remote Server Socket Buffer Synchronization [BUG-003]:** In `RemoteControllerServer.cpp`, guarded all `m_socketBuffers` operations in `onNewConnection` and `onSocketReadyRead` with `m_mutex`, extracted complete lines under the lock, and processed network dispatches outside the critical section to prevent data races and deadlocks.
+
+---
+
+## [0.1.7-beta] - 2026-11-14
+
+### Fixed
+- **MCP Client Name Synchronization & Thread Safety [BUG-002]:** In `McpServer.cpp`, encapsulated all `m_state.clientName` reads and audit logging under `m_mutex` synchronization, eliminating potential data race conditions during concurrent JSON-RPC requests.
+
+---
+
+## [0.1.6-beta] - 2026-11-14
+
+### Fixed
+- **Assembly Relative Output Path Normalization [BUG-001]:** In `DocumentAssemblyService.cpp`, added fallback to `current_path()` when `outputPath.parent_path()` is empty, enabling seamless merging and page extraction targeting bare relative filenames in the active working directory.
 
 ---
 
@@ -24,6 +61,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **First Official Stable Release:** Production-ready release of PDFinity across Windows x64, Linux distributions (.deb, Arch, RPM, AppImage, Flatpak), macOS, and Android (API 28-35).
 - **Multi-Platform Desktop & Mobile Packaging:** Native installer and portable packaging for Windows (Inno Setup / WiX MSI / Portable ZIP), Linux (Debian, Arch Linux, RPM, AppImage, Flatpak), macOS App Bundle, and Android APK/AAB with Storage Access Framework (SAF) integration.
 - **Audited Security & Reliability:** 100% pass on all 51 automated unit, integration, UI, and security test suites. Verified zero broad-storage permissions on Android, thread-safe MCP stdio communication, encrypted remote controller pairing, and cryptographically verified digital signatures (PKCS#7).
+
+---
+
+## [0.1.10-Beta] - 2026-11-14
+
+### Fixed
+- **Transformation Job Queue Concurrency & Token Safety [BUG-005]:** In `src/services/TransformationJobQueue.cpp`, eliminated raw pointer capture across mutex lock scope in `RunJobSynchronously`, encapsulated `executeFunc` copy inside `m_mutex`, and guaranteed non-null cancellation token resolution to prevent use-after-free and data races under concurrent job enqueuing and pruning. Added regression test `testJobQueueConcurrencyAndTokenSafety` in `test_transformation_pipeline.cpp`.
 
 ---
 
