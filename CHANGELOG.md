@@ -11,6 +11,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.0.8] - 2026-11-14
+
+### Fixed
+- **Right Inspector Selection Properties Geometry & Metadata Synchronization [BUG-U3-04]:** Added `GetSelectedAnnotationData()` to `PdfCanvasWidget` and connected live annotation geometry (X, Y, W, H), stroke color, fill color, stroke width, opacity, author, and note contents directly into `RightInspectorPanel`. Added regression coverage in `tests/ui/test_shell_smoke.cpp`.
+
+---
+
 ## [1.0.7] - 2026-11-14
 
 ### Fixed

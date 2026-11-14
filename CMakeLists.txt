@@ -5,7 +5,7 @@
 cmake_minimum_required(VERSION 3.25)
 
 project(PDFinity
-    VERSION 1.0.7
+    VERSION 1.0.8
     DESCRIPTION "Professional, modular, offline-first PDF productivity suite"
     HOMEPAGE_URL "https://www.stacksyncsolutions.com/"
     LANGUAGES C CXX

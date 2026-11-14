@@ -33,6 +33,7 @@ private slots:
     void testWorkflowRibbonWiring();
     void testLeftNavRailPageSync();
     void testShellSplitterPersistence();
+    void testRightInspectorSelectionSync();
 };
 
 void TestShellSmoke::initTestCase() {
@@ -176,6 +177,38 @@ void TestShellSmoke::testShellSplitterPersistence() {
     viewer->ApplySettingsState();
     QVERIFY(rail->IsDrawerExpanded());
     QVERIFY(insp->isVisible());
+
+    window.close();
+}
+
+void TestShellSmoke::testRightInspectorSelectionSync() {
+    MainWindow window;
+    std::filesystem::path fixturePath = std::filesystem::path(PDFINITY_SOURCE_DIR) / "tests" / "fixtures" / "ordinary.pdf";
+    QVERIFY(std::filesystem::exists(fixturePath));
+    QVERIFY(window.OpenFileByPath(QString::fromStdString(fixturePath.string())));
+
+    auto* viewer = window.findChild<PdfViewerWidget*>();
+    QVERIFY(viewer != nullptr);
+
+    auto* insp = viewer->GetInspector();
+    QVERIFY(insp != nullptr);
+
+    insp->SetAllToolsMode();
+
+    SelectionPropertiesInfo info;
+    info.objectType = "Highlight";
+    info.x = 50.0;
+    info.y = 100.0;
+    info.width = 200.0;
+    info.height = 15.0;
+    info.strokeColor = QColor(220, 38, 38);
+    info.strokeWidth = 3.0;
+    info.opacity = 0.85;
+    info.author = "Auditor";
+    info.contents = "Important review finding";
+
+    insp->SetSelectionProperties(info);
+    insp->ClearSelection();
 
     window.close();
 }

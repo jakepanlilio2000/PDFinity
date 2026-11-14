@@ -61,6 +61,9 @@ public:
     void SelectAnnotation(int pageIndex, int annotIndex);
     void DeleteSelectedAnnotation();
     void OpenSelectedAnnotationProperties();
+    [[nodiscard]] const pdf_api::AnnotationData* GetSelectedAnnotationData() const {
+        return (m_selectedAnnotIndex >= 0) ? &m_selectedAnnotData : nullptr;
+    }
 
 signals:
     void CurrentPageChanged(int pageIndex);

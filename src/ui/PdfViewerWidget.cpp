@@ -120,7 +120,22 @@ void PdfViewerWidget::SetupUi() {
         m_annotToolbar->SetDeleteEnabled(annotIdx >= 0);
         if (annotIdx >= 0 && m_inspector) {
             SelectionPropertiesInfo info;
-            info.objectType = tr("Markup Annotation #%1").arg(annotIdx + 1);
+            const auto* data = m_canvas->GetSelectedAnnotationData();
+            if (data) {
+                QString sub = QString::fromStdString(data->subtype);
+                info.objectType = sub.isEmpty() ? tr("Markup Annotation #%1").arg(annotIdx + 1) : sub;
+                info.x = data->rect.x;
+                info.y = data->rect.y;
+                info.width = data->rect.width;
+                info.height = data->rect.height;
+                info.strokeColor = QColor(data->color.r, data->color.g, data->color.b, data->color.a);
+                info.strokeWidth = data->strokeWidth > 0.0f ? data->strokeWidth : 2.0;
+                info.opacity = data->opacity > 0.0f ? data->opacity : 1.0;
+                info.author = QString::fromStdString(data->author);
+                info.contents = QString::fromStdString(data->contents);
+            } else {
+                info.objectType = tr("Markup Annotation #%1").arg(annotIdx + 1);
+            }
             m_inspector->SetSelectionProperties(info);
         } else if (m_inspector) {
             m_inspector->ClearSelection();
