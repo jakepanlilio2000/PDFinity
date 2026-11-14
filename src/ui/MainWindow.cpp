@@ -7,9 +7,13 @@
 #include "HomeDashboardWidget.hpp"
 #include "viewer/StudioToast.hpp"
 #include "shell/WorkflowRibbon.hpp"
+#include "shell/LeftNavRail.hpp"
+#include "shell/RightInspectorPanel.hpp"
 #include "shell/MobileTopAppBar.hpp"
 #include "shell/MobileBottomNavBar.hpp"
 #include "shell/MobileBottomSheet.hpp"
+#include <QVBoxLayout>
+#include <QGridLayout>
 #include <QResizeEvent>
 #include "AnnotationToolbar.hpp"
 #include "AboutDialog.hpp"
@@ -109,7 +113,7 @@ void MainWindow::SetupUi() {
     connect(m_mobileTopBar, &MobileTopAppBar::ShareClicked, this, &MainWindow::OnShareDocument);
     connect(m_mobileTopBar, &MobileTopAppBar::PrintClicked, this, &MainWindow::OnPrint);
     connect(m_mobileTopBar, &MobileTopAppBar::PreflightClicked, this, &MainWindow::OnOpenPreflightCompliance);
-    connect(m_mobileTopBar, &MobileTopAppBar::SettingsClicked, this, &MainWindow::OnOpenSettings);
+    connect(m_mobileTopBar, &MobileTopAppBar::SettingsClicked, this, &MainWindow::OnSettings);
     connect(m_mobileTopBar, &MobileTopAppBar::AboutClicked, this, &MainWindow::OnAbout);
 
     // Wire Mobile Bottom Navigation Bar
@@ -166,7 +170,7 @@ void MainWindow::SetupUi() {
         layout->addWidget(makeMoreBtn(tr("Encrypt / Password Protect"), "🔒", &MainWindow::OnEncryptDocument));
         layout->addWidget(makeMoreBtn(tr("Digital Signatures (PKCS#7)"), "✍", &MainWindow::OnDigitalSignDocument));
         layout->addWidget(makeMoreBtn(tr("Preflight & PDF Standards"), "⚖", &MainWindow::OnOpenPreflightCompliance));
-        layout->addWidget(makeMoreBtn(tr("Settings & Appearance"), "⚙", &MainWindow::OnOpenSettings));
+        layout->addWidget(makeMoreBtn(tr("Settings & Appearance"), "⚙", &MainWindow::OnSettings));
 
         m_mobileBottomSheet->ShowSheet(tr("More Actions & Studio Tools"), sheetContent);
     });
@@ -244,8 +248,7 @@ void MainWindow::SetupUi() {
             int p = viewer->GetCurrentPage();
             auto doc = viewer->GetDocument();
             if (doc) {
-                int rot = (doc->GetPageRotation(p) + 90) % 360;
-                doc->SetPageRotation(p, rot);
+                doc->RotatePages({p}, 90);
                 viewer->update();
             }
         }
@@ -706,8 +709,12 @@ void MainWindow::CreateToolBar() {
     const bool isMobile = (QOperatingSystemVersion::currentType() == QOperatingSystemVersion::Android);
 #endif
 
-    auto* toolBar = isMobile ? addToolBar(Qt::BottomToolBarArea, tr("Main Toolbar"))
-                             : addToolBar(tr("Main Toolbar"));
+    auto* toolBar = new QToolBar(tr("Main Toolbar"), this);
+    if (isMobile) {
+        addToolBar(Qt::BottomToolBarArea, toolBar);
+    } else {
+        addToolBar(toolBar);
+    }
     toolBar->setMovable(false);
 
     if (isMobile) {
@@ -1137,7 +1144,7 @@ void MainWindow::OnSplitDocument() {
     }
 
     QString currentPath = m_workspace->GetCurrentDocumentPath();
-    SplitDocumentDialog dlg(engine, currentPath.isEmpty() ? std::filesystem::path{} : currentPath.toStdString(), this);
+    SplitDocumentDialog dlg(engine, currentPath.isEmpty() ? std::filesystem::path{} : std::filesystem::path(currentPath.toStdString()), this);
     if (dlg.exec() == QDialog::Accepted) {
         const auto& generated = dlg.GetGeneratedFiles();
         if (!generated.empty() && std::filesystem::exists(generated.front())) {
