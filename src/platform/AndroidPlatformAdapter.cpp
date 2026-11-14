@@ -3,6 +3,7 @@
 
 #include "AndroidPlatformAdapter.hpp"
 #include "application/Logger.hpp"
+#include "application/AppContext.hpp"
 #include <QGuiApplication>
 #include <QScreen>
 #include <QStandardPaths>
@@ -56,8 +57,9 @@ void AndroidPlatformAdapter::OnApplicationStateChanged(Qt::ApplicationState stat
     switch (state) {
         case Qt::ApplicationSuspended:
         case Qt::ApplicationHidden:
-            LOG_INFO("AndroidPlatform", "Android app suspended/hidden. Flushing autosave and document state...");
-            // Trigger emergency recovery state sync
+        case Qt::ApplicationInactive:
+            LOG_INFO("AndroidPlatform", "Android app suspended/inactive. Persisting recovery state and flushing caches...");
+            app::AppContext::Instance().SaveCurrentState();
             break;
         case Qt::ApplicationActive:
             LOG_INFO("AndroidPlatform", "Android app resumed to active foreground.");

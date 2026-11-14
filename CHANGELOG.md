@@ -11,6 +11,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.1.4-beta] - 2026-11-14
+
+### Fixed
+- **Android Lifecycle State Persistence:** In `AndroidPlatformAdapter.cpp`, wired `app::AppContext::Instance().SaveCurrentState()` directly into `Qt::ApplicationSuspended`, `ApplicationHidden`, and `ApplicationInactive` handlers, guaranteeing immediate session and document recovery state persistence before background process termination.
+
+---
+
 ## [0.1.3-beta] - 2026-11-14
 
 ### Fixed

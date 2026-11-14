@@ -6,7 +6,7 @@
 
 **Professional • Modular • Offline-First PDF Productivity Suite**
 
-[![Release](https://img.shields.io/badge/Release-0.1--Beta-blue.svg)](https://github.com/jakepanlilio2000/PDFinity/releases/tag/v0.1.3-beta)
+[![Release](https://img.shields.io/badge/Release-0.1--Beta-blue.svg)](https://github.com/jakepanlilio2000/PDFinity/releases/tag/v0.1.4-beta)
 [![Version](https://img.shields.io/badge/Version-0.1.0--beta-emerald.svg)](https://github.com/jakepanlilio2000/PDFinity/releases/tag/v0.1-beta)
 [![License: MPL 2.0](https://img.shields.io/badge/License-MPL_2.0-brightgreen.svg)](LICENSE)
 [![C++ Standard](https://img.shields.io/badge/C%2B%2B-20-00599C.svg?logo=c%2B%2B)](https://en.wikipedia.org/wiki/C%2B%2B20)
