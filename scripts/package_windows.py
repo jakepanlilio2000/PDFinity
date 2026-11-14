@@ -30,7 +30,7 @@ def detect_version(root_dir):
             m = re.search(r"project\s*\(\s*PDFinity\s+VERSION\s+([0-9\.]+)", content, re.IGNORECASE)
             if m:
                 return m.group(1)
-    return "1.1.0"
+    raise ValueError("Cannot determine package version from CMakeLists.txt")
 
 def main():
     parser = argparse.ArgumentParser(description="PDFinity Windows Packaging Utility")
@@ -43,6 +43,8 @@ def main():
     os.chdir(root)
 
     version = args.version or detect_version(root)
+    if version != detect_version(root):
+        raise ValueError("Requested package version differs from checked-out source")
 
     print("==================================================")
     print(" PDFinity Windows Packaging and Deployment Runner")
@@ -59,47 +61,37 @@ def main():
     staged_dir = os.path.join(dist_dir, "staged-windows-x64")
     portable_dir = os.path.join(dist_dir, f"PDFinity-{version}-windows-x64-portable")
 
-    if not os.path.exists(exe_src):
-        # Check if pre-staged binaries exist
-        if os.path.exists(os.path.join(staged_dir, "PDFinity.exe")):
-            print(f"[!] Warning: Build binary not found at {exe_src}, using existing staged files in {staged_dir}")
-        else:
-            print(f"Error: Executable not found at {exe_src} and staged binaries missing. Please build first.")
-            sys.exit(1)
-    else:
+    for required in (exe_src, pdfium_src, os.path.join(bin_dir, "pdfinity-cli.exe")):
+        if not os.path.isfile(required) or os.path.getsize(required) == 0:
+            raise RuntimeError(f"Required fresh build output missing: {required}; stale staging is forbidden")
+    if os.path.exists(exe_src):
         if os.path.exists(staged_dir):
             shutil.rmtree(staged_dir)
         os.makedirs(staged_dir, exist_ok=True)
 
         print(f"\n[1/5] Staging primary binaries to {staged_dir}...")
         shutil.copy2(exe_src, staged_dir)
-        if os.path.exists(pdfium_src):
-            shutil.copy2(pdfium_src, staged_dir)
+        shutil.copy2(pdfium_src, staged_dir)
+        shutil.copy2(os.path.join(bin_dir, "pdfinity-cli.exe"), staged_dir)
 
         windeployqt_candidates = [
-            r"C:\Qt\6.8.2\msvc2022_64\bin\windeployqt.exe",
-            shutil.which("windeployqt") or ""
+            shutil.which("windeployqt") or "",
+            r"C:\Qt\6.8.2\msvc2022_64\bin\windeployqt.exe"
         ]
         windeployqt = next((p for p in windeployqt_candidates if p and os.path.exists(p)), None)
 
         if windeployqt:
             print(f"\n[2/5] Running windeployqt from {windeployqt}...")
             staged_exe = os.path.join(staged_dir, "PDFinity.exe")
-            cmd = f'"{windeployqt}" "{staged_exe}" --compiler-runtime --no-translations'
-            rc = subprocess.call(cmd, shell=True)
-            if rc != 0:
-                print(f"Warning: windeployqt returned non-zero code {rc}")
+            subprocess.run([windeployqt, staged_exe, "--compiler-runtime", "--no-translations"], check=True)
+            subprocess.run([windeployqt, os.path.join(staged_dir, "pdfinity-cli.exe"),
+                            "--compiler-runtime", "--no-translations"], check=True)
         else:
-            print("[!] Notice: windeployqt not found on host. Copying runtime libraries and plugins from bin_dir...")
-            for item in os.listdir(bin_dir):
-                src_item = os.path.join(bin_dir, item)
-                dst_item = os.path.join(staged_dir, item)
-                if item.endswith(".dll") and not item.startswith("test_"):
-                    shutil.copy2(src_item, dst_item)
-                elif os.path.isdir(src_item) and item in ["platforms", "styles", "imageformats"]:
-                    if os.path.exists(dst_item):
-                        shutil.rmtree(dst_item)
-                    shutil.copytree(src_item, dst_item)
+            raise RuntimeError("windeployqt is required; incomplete runtime fallback is forbidden")
+        for runtime in ("Qt6Core.dll", "Qt6Gui.dll", "Qt6Widgets.dll", "Qt6Network.dll",
+                        "Qt6PrintSupport.dll", os.path.join("platforms", "qwindows.dll")):
+            if not os.path.isfile(os.path.join(staged_dir, runtime)):
+                raise RuntimeError(f"Deployment omitted required runtime: {runtime}")
 
     # Copy legal and documentation files
     for doc in ["LICENSE", "LICENSES.md", "README.md"]:
@@ -134,14 +126,13 @@ def main():
     wix_exe = shutil.which("wix") or os.path.expanduser(r"~\.dotnet\tools\wix.exe")
     wxs_file = os.path.join(root, "packaging", "windows", "pdfinity.wxs")
     msi_out = os.path.join(dist_dir, f"PDFinity-{version}-x64.msi")
-    if args.build_msi and os.path.exists(wix_exe) and os.path.exists(wxs_file):
+    if args.build_msi:
+        if not os.path.isfile(wix_exe) or not os.path.isfile(wxs_file):
+            raise RuntimeError("Requested WiX MSI build requires wix and the source recipe")
         print(f"\n[4/5] Building WiX MSI Package...")
-        cmd = f'"{wix_exe}" build "{wxs_file}" -out "{msi_out}"'
-        rc = subprocess.call(cmd, shell=True)
-        if rc == 0 and os.path.exists(msi_out):
-            print(f"  --> WiX MSI generated: {msi_out} ({os.path.getsize(msi_out):,} bytes)")
-        else:
-            print(f"  --> WiX build returned code {rc}")
+        subprocess.run([wix_exe, "build", wxs_file, "-out", msi_out], check=True)
+        if not os.path.isfile(msi_out) or os.path.getsize(msi_out) == 0:
+            raise RuntimeError("WiX returned without producing the required MSI")
 
     # Build Inno Setup
     installer_exe = os.path.join(dist_dir, f"PDFinity-{version}-Setup-x64.exe")
@@ -156,12 +147,11 @@ def main():
         iss_file = os.path.join(root, "packaging", "windows", "installer.iss")
 
         if iscc and os.path.exists(iss_file):
-            cmd = f'"{iscc}" "{iss_file}"'
-            rc = subprocess.call(cmd, shell=True)
-            if rc != 0:
-                print(f"Warning: Inno Setup compiler returned code {rc}")
+            subprocess.run([iscc, iss_file], check=True)
+            if not os.path.isfile(installer_exe) or os.path.getsize(installer_exe) == 0:
+                raise RuntimeError("Inno Setup returned without the required installer")
         else:
-            print("[!] Notice: Inno Setup compiler ISCC.exe not found on this host. Skipping EXE installer.")
+            raise RuntimeError("Inno Setup is required unless --skip-installer was explicitly requested")
 
     print("\n[5/5] Packaging Verification and Integrity Hashes:")
     print("--------------------------------------------------------------------------------")

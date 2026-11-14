@@ -112,6 +112,11 @@ jobs:
       - name: Package Windows Artifacts (Portable ZIP & Staging)
         run: python scripts/package_windows.py --version "$env:RELEASE_VERSION"
 
+      - name: Verify native install, runtime, version and removal
+        shell: bash
+        run: >-
+          python3 scripts/verify_native_packages.py --lane windows
+          --version "$RELEASE_VERSION" --sha "$RELEASE_SHA"
       - name: Validate native package evidence and export only contracted assets
         shell: bash
         run: >-
@@ -204,6 +209,11 @@ jobs:
           test -f PKGBUILD && test -f .SRCINFO
           echo "[+] Arch Linux PKGBUILD and .SRCINFO verified."
 
+      - name: Verify native install, runtime, version and removal
+        shell: bash
+        run: >-
+          python3 scripts/verify_native_packages.py --lane linux
+          --version "$RELEASE_VERSION" --sha "$RELEASE_SHA"
       - name: Validate native package evidence and export only contracted assets
         shell: bash
         run: >-
@@ -289,6 +299,11 @@ jobs:
           TAG_VER="$RELEASE_VERSION"
           bash packaging/macos/build_dmg.sh build/macos-release "${TAG_VER:-1.1.0}"
 
+      - name: Verify native install, runtime, version and removal
+        shell: bash
+        run: >-
+          python3 scripts/verify_native_packages.py --lane macos
+          --version "$RELEASE_VERSION" --sha "$RELEASE_SHA"
       - name: Validate native package evidence and export only contracted assets
         shell: bash
         run: >-
@@ -343,6 +358,11 @@ jobs:
           chmod +x packaging/android/build_apk.sh
           ./packaging/android/build_apk.sh Release
 
+      - name: Verify native install, runtime, version and removal
+        shell: bash
+        run: >-
+          python3 scripts/verify_native_packages.py --lane android
+          --version "$RELEASE_VERSION" --sha "$RELEASE_SHA"
       - name: Validate native package evidence and export only contracted assets
         shell: bash
         run: >-

@@ -35,17 +35,18 @@ mkdir -p "${OUTPUT_DIR}"
 if [ -f "${BUILD_DIR}/bin/PDFinity" ]; then
     install -m 755 "${BUILD_DIR}/bin/PDFinity" "${APP_DIR}/usr/bin/pdfinity"
 else
-    echo "Notice: ${BUILD_DIR}/bin/PDFinity not found. Generating staged executable for structure verification."
-    mkdir -p "${BUILD_DIR}/bin"
-    echo -e "#!/bin/sh\necho \"PDFinity ${VERSION} (StackSync Solutions)\"" > "${BUILD_DIR}/bin/PDFinity"
-    chmod 755 "${BUILD_DIR}/bin/PDFinity"
-    install -m 755 "${BUILD_DIR}/bin/PDFinity" "${APP_DIR}/usr/bin/pdfinity"
+    echo "ERROR: native PDFinity executable missing; no placeholder will be generated" >&2
+    exit 1
 fi
 
+test -s "third_party/pdfium/lib/libpdfium.so"
+test -s "${BUILD_DIR}/bin/pdfinity-cli"
 if [ -f "third_party/pdfium/lib/libpdfium.so" ]; then
     mkdir -p "${APP_DIR}/usr/lib"
     install -m 755 "third_party/pdfium/lib/libpdfium.so" "${APP_DIR}/usr/lib/libpdfium.so"
 fi
+
+install -m 755 "${BUILD_DIR}/bin/pdfinity-cli" "${APP_DIR}/usr/bin/pdfinity-cli"
 
 # 2. Desktop and icon integration
 install -m 644 packaging/linux/com.stacksyncsolutions.pdfinity.desktop "${APP_DIR}/usr/share/applications/com.stacksyncsolutions.pdfinity.desktop"
@@ -91,5 +92,6 @@ elif command -v appimagetool >/dev/null 2>&1; then
     appimagetool "${APP_DIR}" "${OUTPUT_DIR}/${APPIMAGE_NAME}"
     echo "[+] Generated AppImage via appimagetool: ${OUTPUT_DIR}/${APPIMAGE_NAME}"
 else
-    echo "Neither linuxdeploy nor appimagetool found on host. AppDir filesystem structure verified at ${APP_DIR}."
+    echo "ERROR: native AppImage packager missing" >&2
+    exit 1
 fi

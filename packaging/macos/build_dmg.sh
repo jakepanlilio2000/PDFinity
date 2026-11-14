@@ -42,7 +42,15 @@ if [ -f assets/icons/pdfinity.icns ]; then
     cp assets/icons/pdfinity.icns "${APP_BUNDLE}/Contents/Resources/"
 fi
 
+test -s "${APP_BUNDLE}/Contents/MacOS/PDFinity"
+test -s "${BUILD_DIR}/bin/pdfinity-cli"
+cp "${BUILD_DIR}/bin/pdfinity-cli" "${APP_BUNDLE}/Contents/MacOS/"
+command -v macdeployqt >/dev/null
+macdeployqt "${APP_BUNDLE}" -always-overwrite
+command -v hdiutil >/dev/null
+
 echo "=== Packaging Disk Image (DMG) ==="
+rm -rf "${DIST_DIR}/dmg_staging"
 mkdir -p "${DIST_DIR}/dmg_staging"
 cp -R "${APP_BUNDLE}" "${DIST_DIR}/dmg_staging/"
 ln -s /Applications "${DIST_DIR}/dmg_staging/Applications"
@@ -53,8 +61,8 @@ if command -v hdiutil >/dev/null 2>&1; then
     hdiutil create -volname "PDFinity" -srcfolder "${DIST_DIR}/dmg_staging" -ov -format UDZO "${DMG_PATH}"
     echo "=== DMG created: ${DMG_PATH} ==="
 else
-    echo "Notice: hdiutil not available in non-macOS environment. DMG staging verified."
-    tar -czf "${DMG_PATH}" -C "${DIST_DIR}/dmg_staging" .
+    echo "ERROR: hdiutil is required; a tarball is not a DMG" >&2
+    exit 1
 fi
 
 rm -rf "${DIST_DIR}/dmg_staging"
