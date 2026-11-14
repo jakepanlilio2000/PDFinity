@@ -1,5 +1,4 @@
 app-id: com.stacksyncsolutions.pdfinity
-app-id: com.stacksyncsolutions.pdfinity
 runtime: org.kde.Platform
 runtime-version: '6.8'
 sdk: org.kde.Sdk

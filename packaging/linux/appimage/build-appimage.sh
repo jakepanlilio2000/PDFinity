@@ -5,7 +5,20 @@
 set -euo pipefail
 
 BUILD_DIR="${1:-build/linux-x64-release}"
-VERSION="${2:-0.1-Beta}"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+REPO_ROOT="$(cd "${SCRIPT_DIR}/../../.." && pwd)"
+
+if [ -n "${2:-}" ]; then
+    VERSION="$2"
+elif [ -f "${REPO_ROOT}/CMakeLists.txt" ]; then
+    VERSION=$(grep -E '^\s*VERSION\s+[0-9\.]+' "${REPO_ROOT}/CMakeLists.txt" | head -n 1 | awk '{print $2}')
+    if [ -z "${VERSION}" ]; then
+        VERSION="0.1.8-Beta"
+    fi
+else
+    VERSION="0.1.8-Beta"
+fi
+
 APP_DIR="dist/AppDir"
 OUTPUT_DIR="dist"
 APPIMAGE_NAME="PDFinity-${VERSION}-x86_64.AppImage"
@@ -24,7 +37,7 @@ if [ -f "${BUILD_DIR}/bin/PDFinity" ]; then
 else
     echo "Notice: ${BUILD_DIR}/bin/PDFinity not found. Generating staged executable for structure verification."
     mkdir -p "${BUILD_DIR}/bin"
-    echo -e '#!/bin/sh\necho "PDFinity 0.1-Beta (StackSync Solutions)"' > "${BUILD_DIR}/bin/PDFinity"
+    echo -e "#!/bin/sh\necho \"PDFinity ${VERSION} (StackSync Solutions)\"" > "${BUILD_DIR}/bin/PDFinity"
     chmod 755 "${BUILD_DIR}/bin/PDFinity"
     install -m 755 "${BUILD_DIR}/bin/PDFinity" "${APP_DIR}/usr/bin/pdfinity"
 fi

@@ -11,6 +11,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.1.9-beta] - 2026-11-14
+
+### Fixed
+- **Flatpak Manifest Duplicate Key & Dynamic AppImage Versioning [BUG-004]:** In `packaging/linux/flatpak/com.stacksyncsolutions.pdfinity.yml`, eliminated duplicate `app-id` key adhering to strict YAML 1.2 rules. In `packaging/linux/appimage/build-appimage.sh`, replaced hardcoded fallback version with dynamic project version extraction from `CMakeLists.txt`.
+
+---
+
 ## [0.1.8-beta] - 2026-11-14
 
 ### Fixed
