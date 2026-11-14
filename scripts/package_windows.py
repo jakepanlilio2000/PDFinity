@@ -30,7 +30,7 @@ def detect_version(root_dir):
             m = re.search(r"project\s*\(\s*PDFinity\s+VERSION\s+([0-9\.]+)", content, re.IGNORECASE)
             if m:
                 return m.group(1)
-    return "0.1.0"
+    return "1.1.0"
 
 def main():
     parser = argparse.ArgumentParser(description="PDFinity Windows Packaging Utility")
