@@ -30,7 +30,7 @@ class AnnotationToolbar;
 class ContentEditingToolbar;
 class XfaNoticeBanner;
 class LeftNavRail;
-class FloatingHudWidget;
+class FloatingCanvasHud;
 class RightInspectorPanel;
 
 class PdfViewerWidget : public QWidget {
@@ -56,6 +56,13 @@ public:
     void SetLayout(pdf_api::PageLayoutMode mode);
     void GoToPage(int pageIndex);
     void SetAnnotationToolMode(AnnotationToolMode mode);
+    void SetPointerMode(CanvasPointerMode mode);
+    [[nodiscard]] CanvasPointerMode GetPointerMode() const;
+    void SetRulersVisible(bool visible);
+    [[nodiscard]] bool AreRulersVisible() const;
+    void SetSnapGuidesVisible(bool visible);
+    [[nodiscard]] bool AreSnapGuidesVisible() const;
+    [[nodiscard]] FloatingCanvasHud* GetCanvasHud() const noexcept { return m_floatingHud; }
 
 public slots:
     void Print();
@@ -103,7 +110,7 @@ private:
     LeftNavRail* m_leftRail{nullptr};
     QScrollArea* m_scrollArea{nullptr};
     PdfCanvasWidget* m_canvas{nullptr};
-    FloatingHudWidget* m_floatingHud{nullptr};
+    FloatingCanvasHud* m_floatingHud{nullptr};
     RightInspectorPanel* m_inspector{nullptr};
     PdfSearchBar* m_searchBar{nullptr};
     AnnotationToolbar* m_annotToolbar{nullptr};

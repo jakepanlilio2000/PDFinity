@@ -5,6 +5,7 @@
 #include "DocumentWorkspace.hpp"
 #include "PdfViewerWidget.hpp"
 #include "HomeDashboardWidget.hpp"
+#include "viewer/StudioToast.hpp"
 #include "shell/WorkflowRibbon.hpp"
 #include "AnnotationToolbar.hpp"
 #include "AboutDialog.hpp"
@@ -181,12 +182,12 @@ void MainWindow::SetupUi() {
 
     connect(m_workflowRibbon, &WorkflowRibbon::ViewPanClicked, this, [this]() {
         if (auto* v = m_workspace ? m_workspace->GetCurrentViewer() : nullptr) {
-            v->SetAnnotationToolMode(AnnotationToolMode::Select);
+            v->SetPointerMode(CanvasPointerMode::HandPan);
         }
     });
     connect(m_workflowRibbon, &WorkflowRibbon::ViewSelectClicked, this, [this]() {
         if (auto* v = m_workspace ? m_workspace->GetCurrentViewer() : nullptr) {
-            v->SetAnnotationToolMode(AnnotationToolMode::Select);
+            v->SetPointerMode(CanvasPointerMode::Select);
         }
     });
     connect(m_workflowRibbon, &WorkflowRibbon::CommentHighlightClicked, this, [this]() {
@@ -764,11 +765,13 @@ void MainWindow::OnSaveDocument() {
     auto res = app::AppContext::Instance().GetLifecycleService().SaveCopy(*doc, currentPath);
     if (res.has_value()) {
         statusBar()->showMessage(tr("Document successfully saved."), 3000);
+        StudioToast::Show(this, tr("Saved"), tr("Document successfully saved."), ToastType::Success);
     } else {
-        QMessageBox::warning(
+        StudioToast::Show(
             this,
             tr("Save Failed"),
-            tr("Failed to save document: %1").arg(QString::fromStdString(pdf_api::GetEngineErrorMessage(res.error)))
+            tr("Failed to save document: %1").arg(QString::fromStdString(pdf_api::GetEngineErrorMessage(res.error))),
+            ToastType::Error
         );
     }
 }
@@ -1216,9 +1219,11 @@ void MainWindow::OnApplyRedactions() {
     auto doc = viewer->GetDocument();
     auto marks = services::RedactionService::Instance().GetRedactionMarks();
     if (marks.empty()) {
-        QMessageBox::information(
-            this, tr("No Redaction Marks"),
-            tr("No regions have been marked for redaction. Use 'Mark Redaction' or add redaction coordinates first.")
+        StudioToast::Show(
+            this,
+            tr("No Redaction Marks"),
+            tr("No regions have been marked for redaction."),
+            ToastType::Info
         );
         return;
     }
@@ -1275,6 +1280,7 @@ void MainWindow::OnSanitizeDocument() {
 
         auto scrubRes = services::SanitizationService::SanitizeFile(dstPath, opt);
         if (scrubRes.has_value()) {
+            StudioToast::Show(this, tr("Sanitized"), tr("Document successfully sanitized."), ToastType::Success);
             auto reply = QMessageBox::question(
                 this, tr("Sanitization Complete"),
                 tr("Document successfully sanitized and saved to:\n%1\n\nWould you like to open the sanitized copy?")

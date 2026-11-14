@@ -107,6 +107,13 @@ def bump_all(root_dir, ver_info):
         rf'\g<1>{full_ver}\g<2>'
     )
 
+    # 2b. src/app/cli_main.cpp
+    update_file(
+        os.path.join(root_dir, "src", "app", "cli_main.cpp"),
+        r'(std::cout << "PDFinity CLI )[0-9\.]+',
+        rf'\g<1>{semver}'
+    )
+
     # 3. src/ui/AboutDialog.cpp
     update_file(
         os.path.join(root_dir, "src", "ui", "AboutDialog.cpp"),

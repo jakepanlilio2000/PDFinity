@@ -4,6 +4,7 @@
 #include "PdfCanvasWidget.hpp"
 #include "AnnotationToolbar.hpp"
 #include "AnnotationPropertiesDialog.hpp"
+#include "viewer/StudioToast.hpp"
 #include "services/AnnotationCommandManager.hpp"
 #include "services/AnnotationService.hpp"
 #include "application/Logger.hpp"
@@ -32,6 +33,7 @@ PdfCanvasWidget::PdfCanvasWidget(
     m_renderService(renderService) {
 
     setFocusPolicy(Qt::StrongFocus);
+    setMouseTracking(true);
     setAttribute(Qt::WA_OpaquePaintEvent, false);
     setAttribute(Qt::WA_AcceptTouchEvents, true);
 
@@ -253,20 +255,26 @@ void PdfCanvasWidget::paintEvent(QPaintEvent* event) {
     p.setRenderHint(QPainter::Antialiasing, true);
     p.setRenderHint(QPainter::SmoothPixmapTransform, true);
 
+    const bool isDark = palette().window().color().lightness() < 128;
+    const QColor pasteboardColor = isDark ? QColor("#111214") : QColor("#E5E7EB");
+    const QColor hairlineBorderColor = isDark ? QColor("#34373E") : QColor("#D1D5DB");
+
+    // Neutral pasteboard backdrop fill
+    p.fillRect(event->rect(), pasteboardColor);
+
     QRect clip = event->rect();
     double dpr = devicePixelRatioF();
 
     for (const auto& layout : m_pageLayouts) {
         if (!layout.rect.intersects(clip)) continue;
 
-        // 1. Draw page drop shadow
-        QRectF shadowRect = layout.rect.adjusted(2, 3, 4, 5);
-        p.fillRect(shadowRect, QColor(0, 0, 0, 35));
+        // 1. Elevated Sheet Drop Shadow (Multi-layered soft ambient & directional blur)
+        p.fillRect(layout.rect.adjusted(-6, 2, 6, 10), QColor(0, 0, 0, isDark ? 40 : 12));
+        p.fillRect(layout.rect.adjusted(-3, 2, 3, 6),  QColor(0, 0, 0, isDark ? 65 : 22));
+        p.fillRect(layout.rect.adjusted(-1, 1, 1, 2),  QColor(0, 0, 0, isDark ? 90 : 35));
 
-        // 2. Draw white page background
+        // 2. Crisp white sheet surface
         p.fillRect(layout.rect, Qt::white);
-        p.setPen(QColor(180, 180, 180));
-        p.drawRect(layout.rect);
 
         // 3. Render or fetch page bitmap
         bool drawn = false;
@@ -283,12 +291,17 @@ void PdfCanvasWidget::paintEvent(QPaintEvent* event) {
 
         if (!drawn) {
             // Placeholder skeleton while rasterizing
-            p.setPen(QColor(140, 140, 140));
+            p.setPen(isDark ? QColor(100, 100, 105) : QColor(160, 160, 165));
             QFont font = p.font();
             font.setPointSize(12);
             p.setFont(font);
             p.drawText(layout.rect, Qt::AlignCenter, tr("Page %1 (Rendering...)").arg(layout.pageIndex + 1));
         }
+
+        // 4. Subtle 1px hairline border over image so page bounds stand out
+        p.setPen(QPen(hairlineBorderColor, 1));
+        p.setBrush(Qt::NoBrush);
+        p.drawRect(layout.rect);
 
         // 4. Draw Search Highlights
         for (size_t m = 0; m < m_searchMatches.size(); ++m) {
@@ -359,6 +372,16 @@ void PdfCanvasWidget::paintEvent(QPaintEvent* event) {
                 p.setBrush(Qt::NoBrush);
                 p.drawLine(m_drawStartPoint, m_drawCurrentPoint);
             }
+        }
+    }
+
+    // 8. Canvas Rulers & Alignment Snap Guides Overlay
+    if (m_rulerOverlay.IsVisible() && m_currentPage >= 0 &&
+        static_cast<size_t>(m_currentPage) < m_pageLayouts.size()) {
+        const auto& curLayout = m_pageLayouts[static_cast<size_t>(m_currentPage)];
+        m_rulerOverlay.DrawRulers(p, curLayout.rect, m_zoomScale, m_lastMousePos, isDark);
+        if (m_rulerOverlay.AreSnapGuidesVisible()) {
+            m_rulerOverlay.DrawSnapGuides(p, curLayout.rect, m_zoomScale, rect());
         }
     }
 }
@@ -442,6 +465,31 @@ QPointF PdfCanvasWidget::PdfToScreenPoint(int pageIndex, const pdf_api::PdfPoint
         }
     }
     return {};
+}
+
+void PdfCanvasWidget::SetPointerMode(CanvasPointerMode mode) {
+    m_pointerMode = mode;
+    if (mode == CanvasPointerMode::HandPan) {
+        setCursor(Qt::OpenHandCursor);
+    } else {
+        setCursor(Qt::ArrowCursor);
+    }
+    update();
+}
+
+void PdfCanvasWidget::SetRulersVisible(bool visible) {
+    m_rulerOverlay.SetVisible(visible);
+    update();
+}
+
+void PdfCanvasWidget::SetSnapGuidesVisible(bool visible) {
+    m_rulerOverlay.SetSnapGuidesVisible(visible);
+    update();
+}
+
+void PdfCanvasWidget::SetRulerUnit(RulerUnit unit) {
+    m_rulerOverlay.SetUnit(unit);
+    update();
 }
 
 void PdfCanvasWidget::SetAnnotationToolMode(int mode) {
@@ -532,6 +580,14 @@ void PdfCanvasWidget::OpenSelectedAnnotationProperties() {
 
 void PdfCanvasWidget::mousePressEvent(QMouseEvent* event) {
     if (event->button() == Qt::LeftButton) {
+        if (m_pointerMode == CanvasPointerMode::HandPan) {
+            m_isPanning = true;
+            m_panStartPos = event->globalPosition().toPoint();
+            setCursor(Qt::ClosedHandCursor);
+            event->accept();
+            return;
+        }
+
         int page = GetPageIndexAtPoint(event->position());
         if (page != -1) {
             // Check if Annotation Tool is active
@@ -588,6 +644,29 @@ void PdfCanvasWidget::mousePressEvent(QMouseEvent* event) {
 }
 
 void PdfCanvasWidget::mouseMoveEvent(QMouseEvent* event) {
+    m_lastMousePos = event->position();
+    if (m_rulerOverlay.IsVisible()) {
+        update();
+    }
+
+    if (m_isPanning && (event->buttons() & Qt::LeftButton)) {
+        QPoint currentPos = event->globalPosition().toPoint();
+        QPoint delta = currentPos - m_panStartPos;
+        m_panStartPos = currentPos;
+
+        QWidget* p = parentWidget();
+        while (p) {
+            if (auto* sa = qobject_cast<QScrollArea*>(p)) {
+                sa->horizontalScrollBar()->setValue(sa->horizontalScrollBar()->value() - delta.x());
+                sa->verticalScrollBar()->setValue(sa->verticalScrollBar()->value() - delta.y());
+                break;
+            }
+            p = p->parentWidget();
+        }
+        event->accept();
+        return;
+    }
+
     if (m_isDrawingAnnot) {
         m_drawCurrentPoint = event->position();
         int page = m_selectionPageIndex;
@@ -606,6 +685,15 @@ void PdfCanvasWidget::mouseMoveEvent(QMouseEvent* event) {
 }
 
 void PdfCanvasWidget::mouseReleaseEvent(QMouseEvent* event) {
+    if (event->button() == Qt::LeftButton && m_isPanning) {
+        m_isPanning = false;
+        if (m_pointerMode == CanvasPointerMode::HandPan) {
+            setCursor(Qt::OpenHandCursor);
+        }
+        event->accept();
+        return;
+    }
+
     if (event->button() == Qt::LeftButton && m_isDrawingAnnot) {
         m_isDrawingAnnot = false;
         int page = m_selectionPageIndex;
@@ -743,6 +831,7 @@ void PdfCanvasWidget::OnCopySelection() {
     if (!m_selectedText.isEmpty() && m_doc->GetPermissions().canCopyText) {
         QGuiApplication::clipboard()->setText(m_selectedText);
         LOG_INFO("Viewer", "Copied text to clipboard (" + std::to_string(m_selectedText.length()) + " chars)");
+        StudioToast::Show(this, tr("Copied"), tr("Selected text copied to clipboard."), ToastType::Info);
     }
 }
 

@@ -8,6 +8,8 @@
 #include <QMenu>
 #include "domain/DocumentModel.hpp"
 #include "services/AsyncRenderService.hpp"
+#include "viewer/CanvasRulerOverlay.hpp"
+#include "viewer/FloatingCanvasHud.hpp"
 #include <memory>
 #include <vector>
 
@@ -64,6 +66,18 @@ public:
     [[nodiscard]] const pdf_api::AnnotationData* GetSelectedAnnotationData() const {
         return (m_selectedAnnotIndex >= 0) ? &m_selectedAnnotData : nullptr;
     }
+
+    // Pointer mode & kinetic pan
+    void SetPointerMode(CanvasPointerMode mode);
+    [[nodiscard]] CanvasPointerMode GetPointerMode() const noexcept { return m_pointerMode; }
+
+    // Rulers & Snap Guides
+    void SetRulersVisible(bool visible);
+    [[nodiscard]] bool AreRulersVisible() const noexcept { return m_rulerOverlay.IsVisible(); }
+    void SetSnapGuidesVisible(bool visible);
+    [[nodiscard]] bool AreSnapGuidesVisible() const noexcept { return m_rulerOverlay.AreSnapGuidesVisible(); }
+    void SetRulerUnit(RulerUnit unit);
+    [[nodiscard]] RulerUnit GetRulerUnit() const noexcept { return m_rulerOverlay.GetUnit(); }
 
 signals:
     void CurrentPageChanged(int pageIndex);
@@ -133,6 +147,13 @@ private:
     QPointF m_drawStartPoint;
     QPointF m_drawCurrentPoint;
     std::vector<pdf_api::PdfPoint> m_currentInkStroke;
+
+    // Pointer mode, kinetic pan, and rulers
+    CanvasPointerMode m_pointerMode{CanvasPointerMode::Select};
+    bool m_isPanning{false};
+    QPoint m_panStartPos;
+    QPointF m_lastMousePos;
+    CanvasRulerOverlay m_rulerOverlay;
 
     static constexpr double MinZoom = 0.10;
     static constexpr double MaxZoom = 10.0;

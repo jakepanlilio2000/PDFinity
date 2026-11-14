@@ -8,7 +8,7 @@
 #include "ContentEditingToolbar.hpp"
 #include "ObjectInspectorDialog.hpp"
 #include "shell/LeftNavRail.hpp"
-#include "FloatingHudWidget.hpp"
+#include "viewer/FloatingCanvasHud.hpp"
 #include "shell/RightInspectorPanel.hpp"
 #include "VectorIcons.hpp"
 #include "services/AnnotationCommandManager.hpp"
@@ -176,22 +176,25 @@ void PdfViewerWidget::SetupUi() {
     m_scrollArea->setWidget(m_canvas);
 
     // Floating Bottom Page / Zoom HUD
-    m_floatingHud = new FloatingHudWidget(m_scrollArea);
+    m_floatingHud = new FloatingCanvasHud(m_scrollArea);
     m_floatingHud->UpdatePageInfo(m_canvas->GetCurrentPage(), m_doc ? m_doc->GetPageCount() : 1);
     m_floatingHud->UpdateZoom(m_canvas->GetZoomScale());
-    connect(m_floatingHud, &FloatingHudWidget::PreviousPageRequested, this, [this]() {
+    m_floatingHud->SetLayoutMode(m_canvas->GetLayoutMode());
+    connect(m_floatingHud, &FloatingCanvasHud::PreviousPageRequested, this, [this]() {
         GoToPage(GetCurrentPage() - 1);
     });
-    connect(m_floatingHud, &FloatingHudWidget::NextPageRequested, this, [this]() {
+    connect(m_floatingHud, &FloatingCanvasHud::NextPageRequested, this, [this]() {
         GoToPage(GetCurrentPage() + 1);
     });
-    connect(m_floatingHud, &FloatingHudWidget::PageSelected, this, &PdfViewerWidget::GoToPage);
-    connect(m_floatingHud, &FloatingHudWidget::ZoomInRequested, this, &PdfViewerWidget::ZoomIn);
-    connect(m_floatingHud, &FloatingHudWidget::ZoomOutRequested, this, &PdfViewerWidget::ZoomOut);
-    connect(m_floatingHud, &FloatingHudWidget::ZoomResetRequested, this, [this]() { SetZoom(1.0); });
-    connect(m_floatingHud, &FloatingHudWidget::FitWidthRequested, this, &PdfViewerWidget::ZoomFitWidth);
-    connect(m_floatingHud, &FloatingHudWidget::FitPageRequested, this, &PdfViewerWidget::ZoomFitPage);
-    connect(m_floatingHud, &FloatingHudWidget::RotateRequested, this, [this]() {
+    connect(m_floatingHud, &FloatingCanvasHud::PageSelected, this, &PdfViewerWidget::GoToPage);
+    connect(m_floatingHud, &FloatingCanvasHud::PointerModeChanged, this, &PdfViewerWidget::SetPointerMode);
+    connect(m_floatingHud, &FloatingCanvasHud::ZoomInRequested, this, &PdfViewerWidget::ZoomIn);
+    connect(m_floatingHud, &FloatingCanvasHud::ZoomOutRequested, this, &PdfViewerWidget::ZoomOut);
+    connect(m_floatingHud, &FloatingCanvasHud::ZoomScaleChanged, this, &PdfViewerWidget::SetZoom);
+    connect(m_floatingHud, &FloatingCanvasHud::FitWidthRequested, this, &PdfViewerWidget::ZoomFitWidth);
+    connect(m_floatingHud, &FloatingCanvasHud::FitPageRequested, this, &PdfViewerWidget::ZoomFitPage);
+    connect(m_floatingHud, &FloatingCanvasHud::LayoutModeChanged, this, &PdfViewerWidget::SetLayout);
+    connect(m_floatingHud, &FloatingCanvasHud::RotateRequested, this, [this]() {
         if (m_doc) {
             int p = GetCurrentPage();
             int rot = (m_doc->GetPageRotation(p) + 90) % 360;
@@ -464,6 +467,39 @@ void PdfViewerWidget::SetAnnotationToolMode(AnnotationToolMode mode) {
     }
 }
 
+void PdfViewerWidget::SetPointerMode(CanvasPointerMode mode) {
+    if (m_canvas) {
+        m_canvas->SetPointerMode(mode);
+    }
+    if (m_floatingHud) {
+        m_floatingHud->SetPointerMode(mode);
+    }
+}
+
+CanvasPointerMode PdfViewerWidget::GetPointerMode() const {
+    return m_canvas ? m_canvas->GetPointerMode() : CanvasPointerMode::Select;
+}
+
+void PdfViewerWidget::SetRulersVisible(bool visible) {
+    if (m_canvas) {
+        m_canvas->SetRulersVisible(visible);
+    }
+}
+
+bool PdfViewerWidget::AreRulersVisible() const {
+    return m_canvas ? m_canvas->AreRulersVisible() : false;
+}
+
+void PdfViewerWidget::SetSnapGuidesVisible(bool visible) {
+    if (m_canvas) {
+        m_canvas->SetSnapGuidesVisible(visible);
+    }
+}
+
+bool PdfViewerWidget::AreSnapGuidesVisible() const {
+    return m_canvas ? m_canvas->AreSnapGuidesVisible() : false;
+}
+
 std::vector<int> PdfViewerWidget::GetSplitterSizes() const {
     std::vector<int> res;
     if (m_splitter) {
@@ -555,6 +591,9 @@ void PdfViewerWidget::OnCanvasPageChanged(int pageIndex) {
     if (m_contentToolbar) {
         m_contentToolbar->SetDocument(m_doc, pageIndex);
     }
+    if (m_floatingHud) {
+        m_floatingHud->UpdatePageInfo(pageIndex, m_doc ? m_doc->GetPageCount() : 1);
+    }
     emit PageChanged(pageIndex, m_doc ? m_doc->GetPageCount() : 0);
 }
 
@@ -563,6 +602,9 @@ void PdfViewerWidget::OnCanvasZoomChanged(double zoomScale) {
     m_zoomLabel->setText(QString("%1%").arg(pct));
     if (m_inspector) {
         m_inspector->UpdatePageContext(GetCurrentPage(), zoomScale);
+    }
+    if (m_floatingHud) {
+        m_floatingHud->UpdateZoom(zoomScale);
     }
 }
 

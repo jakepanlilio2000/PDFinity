@@ -19,7 +19,7 @@
 
 namespace {
 void PrintCliHelp() {
-    std::cout << "PDFinity CLI - Professional Offline-First PDF Productivity Suite\n"
+    std::cout << "PDFinity CLI 1.0.9 Stable\n"
               << "Published by StackSync Solutions (https://www.stacksyncsolutions.com/)\n"
               << "Lead Programmer: Jake Ashley Panlilio (https://github.com/jakepanlilio2000)\n\n"
               << "Usage: pdfinity-cli <command> [options] [arguments]\n\n"
@@ -44,7 +44,7 @@ void PrintCliHelp() {
 }
 
 void PrintCliVersion() {
-    std::cout << "PDFinity CLI 1.0.8\n"
+    std::cout << "PDFinity CLI 1.0.9\n"
               << "Published by StackSync Solutions (https://www.stacksyncsolutions.com/)\n"
               << "Lead Programmer: Jake Ashley Panlilio (https://github.com/jakepanlilio2000)\n"
               << "License: Mozilla Public License Version 2.0 (MPL-2.0)\n";

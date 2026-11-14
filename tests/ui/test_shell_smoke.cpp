@@ -14,6 +14,9 @@
 #include "ui/AboutDialog.hpp"
 #include "ui/SettingsDialog.hpp"
 #include "ui/UpdateDialog.hpp"
+#include "ui/viewer/FloatingCanvasHud.hpp"
+#include "ui/viewer/CanvasRulerOverlay.hpp"
+#include "ui/viewer/StudioToast.hpp"
 #include "application/AppContext.hpp"
 
 using namespace pdfinity::ui;
@@ -34,6 +37,7 @@ private slots:
     void testLeftNavRailPageSync();
     void testShellSplitterPersistence();
     void testRightInspectorSelectionSync();
+    void testFloatingCanvasHudAndRulers();
 };
 
 void TestShellSmoke::initTestCase() {
@@ -209,6 +213,43 @@ void TestShellSmoke::testRightInspectorSelectionSync() {
 
     insp->SetSelectionProperties(info);
     insp->ClearSelection();
+
+    window.close();
+}
+
+void TestShellSmoke::testFloatingCanvasHudAndRulers() {
+    MainWindow window;
+    std::filesystem::path fixturePath = std::filesystem::path(PDFINITY_SOURCE_DIR) / "tests" / "fixtures" / "ordinary.pdf";
+    QVERIFY(std::filesystem::exists(fixturePath));
+    QVERIFY(window.OpenFileByPath(QString::fromStdString(fixturePath.string())));
+
+    auto* viewer = window.findChild<PdfViewerWidget*>();
+    QVERIFY(viewer != nullptr);
+
+    auto* hud = viewer->GetCanvasHud();
+    QVERIFY(hud != nullptr);
+
+    // Verify pointer modes
+    viewer->SetPointerMode(CanvasPointerMode::HandPan);
+    QCOMPARE(viewer->GetPointerMode(), CanvasPointerMode::HandPan);
+    viewer->SetPointerMode(CanvasPointerMode::Select);
+    QCOMPARE(viewer->GetPointerMode(), CanvasPointerMode::Select);
+
+    // Verify rulers and snap guides toggles
+    viewer->SetRulersVisible(true);
+    QVERIFY(viewer->AreRulersVisible());
+    viewer->SetSnapGuidesVisible(true);
+    QVERIFY(viewer->AreSnapGuidesVisible());
+    viewer->SetRulersVisible(false);
+    QVERIFY(!viewer->AreRulersVisible());
+
+    // Verify HUD controls & wake-up
+    hud->WakeUp();
+    hud->UpdatePageInfo(0, 1);
+    hud->UpdateZoom(1.25);
+
+    // Verify StudioToast creation & auto-dismiss
+    StudioToast::Show(&window, "HUD Verified", "Elevated viewport HUD test passed.", ToastType::Success, 500);
 
     window.close();
 }

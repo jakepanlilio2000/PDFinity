@@ -234,6 +234,12 @@ add_library(pdfinity_ui STATIC
     ui/VectorIcons.cpp
     ui/FloatingHudWidget.hpp
     ui/FloatingHudWidget.cpp
+    ui/viewer/FloatingCanvasHud.hpp
+    ui/viewer/FloatingCanvasHud.cpp
+    ui/viewer/CanvasRulerOverlay.hpp
+    ui/viewer/CanvasRulerOverlay.cpp
+    ui/viewer/StudioToast.hpp
+    ui/viewer/StudioToast.cpp
     ui/HomeDashboardWidget.hpp
     ui/HomeDashboardWidget.cpp
     ui/shell/StudioTabBar.hpp

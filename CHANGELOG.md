@@ -11,6 +11,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.0.9] - 2026-11-14
+
+### Added
+- **Elevated Document Sheet Rendering (`PdfCanvasWidget`):**
+  - Crisp white sheet surface centered on neutral pasteboard backdrop (`#111214` dark / `#E5E7EB` light) with multi-layered soft drop shadow (ambient diffusion, medium elevation, and contact shadow) and subtle 1px hairline border (`#34373E` / `#D1D5DB`).
+  - High-DPI device pixel ratio rendering support for razor-sharp vector rendering and crisp typography across 1.25x, 1.5x, 2.0x, and 3.0x displays.
+  - Interactive alignment rulers (`Points`, `Inches`, `Millimeters`) and crimson alignment snap guides for edit and layout operations.
+- **Translucent Floating Canvas HUD (`FloatingCanvasHud`):**
+  - Modern rounded pill overlay anchored at viewport bottom-center with smooth idle ambient auto-fading (3.5s timeout to 0.18 opacity) and instant wakeup on mouse/keyboard interaction.
+  - Page navigation controls: Previous (`▲`), Direct Page SpinBox (`[ 1 ] / N`), Next (`▼`).
+  - Pointer mode selector: Select Tool (`V`) and Hand Pan Dragging Tool (`H`) with kinetic scrollbar integration.
+  - Zoom controls: Zoom Out (`−`), Preset Selector (`50%`, `75%`, `100%`, `125%`, `150%`, `200%`, `300%`, `Fit Width`, `Fit Page`), Zoom In (`+`).
+  - Page layout & rotation: Single Page (`1`), Continuous Scroll (`≡`), Facing Spread (`⚏`), and 90° Clockwise Rotation (`↷`).
+- **Non-Intrusive Studio Toast Feedback (`StudioToast`):**
+  - Replaced jarring modal dialogs for routine operations (document saving, text copying, mark clearing, and sanitization) with dismissible bottom-right toast notifications featuring subtle type accent bars and fade animations.
+
+---
+
 ## [1.0.8] - 2026-11-14
 
 ### Fixed
