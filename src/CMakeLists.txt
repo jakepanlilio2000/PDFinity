@@ -148,6 +148,18 @@ if(WIN32)
         "${PROJECT_SOURCE_DIR}/third_party/pdfium/bin/pdfium.dll"
         "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/pdfium.dll"
     )
+elseif(UNIX AND NOT APPLE)
+    add_custom_command(TARGET pdfinity_core POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different
+        "${PROJECT_SOURCE_DIR}/third_party/pdfium/lib/libpdfium.so"
+        "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/libpdfium.so"
+    )
+elseif(APPLE)
+    add_custom_command(TARGET pdfinity_core POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different
+        "${PROJECT_SOURCE_DIR}/third_party/pdfium/lib/libpdfium.dylib"
+        "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/libpdfium.dylib"
+    )
 endif()
 
 # pdfinity_ui library

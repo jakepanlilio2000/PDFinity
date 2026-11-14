@@ -57,7 +57,7 @@ else()
 endif()
 
 # Locate Qt 6 components
-find_package(Qt6 6.5 REQUIRED COMPONENTS
+find_package(Qt6 6.2 REQUIRED COMPONENTS
     Core
     Gui
     Widgets
@@ -74,6 +74,20 @@ find_package(PDFium REQUIRED)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
+
+# Configure RPATH for reliable Linux and macOS dynamic linking
+set(CMAKE_BUILD_RPATH_USE_ORIGIN TRUE)
+list(APPEND CMAKE_BUILD_RPATH
+    "${PROJECT_SOURCE_DIR}/third_party/pdfium/lib"
+    "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}"
+    "${CMAKE_LIBRARY_OUTPUT_DIRECTORY}"
+)
+if(APPLE)
+    set(CMAKE_MACOSX_RPATH TRUE)
+    set(CMAKE_INSTALL_RPATH "@loader_path/../Frameworks;@loader_path/../lib;@loader_path")
+else()
+    set(CMAKE_INSTALL_RPATH "$ORIGIN/../lib;$ORIGIN")
+endif()
 
 # Include directories
 include_directories(

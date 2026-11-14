@@ -82,6 +82,8 @@ desktop.ini
 .antigravity/
 .cursor/
 .claude/
+docs/IMPLEMENTATION_BASELINE.md
+docs/baseline-evidence/
 *.tmp
 *.bak
 *.log

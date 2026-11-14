@@ -14,6 +14,10 @@ mkdir -p "${APP_BUNDLE}/Contents/MacOS"
 mkdir -p "${APP_BUNDLE}/Contents/Resources"
 
 cp "${BUILD_DIR}/bin/PDFinity" "${APP_BUNDLE}/Contents/MacOS/"
+if [ -f "third_party/pdfium/lib/libpdfium.dylib" ]; then
+    mkdir -p "${APP_BUNDLE}/Contents/Frameworks"
+    cp "third_party/pdfium/lib/libpdfium.dylib" "${APP_BUNDLE}/Contents/Frameworks/"
+fi
 cp packaging/macos/bundle.plist "${APP_BUNDLE}/Contents/Info.plist"
 if [ -f assets/icons/pdfinity.icns ]; then
     cp assets/icons/pdfinity.icns "${APP_BUNDLE}/Contents/Resources/"

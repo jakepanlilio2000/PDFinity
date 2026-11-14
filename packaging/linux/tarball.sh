@@ -13,6 +13,9 @@ mkdir -p "${STAGE_DIR}/bin"
 mkdir -p "${STAGE_DIR}/lib"
 
 cp "${BUILD_DIR}/bin/PDFinity" "${STAGE_DIR}/bin/"
+if [ -f "third_party/pdfium/lib/libpdfium.so" ]; then
+    cp "third_party/pdfium/lib/libpdfium.so" "${STAGE_DIR}/lib/"
+fi
 cp LICENSE "${STAGE_DIR}/"
 cp THIRDPARTY_NOTICES.txt "${STAGE_DIR}/"
 cp README.md "${STAGE_DIR}/"

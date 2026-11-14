@@ -16,12 +16,25 @@ def sha256_file(filepath):
             h.update(chunk)
     return h.hexdigest()
 
+def detect_version(root_dir):
+    if len(sys.argv) > 1 and sys.argv[1] and not sys.argv[1].startswith("-"):
+        return sys.argv[1].lstrip("v")
+    cmake_path = os.path.join(root_dir, "CMakeLists.txt")
+    if os.path.exists(cmake_path):
+        import re
+        with open(cmake_path, "r", encoding="utf-8") as f:
+            content = f.read()
+            m = re.search(r"project\s*\(\s*PDFinity\s+VERSION\s+([0-9\.]+)", content, re.IGNORECASE)
+            if m:
+                return m.group(1)
+    return "1.1.0"
+
 def main():
     root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
     dist = os.path.join(root, "dist")
     os.makedirs(dist, exist_ok=True)
 
-    version = "1.0.0"
+    version = detect_version(root)
     print(f"=== Preparing PDFinity v{version} Release Artifacts ===")
 
     # 1. Windows Portable ZIP

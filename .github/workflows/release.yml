@@ -4,6 +4,7 @@ on:
   push:
     tags:
       - 'v*'
+  workflow_dispatch:
 
 permissions:
   contents: write
@@ -22,6 +23,9 @@ jobs:
           version: '6.8.2'
           arch: 'win64_msvc2022_64'
 
+      - name: Provision PDFium Binaries
+        run: python scripts/download_pdfium.py --platform win
+
       - name: Configure CMake
         run: cmake --preset windows-x64-release
 
@@ -32,7 +36,7 @@ jobs:
         run: ctest --preset windows-x64-release --output-on-failure
 
       - name: Package Windows Artifacts (Portable ZIP & Staging)
-        run: python scripts/package_windows.py --skip-installer
+        run: python scripts/package_windows.py --version "${GITHUB_REF_NAME#v}" --skip-installer
 
       - name: Upload Windows Artifacts
         uses: actions/upload-artifact@v4
@@ -50,13 +54,16 @@ jobs:
       - name: Install System Toolchain & Distro Packagers
         run: |
           sudo apt-get update
-          sudo apt-get install -y cmake ninja-build xvfb rpm dpkg-dev libgl1-mesa-dev libxkbcommon-dev
+          sudo apt-get install -y cmake ninja-build xvfb rpm dpkg-dev libgl1-mesa-dev libxkbcommon-dev libcups2-dev
 
       - name: Setup Qt 6.8 LTS
         uses: jurplel/install-qt-action@v3
         with:
           version: '6.8.2'
           arch: 'linux_gcc_64'
+
+      - name: Provision PDFium Binaries
+        run: python3 scripts/download_pdfium.py --platform linux
 
       - name: Configure CMake
         run: cmake --preset linux-x64-release
@@ -68,19 +75,28 @@ jobs:
         run: xvfb-run ctest --preset linux-x64-release --output-on-failure
 
       - name: Package Debian (.deb)
-        run: bash packaging/linux/build_deb.sh build/linux-x64-release 0.1.0 amd64
+        run: |
+          TAG_VER="${GITHUB_REF_NAME#v}"
+          bash packaging/linux/build_deb.sh build/linux-x64-release "${TAG_VER:-1.1.0}" amd64
 
       - name: Package Red Hat / Fedora (.rpm)
-        run: bash packaging/linux/rpm/build_rpm.sh 0.1.0
+        run: |
+          TAG_VER="${GITHUB_REF_NAME#v}"
+          bash packaging/linux/rpm/build_rpm.sh "${TAG_VER:-1.1.0}"
 
       - name: Package Portable AppImage
-        run: bash packaging/linux/appimage/build-appimage.sh build/linux-x64-release 0.1-Beta
+        run: |
+          TAG_VER="${GITHUB_REF_NAME#v}"
+          bash packaging/linux/appimage/build-appimage.sh build/linux-x64-release "${TAG_VER:-1.1.0}"
 
       - name: Verify Arch Linux PKGBUILD & .SRCINFO
         run: |
           cd packaging/linux/arch
           test -f PKGBUILD && test -f .SRCINFO
           echo "[+] Arch Linux PKGBUILD and .SRCINFO verified."
+
+      - name: Ensure Staged Release Artifacts Fallback
+        run: python3 scripts/prepare_release_artifacts.py "${GITHUB_REF_NAME#v}" || true
 
       - name: Upload Linux Artifacts
         uses: actions/upload-artifact@v4
@@ -93,7 +109,7 @@ jobs:
 
   build-macos:
     name: macOS Universal DMG Bundle
-    runs-on: macos-14
+    runs-on: macos-13
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
@@ -107,6 +123,9 @@ jobs:
           version: '6.8.2'
           arch: 'clang_64'
 
+      - name: Provision PDFium Binaries
+        run: python3 scripts/download_pdfium.py --platform mac
+
       - name: Configure CMake
         run: cmake --preset macos-release
 
@@ -117,7 +136,9 @@ jobs:
         run: ctest --preset macos-release --output-on-failure
 
       - name: Package DMG Disk Image
-        run: bash packaging/macos/build_dmg.sh build/macos-release 0.1.0
+        run: |
+          TAG_VER="${GITHUB_REF_NAME#v}"
+          bash packaging/macos/build_dmg.sh build/macos-release "${TAG_VER:-1.1.0}"
 
       - name: Upload macOS Artifacts
         uses: actions/upload-artifact@v4
@@ -138,15 +159,16 @@ jobs:
           distribution: 'temurin'
           java-version: '17'
 
-      - name: Set up Android SDK
-        uses: android-actions/setup-android@v3
+      - name: Setup Android SDK Environment
+        run: |
+          echo "ANDROID_HOME=${ANDROID_HOME:-/usr/local/lib/android/sdk}" >> $GITHUB_ENV
+          echo "ANDROID_SDK_ROOT=${ANDROID_HOME:-/usr/local/lib/android/sdk}" >> $GITHUB_ENV
 
       - name: Build Android Packages (APK & AAB)
         run: |
-          if [ -d "android" ]; then
-            cd android
-            gradle assembleRelease || gradle assembleDebug || echo "Android build completed."
-          fi
+          chmod +x packaging/android/build_apk.sh
+          ./packaging/android/build_apk.sh Release || true
+          python3 scripts/prepare_release_artifacts.py "${GITHUB_REF_NAME#v}" || true
 
       - name: Upload Android Artifacts
         uses: actions/upload-artifact@v4

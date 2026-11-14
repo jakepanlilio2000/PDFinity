@@ -42,6 +42,11 @@ else
     install -m 755 "${BUILD_DIR}/bin/PDFinity" "${APP_DIR}/usr/bin/pdfinity"
 fi
 
+if [ -f "third_party/pdfium/lib/libpdfium.so" ]; then
+    mkdir -p "${APP_DIR}/usr/lib"
+    install -m 755 "third_party/pdfium/lib/libpdfium.so" "${APP_DIR}/usr/lib/libpdfium.so"
+fi
+
 # 2. Desktop and icon integration
 install -m 644 packaging/linux/com.stacksyncsolutions.pdfinity.desktop "${APP_DIR}/usr/share/applications/com.stacksyncsolutions.pdfinity.desktop"
 install -m 644 packaging/linux/com.stacksyncsolutions.pdfinity.metainfo.xml "${APP_DIR}/usr/share/metainfo/com.stacksyncsolutions.pdfinity.metainfo.xml"

@@ -17,8 +17,23 @@ find_path(PDFium_INCLUDE_DIR
 )
 
 set(PDFium_VERSION "159.0.8152.0")
+set(PDFIUM_BUILD_VER "8152")
 
 if(WIN32)
+  if(NOT EXISTS "${CMAKE_CURRENT_LIST_DIR}/bin/pdfium.dll" OR NOT EXISTS "${CMAKE_CURRENT_LIST_DIR}/lib/pdfium.dll.lib")
+    message(STATUS "PDFium Windows binaries not found. Downloading chromium/${PDFIUM_BUILD_VER}...")
+    set(_PDFIUM_URL "https://github.com/bblanchon/pdfium-binaries/releases/download/chromium%2F${PDFIUM_BUILD_VER}/pdfium-win-x64.tgz")
+    set(_ARCHIVE "${CMAKE_CURRENT_LIST_DIR}/pdfium-temp.tgz")
+    file(DOWNLOAD "${_PDFIUM_URL}" "${_ARCHIVE}" SHOW_PROGRESS STATUS _status)
+    list(GET _status 0 _status_code)
+    if(_status_code EQUAL 0)
+      execute_process(COMMAND ${CMAKE_COMMAND} -E tar xzf "${_ARCHIVE}" WORKING_DIRECTORY "${CMAKE_CURRENT_LIST_DIR}")
+      file(REMOVE "${_ARCHIVE}")
+    else()
+      message(WARNING "Failed to download PDFium from ${_PDFIUM_URL}")
+    endif()
+  endif()
+
   find_file(PDFium_LIBRARY
         NAMES "pdfium.dll"
         PATHS "${CMAKE_CURRENT_LIST_DIR}"
@@ -42,6 +57,36 @@ if(WIN32)
     VERSION_VAR PDFium_VERSION
   )
 else()
+  if(APPLE)
+    if(NOT EXISTS "${CMAKE_CURRENT_LIST_DIR}/lib/libpdfium.dylib")
+      message(STATUS "PDFium macOS binaries not found. Downloading chromium/${PDFIUM_BUILD_VER}...")
+      set(_PDFIUM_URL "https://github.com/bblanchon/pdfium-binaries/releases/download/chromium%2F${PDFIUM_BUILD_VER}/pdfium-mac-univ.tgz")
+      set(_ARCHIVE "${CMAKE_CURRENT_LIST_DIR}/pdfium-temp.tgz")
+      file(DOWNLOAD "${_PDFIUM_URL}" "${_ARCHIVE}" SHOW_PROGRESS STATUS _status)
+      list(GET _status 0 _status_code)
+      if(_status_code EQUAL 0)
+        execute_process(COMMAND ${CMAKE_COMMAND} -E tar xzf "${_ARCHIVE}" WORKING_DIRECTORY "${CMAKE_CURRENT_LIST_DIR}")
+        file(REMOVE "${_ARCHIVE}")
+      else()
+        message(WARNING "Failed to download PDFium from ${_PDFIUM_URL}")
+      endif()
+    endif()
+  else()
+    if(NOT EXISTS "${CMAKE_CURRENT_LIST_DIR}/lib/libpdfium.so")
+      message(STATUS "PDFium Linux binaries not found. Downloading chromium/${PDFIUM_BUILD_VER}...")
+      set(_PDFIUM_URL "https://github.com/bblanchon/pdfium-binaries/releases/download/chromium%2F${PDFIUM_BUILD_VER}/pdfium-linux-x64.tgz")
+      set(_ARCHIVE "${CMAKE_CURRENT_LIST_DIR}/pdfium-temp.tgz")
+      file(DOWNLOAD "${_PDFIUM_URL}" "${_ARCHIVE}" SHOW_PROGRESS STATUS _status)
+      list(GET _status 0 _status_code)
+      if(_status_code EQUAL 0)
+        execute_process(COMMAND ${CMAKE_COMMAND} -E tar xzf "${_ARCHIVE}" WORKING_DIRECTORY "${CMAKE_CURRENT_LIST_DIR}")
+        file(REMOVE "${_ARCHIVE}")
+      else()
+        message(WARNING "Failed to download PDFium from ${_PDFIUM_URL}")
+      endif()
+    endif()
+  endif()
+
   find_library(PDFium_LIBRARY
         NAMES "pdfium"
         PATHS "${CMAKE_CURRENT_LIST_DIR}"

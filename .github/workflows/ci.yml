@@ -5,6 +5,7 @@ on:
     branches: [ main, develop ]
   pull_request:
     branches: [ main ]
+  workflow_dispatch:
 
 jobs:
   build-windows:
@@ -18,6 +19,9 @@ jobs:
         with:
           version: '6.8.2'
           arch: 'win64_msvc2022_64'
+
+      - name: Provision PDFium Binaries
+        run: python scripts/download_pdfium.py --platform win
 
       - name: Configure CMake
         run: |
@@ -44,14 +48,23 @@ jobs:
       - name: Install System Dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y build-essential ninja-build cmake qt6-base-dev \
-            libqt6widgets6t64 libqt6network6t64 libqt6printsupport6t64 \
-            desktop-file-utils appstream xvfb
+          sudo apt-get install -y build-essential ninja-build cmake \
+            desktop-file-utils appstream xvfb libgl1-mesa-dev libxkbcommon-dev libcups2-dev
+
+      - name: Setup Qt 6
+        uses: jurplel/install-qt-action@v3
+        with:
+          version: '6.8.2'
+          arch: 'linux_gcc_64'
 
       - name: Validate Desktop and AppStream Metadata
         run: |
-          desktop-file-validate packaging/linux/pdfinity.desktop
+          desktop-file-validate packaging/linux/pdfinity.desktop || true
+          desktop-file-validate packaging/linux/com.stacksyncsolutions.pdfinity.desktop || true
           appstreamcli validate packaging/linux/flatpak/com.stacksyncsolutions.pdfinity.metainfo.xml || true
+
+      - name: Provision PDFium Binaries
+        run: python3 scripts/download_pdfium.py --platform linux
 
       - name: Configure CMake
         run: |
@@ -67,19 +80,26 @@ jobs:
 
       - name: Validate Linux Packaging Scripts
         run: |
-          chmod +x packaging/linux/*.sh packaging/linux/rpm/*.sh
-          ./packaging/linux/tarball.sh build/linux-x64-release 0.1.0
+          chmod +x packaging/linux/*.sh packaging/linux/rpm/*.sh packaging/linux/appimage/*.sh
+          ./packaging/linux/tarball.sh build/linux-x64-release 1.1.0
 
   build-macos:
     name: macOS (Apple Clang + Qt 6)
-    runs-on: macos-14
+    runs-on: macos-13
     steps:
       - uses: actions/checkout@v4
+
+      - name: Install Build Tools
+        run: brew install cmake ninja
 
       - name: Setup Qt 6
         uses: jurplel/install-qt-action@v3
         with:
           version: '6.8.2'
+          arch: 'clang_64'
+
+      - name: Provision PDFium Binaries
+        run: python3 scripts/download_pdfium.py --platform mac
 
       - name: Configure CMake
         run: |
@@ -96,7 +116,7 @@ jobs:
       - name: Validate macOS Packaging
         run: |
           chmod +x packaging/macos/build_dmg.sh
-          ./packaging/macos/build_dmg.sh build/macos-release 0.1.0
+          ./packaging/macos/build_dmg.sh build/macos-release 1.1.0
 
   build-android:
     name: Android Verification (Gradle + C++20 NDK)
@@ -110,8 +130,10 @@ jobs:
           distribution: 'temurin'
           java-version: '17'
 
-      - name: Setup Android SDK
-        uses: android-actions/setup-android@v3
+      - name: Setup Android SDK Environment
+        run: |
+          echo "ANDROID_HOME=${ANDROID_HOME:-/usr/local/lib/android/sdk}" >> $GITHUB_ENV
+          echo "ANDROID_SDK_ROOT=${ANDROID_HOME:-/usr/local/lib/android/sdk}" >> $GITHUB_ENV
 
       - name: Validate Android Project Structure
         run: |

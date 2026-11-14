@@ -19,6 +19,7 @@ if command -v rpmbuild >/dev/null 2>&1; then
         rpmbuild --define "_topdir ${TOPDIR}" -bb --nodeps "${TOPDIR}/SPECS/pdfinity.spec" || true
     }
     echo "[+] RPM successfully verified in ${TOPDIR}/RPMS"
+    find "${TOPDIR}/RPMS" -name "*.rpm" -exec cp -v {} dist/ \; || true
 else
     echo "rpmbuild command not found on host. Staging spec verified at ${TOPDIR}/SPECS/pdfinity.spec."
 fi

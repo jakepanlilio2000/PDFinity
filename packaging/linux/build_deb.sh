@@ -46,6 +46,10 @@ else
     install -m 755 "${BUILD_DIR}/bin/PDFinity" "${STAGE_DIR}/usr/bin/pdfinity"
 fi
 
+if [ -f "third_party/pdfium/lib/libpdfium.so" ]; then
+    install -m 755 "third_party/pdfium/lib/libpdfium.so" "${STAGE_DIR}/usr/lib/libpdfium.so"
+fi
+
 # 3. Desktop integration & AppStream metainfo
 install -m 644 packaging/linux/com.stacksyncsolutions.pdfinity.desktop "${STAGE_DIR}/usr/share/applications/com.stacksyncsolutions.pdfinity.desktop"
 ln -sf com.stacksyncsolutions.pdfinity.desktop "${STAGE_DIR}/usr/share/applications/pdfinity.desktop"
