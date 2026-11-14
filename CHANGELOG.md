@@ -11,6 +11,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.1.10-Beta] - 2026-11-14
+
+### Fixed
+- **Transformation Job Queue Concurrency & Token Safety [BUG-005]:** In `src/services/TransformationJobQueue.cpp`, eliminated raw pointer capture across mutex lock scope in `RunJobSynchronously`, encapsulated `executeFunc` copy inside `m_mutex`, and guaranteed non-null cancellation token resolution to prevent use-after-free and data races under concurrent job enqueuing and pruning. Added regression test `testJobQueueConcurrencyAndTokenSafety` in `test_transformation_pipeline.cpp`.
+
+---
+
 ## [1.0.0] - 2026-11-14 (Stable Release)
 
 ### Added

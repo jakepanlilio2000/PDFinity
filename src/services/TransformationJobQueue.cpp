@@ -33,7 +33,7 @@ std::string TransformationJobQueue::EnqueueJob(
 }
 
 pdf_api::EngineResult<void> TransformationJobQueue::RunJobSynchronously(const std::string& jobId) {
-    TransformationJobTask* taskPtr = nullptr;
+    std::function<pdf_api::EngineResult<void>(std::atomic<bool>& cancelToken, std::function<void(int current, int total, const std::string&)> progressCb)> execFunc;
     std::shared_ptr<std::atomic<bool>> token;
 
     {
@@ -42,10 +42,20 @@ pdf_api::EngineResult<void> TransformationJobQueue::RunJobSynchronously(const st
         if (it == m_jobs.end()) {
             return pdf_api::EngineResult<void>::Fail(pdf_api::EngineError::FileNotFound, "Job not found: " + jobId);
         }
-        taskPtr = &it->second;
-        token = m_cancelTokens[jobId];
-        taskPtr->status = pdf_api::JobStatus::Running;
-        taskPtr->progress = {0, 100, "Running"};
+        execFunc = it->second.executeFunc;
+        auto tokenIt = m_cancelTokens.find(jobId);
+        if (tokenIt != m_cancelTokens.end() && tokenIt->second) {
+            token = tokenIt->second;
+        } else {
+            token = std::make_shared<std::atomic<bool>>(false);
+            m_cancelTokens[jobId] = token;
+        }
+        it->second.status = pdf_api::JobStatus::Running;
+        it->second.progress = {0, 100, "Running"};
+    }
+
+    if (!execFunc) {
+        return pdf_api::EngineResult<void>::Fail(pdf_api::EngineError::Unknown, "Job execution function is not set");
     }
 
     auto progressCallback = [this, jobId](int cur, int tot, const std::string& msg) {
@@ -56,7 +66,7 @@ pdf_api::EngineResult<void> TransformationJobQueue::RunJobSynchronously(const st
         }
     };
 
-    auto res = taskPtr->executeFunc(*token, progressCallback);
+    auto res = execFunc(*token, progressCallback);
 
     {
         std::lock_guard<std::mutex> lock(m_mutex);
@@ -84,10 +94,10 @@ void TransformationJobQueue::CancelJob(const std::string& jobId) {
     auto it = m_cancelTokens.find(jobId);
     if (it != m_cancelTokens.end() && it->second) {
         it->second->store(true);
-        auto jobIt = m_jobs.find(jobId);
-        if (jobIt != m_jobs.end()) {
-            jobIt->second.status = pdf_api::JobStatus::Cancelled;
-        }
+    }
+    auto jobIt = m_jobs.find(jobId);
+    if (jobIt != m_jobs.end()) {
+        jobIt->second.status = pdf_api::JobStatus::Cancelled;
     }
 }
 

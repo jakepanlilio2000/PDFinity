@@ -6,6 +6,8 @@
 #include <QImage>
 #include <QPainter>
 #include <filesystem>
+#include <thread>
+#include <chrono>
 #include "services/ConversionService.hpp"
 #include "services/OcrService.hpp"
 #include "services/OptimizationService.hpp"
@@ -24,6 +26,7 @@ private slots:
 
     void testEndToEndPipeline_Image_Ocr_Optimize_Export();
     void testBatchJobQueueTransformation();
+    void testJobQueueConcurrencyAndTokenSafety();
 
 private:
     std::filesystem::path m_fixturesDir;
@@ -149,6 +152,61 @@ void TestTransformationPipeline::testBatchJobQueueTransformation() {
     QVERIFY(runRes.has_value());
     QCOMPARE(executedCounter, 3);
     QCOMPARE(queue.GetJobStatus(jobId), pdf_api::JobStatus::Completed);
+}
+
+void TestTransformationPipeline::testJobQueueConcurrencyAndTokenSafety() {
+    auto& queue = services::TransformationJobQueue::Instance();
+    queue.ClearCompletedJobs();
+
+    // 1. Enqueue job and run while concurrent operations enqueue and manipulate map
+    std::atomic<bool> threadRunning{true};
+    std::thread backgroundWorker([&]() {
+        int extraCounter = 0;
+        while (threadRunning.load()) {
+            queue.EnqueueJob("Concurrent Task " + std::to_string(++extraCounter), [](std::atomic<bool>&, auto) {
+                return pdf_api::EngineResult<void>::Ok();
+            });
+            std::this_thread::sleep_for(std::chrono::milliseconds(1));
+        }
+    });
+
+    auto mainJobId = queue.EnqueueJob("Thread Safety Verification Job", [](std::atomic<bool>& cancel, auto progressCb) {
+        for (int i = 0; i < 5; ++i) {
+            if (cancel.load()) return pdf_api::EngineResult<void>::Fail(pdf_api::EngineError::Unknown, "Cancelled");
+            progressCb(i + 1, 5, "Step " + std::to_string(i + 1));
+            std::this_thread::sleep_for(std::chrono::milliseconds(2));
+        }
+        return pdf_api::EngineResult<void>::Ok();
+    });
+
+    auto result = queue.RunJobSynchronously(mainJobId);
+    threadRunning.store(false);
+    backgroundWorker.join();
+
+    QVERIFY(result.has_value());
+    QCOMPARE(queue.GetJobStatus(mainJobId), pdf_api::JobStatus::Completed);
+
+    // 2. Verify cancellation safety without null pointer or stale token issues
+    auto cancelJobId = queue.EnqueueJob("Cancellation Target Job", [](std::atomic<bool>& cancel, auto) {
+        while (!cancel.load()) {
+            std::this_thread::sleep_for(std::chrono::milliseconds(2));
+        }
+        return pdf_api::EngineResult<void>::Fail(pdf_api::EngineError::Unknown, "Cancelled by user");
+    });
+
+    std::thread cancelTrigger([&]() {
+        std::this_thread::sleep_for(std::chrono::milliseconds(10));
+        queue.CancelJob(cancelJobId);
+    });
+
+    auto cancelRes = queue.RunJobSynchronously(cancelJobId);
+    cancelTrigger.join();
+
+    QVERIFY(!cancelRes.has_value());
+    QCOMPARE(queue.GetJobStatus(cancelJobId), pdf_api::JobStatus::Cancelled);
+
+    // Cleanup
+    queue.ClearCompletedJobs();
 }
 
 QTEST_MAIN(TestTransformationPipeline)
