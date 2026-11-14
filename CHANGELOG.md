@@ -11,6 +11,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.1.3-beta] - 2026-11-14
+
+### Fixed
+- **SAF Descriptor Read & Atomic Staged Writeback:** In `PDFinityActivity.java`, routed all content URI reads explicitly through `ParcelFileDescriptor` (`openFileDescriptor(uri, "r")`) and staged document writebacks through a verified temporary file in `context.getCacheDir()` before flushing to avoid document corruption on write interruption.
+
+---
+
 ## [0.1.2-beta] - 2026-11-14
 
 ### Fixed

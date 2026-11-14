@@ -132,19 +132,23 @@ public class PDFinityActivity extends QtActivity {
             }
 
             File targetFile = new File(cacheDir, System.currentTimeMillis() + "_" + displayName);
-            try (InputStream in = resolver.openInputStream(uri);
-                 FileOutputStream out = new FileOutputStream(targetFile)) {
-                if (in == null) return null;
-
-                byte[] buffer = new byte[65536];
-                int bytesRead;
-                while ((bytesRead = in.read(buffer)) != -1) {
-                    out.write(buffer, 0, bytesRead);
+            try (ParcelFileDescriptor pfd = resolver.openFileDescriptor(uri, "r")) {
+                if (pfd == null) {
+                    Log.e(TAG, "ContentResolver returned null ParcelFileDescriptor for URI: " + uri);
+                    return null;
                 }
-                out.flush();
-                return targetFile.getAbsolutePath();
+                try (FileInputStream in = new FileInputStream(pfd.getFileDescriptor());
+                     FileOutputStream out = new FileOutputStream(targetFile)) {
+                    byte[] buffer = new byte[65536];
+                    int bytesRead;
+                    while ((bytesRead = in.read(buffer)) != -1) {
+                        out.write(buffer, 0, bytesRead);
+                    }
+                    out.flush();
+                    return targetFile.getAbsolutePath();
+                }
             } catch (Exception e) {
-                Log.e(TAG, "Error caching content URI to local storage", e);
+                Log.e(TAG, "Error caching content URI via ParcelFileDescriptor", e);
                 return null;
             }
         }
@@ -153,28 +157,65 @@ public class PDFinityActivity extends QtActivity {
     }
 
     /**
-     * Flushes modified local file back to the target content:// URI via ContentResolver ParcelFileDescriptor.
+     * Flushes modified document safely back to the target content:// URI using atomic staging in
+     * context.getCacheDir() before streaming into the target ParcelFileDescriptor.
      */
     public static boolean saveDocumentToUri(String localCachePath, String targetUriString) {
         if (sInstance == null || localCachePath == null || targetUriString == null) return false;
+        File sourceFile = new File(localCachePath);
+        if (!sourceFile.exists()) {
+            Log.e(TAG, "Source file for SAF writeback does not exist: " + localCachePath);
+            return false;
+        }
+
+        File stagingDir = new File(sInstance.getCacheDir(), "saf_staging");
+        if (!stagingDir.exists() && !stagingDir.mkdirs()) {
+            Log.e(TAG, "Failed to create SAF atomic staging directory");
+            return false;
+        }
+
+        File tempStageFile = null;
         try {
-            Uri targetUri = Uri.parse(targetUriString);
-            ContentResolver resolver = sInstance.getContentResolver();
-            try (ParcelFileDescriptor pfd = resolver.openFileDescriptor(targetUri, "w");
-                 FileOutputStream out = new FileOutputStream(pfd.getFileDescriptor());
-                 FileInputStream in = new FileInputStream(new File(localCachePath))) {
+            tempStageFile = File.createTempFile("saf_atomic_stage_", ".tmp", stagingDir);
+            // 1. Copy source to staging file
+            try (FileInputStream in = new FileInputStream(sourceFile);
+                 FileOutputStream out = new FileOutputStream(tempStageFile)) {
                 byte[] buffer = new byte[65536];
                 int bytesRead;
                 while ((bytesRead = in.read(buffer)) != -1) {
                     out.write(buffer, 0, bytesRead);
                 }
                 out.flush();
-                Log.i(TAG, "Successfully flushed document to SAF URI: " + targetUriString);
-                return true;
+            }
+
+            // 2. Stream staging file to target content URI descriptor
+            Uri targetUri = Uri.parse(targetUriString);
+            ContentResolver resolver = sInstance.getContentResolver();
+            try (ParcelFileDescriptor pfd = resolver.openFileDescriptor(targetUri, "w")) {
+                if (pfd == null) {
+                    Log.e(TAG, "Failed to obtain writable ParcelFileDescriptor for target URI: " + targetUriString);
+                    return false;
+                }
+                try (FileOutputStream out = new FileOutputStream(pfd.getFileDescriptor());
+                     FileInputStream in = new FileInputStream(tempStageFile)) {
+                    byte[] buffer = new byte[65536];
+                    int bytesRead;
+                    while ((bytesRead = in.read(buffer)) != -1) {
+                        out.write(buffer, 0, bytesRead);
+                    }
+                    out.flush();
+                    pfd.getFileDescriptor().sync();
+                    Log.i(TAG, "Successfully committed document atomically to SAF URI: " + targetUriString);
+                    return true;
+                }
             }
         } catch (Exception e) {
-            Log.e(TAG, "Failed to save document to SAF URI", e);
+            Log.e(TAG, "Failed atomic SAF document writeback", e);
             return false;
+        } finally {
+            if (tempStageFile != null && tempStageFile.exists()) {
+                tempStageFile.delete();
+            }
         }
     }
 
