@@ -10,7 +10,11 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "${SCRIPT_DIR}/../.." && pwd)"
-ANDROID_DIR="${REPO_ROOT}/android"
+if [ -d "${REPO_ROOT}/packaging/android" ] && [ -f "${REPO_ROOT}/packaging/android/build.gradle" ]; then
+    ANDROID_DIR="${REPO_ROOT}/packaging/android"
+else
+    ANDROID_DIR="${REPO_ROOT}/android"
+fi
 DIST_DIR="${REPO_ROOT}/dist"
 BUILD_TYPE="${1:-Release}"
 

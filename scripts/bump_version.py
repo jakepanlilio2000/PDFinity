@@ -183,19 +183,23 @@ def bump_all(root_dir, ver_info):
         rf'\g<1>{semver}\g<2>'
     )
 
-    # 13. android/build.gradle
-    update_file(
-        os.path.join(root_dir, "android", "build.gradle"),
-        r'(versionName\s+")[^"]+(")',
-        rf'\g<1>{display}\g<2>'
-    )
+    # 13. android/build.gradle and packaging/android/build.gradle
+    for bg_path in [os.path.join(root_dir, "android", "build.gradle"),
+                    os.path.join(root_dir, "packaging", "android", "build.gradle")]:
+        update_file(
+            bg_path,
+            r'(versionName\s+")[^"]+(")',
+            rf'\g<1>{display}\g<2>'
+        )
 
-    # 14. android/AndroidManifest.xml
-    update_file(
-        os.path.join(root_dir, "android", "AndroidManifest.xml"),
-        r'(android:versionName=")[^"]+(")',
-        rf'\g<1>{display}\g<2>'
-    )
+    # 14. android/AndroidManifest.xml and packaging/android/AndroidManifest.xml
+    for mf_path in [os.path.join(root_dir, "android", "AndroidManifest.xml"),
+                    os.path.join(root_dir, "packaging", "android", "AndroidManifest.xml")]:
+        update_file(
+            mf_path,
+            r'(android:versionName=")[^"]+(")',
+            rf'\g<1>{display}\g<2>'
+        )
 
     # 15. README.md badges & links
     readme_path = os.path.join(root_dir, "README.md")

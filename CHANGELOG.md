@@ -11,6 +11,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.1.2-beta] - 2026-11-14
+
+### Fixed
+- **Android Packaging Hierarchy Sync:** Mirrored Android packaging files (`AndroidManifest.xml`, `build.gradle`, `gradle.properties`, `settings.gradle`, and `res/xml/file_paths.xml`) into `packaging/android/` aligning with standard distribution structure.
+
+---
+
 ## [0.1.1-beta] - 2026-11-14
 
 ### Fixed

@@ -5,7 +5,7 @@
 cmake_minimum_required(VERSION 3.25)
 
 project(PDFinity
-    VERSION 0.1.1
+    VERSION 0.1.2
     DESCRIPTION "Professional, modular, offline-first PDF productivity suite"
     HOMEPAGE_URL "https://www.stacksyncsolutions.com/"
     LANGUAGES C CXX
@@ -29,7 +29,11 @@ set(CMAKE_AUTORCC ON)
 
 # Qt for Android Platform Configuration
 if(ANDROID)
-    set(QT_ANDROID_PACKAGE_SOURCE_DIR "${PROJECT_SOURCE_DIR}/android")
+    if(EXISTS "${PROJECT_SOURCE_DIR}/packaging/android")
+        set(QT_ANDROID_PACKAGE_SOURCE_DIR "${PROJECT_SOURCE_DIR}/packaging/android")
+    else()
+        set(QT_ANDROID_PACKAGE_SOURCE_DIR "${PROJECT_SOURCE_DIR}/android")
+    endif()
     set(QT_ANDROID_ABIS "arm64-v8a;armeabi-v7a;x86_64" CACHE STRING "Target Android ABIs")
     set(QT_ANDROID_MIN_SDK_VERSION 28)
     set(QT_ANDROID_TARGET_SDK_VERSION 35)

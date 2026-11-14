@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  PDFinity FileProvider Configuration
+  Publisher: StackSync Solutions (https://www.stacksyncsolutions.com/)
+  Lead Programmer: Jake Ashley Panlilio (https://github.com/jakepanlilio2000)
+  License: Mozilla Public License Version 2.0 (MPL-2.0)
+-->
+<paths xmlns:android="http://schemas.android.com/apk/res/android">
+    <cache-path name="saf_cache" path="saf_inbox" />
+    <cache-path name="temp_cache" path="." />
+    <files-path name="pdfinity_files" path="." />
+</paths>
