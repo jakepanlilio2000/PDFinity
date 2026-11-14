@@ -27,7 +27,7 @@ void AboutDialog::SetupUi() {
 
     // Header with App Title and Version
     auto* headerLayout = new QVBoxLayout();
-    auto* titleLabel = new QLabel(tr("<h2>PDFinity 0.1.4-Beta</h2>"), this);
+    auto* titleLabel = new QLabel(tr("<h2>PDFinity 0.1.5-Beta</h2>"), this);
     auto* subtitleLabel = new QLabel(tr("<b>Professional Offline-First PDF Productivity Suite</b><br>"
                                         "Published by <a href='https://www.stacksyncsolutions.com/'>StackSync Solutions</a><br>"
                                         "Lead Programmer: <a href='https://github.com/jakepanlilio2000'>Jake Ashley Panlilio</a><br>"

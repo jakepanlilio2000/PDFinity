@@ -172,6 +172,20 @@ void MainWindow::SetupUi() {
 
     UpdateStatusDisplay();
     m_workspace->RestoreSession();
+
+#if defined(__ANDROID__)
+    const bool isMobile = true;
+#else
+    const bool isMobile = (QOperatingSystemVersion::currentType() == QOperatingSystemVersion::Android);
+#endif
+
+    if (isMobile) {
+        // Hide desktop-only process/stdio actions on Android to eliminate dead buttons
+        if (m_mcpManagerAction) m_mcpManagerAction->setVisible(false);
+        if (m_batchCenterAction) m_batchCenterAction->setVisible(false);
+        if (m_batchProfileEditorAction) m_batchProfileEditorAction->setVisible(false);
+        if (m_exitAction) m_exitAction->setVisible(false);
+    }
 }
 
 void MainWindow::CreateMenus() {
@@ -411,14 +425,15 @@ void MainWindow::CreateMenus() {
 }
 
 void MainWindow::CreateToolBar() {
-    auto* toolBar = addToolBar(tr("Main Toolbar"));
-    toolBar->setMovable(false);
-
 #if defined(__ANDROID__)
     const bool isMobile = true;
 #else
     const bool isMobile = (QOperatingSystemVersion::currentType() == QOperatingSystemVersion::Android);
 #endif
+
+    auto* toolBar = isMobile ? addToolBar(Qt::BottomToolBarArea, tr("Main Toolbar"))
+                             : addToolBar(tr("Main Toolbar"));
+    toolBar->setMovable(false);
 
     if (isMobile) {
         toolBar->setIconSize(QSize(36, 36));

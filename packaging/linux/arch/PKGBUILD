@@ -1,7 +1,7 @@
 # Maintainer: Jake Ashley Panlilio <jakepanlilio2000@users.noreply.github.com>
 # Contributor: StackSync Solutions <support@stacksyncsolutions.com>
 pkgname=pdfinity
-pkgver=0.1.4
+pkgver=0.1.5
 pkgrel=1
 pkgdesc="Professional, modular, offline-first PDF productivity suite"
 arch=('x86_64' 'aarch64')

@@ -14,7 +14,11 @@ assert "QT_ANDROID_PACKAGE_SOURCE_DIR" in cm, "Missing QT_ANDROID_PACKAGE_SOURCE
 assert "arm64-v8a;armeabi-v7a;x86_64" in cm, "Missing QT_ANDROID_ABIS"
 assert "QT_ANDROID_MIN_SDK_VERSION 28" in cm, "Missing QT_ANDROID_MIN_SDK_VERSION 28"
 assert "QT_ANDROID_TARGET_SDK_VERSION 35" in cm, "Missing QT_ANDROID_TARGET_SDK_VERSION 35"
-print("[PASS] Check 1.1: CMakeLists.txt Qt for Android properties verified.")
+assert os.path.exists("packaging/android/AndroidManifest.xml"), "packaging/android/AndroidManifest.xml missing"
+assert os.path.exists("packaging/android/build.gradle"), "packaging/android/build.gradle missing"
+assert os.path.exists("packaging/android/gradle.properties"), "packaging/android/gradle.properties missing"
+assert os.path.exists("packaging/android/res/xml/file_paths.xml"), "packaging/android/res/xml/file_paths.xml missing"
+print("[PASS] Check 1.1: CMakeLists.txt & packaging/android hierarchy verified.")
 
 # Check 2: AndroidManifest.xml
 with open("android/AndroidManifest.xml", "r", encoding="utf-8") as f:
@@ -48,6 +52,7 @@ for res in ["android/res/drawable/ic_launcher_background.xml",
 print("[PASS] Check 1.4: Adaptive icons and file_paths.xml verified on disk.")
 
 # Check 5: AndroidPlatformAdapter & JNI
+assert os.path.exists("app/platform/android/AndroidPlatformAdapter.hpp"), "app/platform/android header missing"
 with open("src/platform/AndroidPlatformAdapter.hpp", "r", encoding="utf-8") as f:
     aph = f.read()
 with open("src/platform/AndroidPlatformAdapter.cpp", "r", encoding="utf-8") as f:
@@ -57,17 +62,20 @@ assert "QJniObject" in apc, "QJniObject missing in AndroidPlatformAdapter.cpp"
 assert "PrintDocument" in apc, "PrintDocument missing"
 assert "ShareDocument" in apc, "ShareDocument missing"
 assert "OnApplicationStateChanged" in apc, "Lifecycle handler missing"
-print("[PASS] Check 2.1: AndroidPlatformAdapter verified (JNI, Print, Share, Lifecycle).")
+assert "SaveCurrentState" in apc, "SaveCurrentState missing in AndroidPlatformAdapter.cpp"
+print("[PASS] Check 2.1: AndroidPlatformAdapter verified (JNI, Print, Share, Lifecycle SaveCurrentState).")
 
 # Check 6: PDFinityActivity.java
 with open("android/src/com/stacksyncsolutions/pdfinity/PDFinityActivity.java", "r", encoding="utf-8") as f:
     paj = f.read()
 assert "resolveUriToLocalFile" in paj, "resolveUriToLocalFile missing"
 assert "saveDocumentToUri" in paj, "saveDocumentToUri missing"
+assert "openFileDescriptor(uri, \"r\")" in paj, "ParcelFileDescriptor read missing"
+assert "saf_atomic_stage_" in paj, "Atomic staging writeback missing"
 assert "printDocument" in paj, "printDocument missing"
 assert "shareDocument" in paj, "shareDocument missing"
 assert "cleanupOldCacheFiles" in paj, "cleanupOldCacheFiles missing"
-print("[PASS] Check 2.2: PDFinityActivity.java verified (SAF copy, SAF writeback, printing, sharing, 24h cache purge).")
+print("[PASS] Check 2.2: PDFinityActivity.java verified (SAF PFD read, staged atomic writeback, printing, sharing, 24h cache purge).")
 
 # Check 7: PdfCanvasWidget gestures
 with open("src/ui/PdfCanvasWidget.hpp", "r", encoding="utf-8") as f:
@@ -85,9 +93,11 @@ print("[PASS] Check 3.1: PdfCanvasWidget gestures verified (Pinch-to-zoom, Swipe
 with open("src/ui/MainWindow.cpp", "r", encoding="utf-8") as f:
     mwc = f.read()
 assert "min-width: 48px; min-height: 48px" in mwc, "48dp touch target styling missing"
+assert "Qt::BottomToolBarArea" in mwc, "Bottom toolbar area missing"
+assert "m_mcpManagerAction->setVisible(false)" in mwc, "Desktop MCP action hiding missing"
 assert "m_shareAction" in mwc, "m_shareAction missing"
 assert "OnShareDocument" in mwc, "OnShareDocument missing"
-print("[PASS] Check 3.2: MainWindow verified (48dp touch targets, ShareDocument action).")
+print("[PASS] Check 3.2: MainWindow verified (48dp touch targets, bottom toolbar, action hiding, ShareDocument).")
 
 # Check 9: Packaging & Docs
 with open("packaging/android/build_apk.sh", "r", encoding="utf-8") as f:

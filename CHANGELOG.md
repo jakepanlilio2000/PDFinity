@@ -11,6 +11,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.1.5-beta] - 2026-11-14
+
+### Fixed
+- **Mobile Responsive Ergonomics & Desktop Action Suppression:** Relocated the mobile toolbar to `Qt::BottomToolBarArea` for ergonomic thumb accessibility on mobile/touch form factors, disabled desktop-only CLI/stdio actions (`m_mcpManagerAction`, `m_batchCenterAction`, `m_batchProfileEditorAction`, `m_exitAction`) on Android to eliminate dead buttons, and provided `app/platform/android/` architecture forwarding references.
+
+---
+
 ## [0.1.4-beta] - 2026-11-14
 
 ### Fixed
