@@ -258,3 +258,45 @@ if(WIN32 AND CMAKE_BUILD_TYPE STREQUAL "Release")
         WIN32_EXECUTABLE FALSE
     )
 endif()
+
+# Installation rules
+install(TARGETS PDFinity pdfinity_ui pdfinity_core
+    RUNTIME DESTINATION bin
+    LIBRARY DESTINATION lib
+    ARCHIVE DESTINATION lib
+    BUNDLE DESTINATION .
+)
+
+if(UNIX AND NOT APPLE AND NOT ANDROID)
+    # Desktop entries
+    install(FILES "${PROJECT_SOURCE_DIR}/packaging/linux/com.stacksyncsolutions.pdfinity.desktop"
+        DESTINATION share/applications
+    )
+    install(FILES "${PROJECT_SOURCE_DIR}/packaging/linux/com.stacksyncsolutions.pdfinity.desktop"
+        DESTINATION share/applications
+        RENAME pdfinity.desktop
+    )
+
+    # AppStream Metainfo
+    install(FILES "${PROJECT_SOURCE_DIR}/packaging/linux/com.stacksyncsolutions.pdfinity.metainfo.xml"
+        DESTINATION share/metainfo
+    )
+
+    # Icons
+    install(FILES "${PROJECT_SOURCE_DIR}/packaging/resources/pdfinity.svg"
+        DESTINATION share/icons/hicolor/scalable/apps
+        RENAME com.stacksyncsolutions.pdfinity.svg
+    )
+    install(FILES "${PROJECT_SOURCE_DIR}/packaging/resources/pdfinity.svg"
+        DESTINATION share/icons/hicolor/scalable/apps
+        RENAME pdfinity.svg
+    )
+
+    # Licenses and docs
+    install(FILES "${PROJECT_SOURCE_DIR}/LICENSE"
+        DESTINATION share/licenses/pdfinity
+    )
+    install(FILES "${PROJECT_SOURCE_DIR}/README.md" "${PROJECT_SOURCE_DIR}/THIRD_PARTY_LICENSES.md" "${PROJECT_SOURCE_DIR}/NOTICE"
+        DESTINATION share/doc/pdfinity
+    )
+endif()

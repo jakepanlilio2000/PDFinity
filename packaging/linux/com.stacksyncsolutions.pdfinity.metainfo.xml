@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component type="desktop-application">
+  <id>com.stacksyncsolutions.pdfinity</id>
+  <metadata_license>CC0-1.0</metadata_license>
+  <project_license>MPL-2.0</project_license>
+  <name>PDFinity</name>
+  <summary>Professional, modular, offline-first PDF productivity suite</summary>
+  <developer_name>StackSync Solutions (Lead Programmer: Jake Ashley Panlilio)</developer_name>
+  <description>
+    <p>
+      PDFinity is an enterprise-grade desktop PDF application engineered in modern C++20 and Qt 6.
+      Designed from the ground up for absolute document integrity, memory safety, and complete data privacy,
+      PDFinity operates 100% offline with zero cloud accounts, zero telemetry, and zero hidden network transmissions.
+    </p>
+    <p>
+      Core capabilities include high-speed document viewing, lossless page assembly, annotation studio,
+      interactive AcroForms filler, native content editing, PKCS#7 cryptographic signing, irreversible
+      multi-pass redaction, offline OCR, format conversion, and scriptable batch automation.
+    </p>
+  </description>
+  <launchable type="desktop-id">com.stacksyncsolutions.pdfinity.desktop</launchable>
+  <url type="homepage">https://www.stacksyncsolutions.com/</url>
+  <url type="bugtracker">https://github.com/jakepanlilio2000/PDFinity/issues</url>
+  <url type="vcs-browser">https://github.com/jakepanlilio2000/PDFinity</url>
+  <provides>
+    <binary>pdfinity</binary>
+    <mediatype>application/pdf</mediatype>
+  </provides>
+  <releases>
+    <release version="0.1.0" date="2026-11-14">
+      <description>
+        <p>PDFinity 0.1-Beta initial clean open-source release under Mozilla Public License Version 2.0.</p>
+      </description>
+    </release>
+  </releases>
+  <content_rating type="oars-1.1" />
+</component>

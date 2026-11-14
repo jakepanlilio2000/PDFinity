@@ -1,0 +1,18 @@
+pkgbase = pdfinity
+	pkgdesc = Professional, modular, offline-first PDF productivity suite
+	pkgver = 0.1.0
+	pkgrel = 1
+	url = https://www.stacksyncsolutions.com/
+	arch = x86_64
+	arch = aarch64
+	license = MPL-2.0
+	makedepends = cmake
+	makedepends = ninja
+	depends = qt6-base
+	depends = hicolor-icon-theme
+	optdepends = tesseract: for offline Optical Character Recognition (OCR)
+	optdepends = libreoffice: for Office document format conversion
+	source = https://github.com/jakepanlilio2000/PDFinity/archive/v0.1-beta.tar.gz
+	sha256sums = SKIP
+
+pkgname = pdfinity

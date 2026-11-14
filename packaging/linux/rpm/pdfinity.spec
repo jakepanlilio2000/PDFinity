@@ -13,6 +13,7 @@ BuildRequires:  gcc-c++ >= 11
 BuildRequires:  qt6-qtbase-devel >= 6.5.0
 Requires:       qt6-qtbase >= 6.5.0
 Requires:       qt6-qtbase-gui >= 6.5.0
+Requires:       hicolor-icon-theme
 
 %description
 PDFinity is an enterprise-grade desktop PDF application engineered in modern
@@ -33,25 +34,39 @@ offline with zero telemetry.
 %ctest
 
 %install
-mkdir -p %{buildroot}%{_bindir}
+%cmake_install
 mkdir -p %{buildroot}%{_datadir}/applications
+mkdir -p %{buildroot}%{_datadir}/metainfo
 mkdir -p %{buildroot}%{_datadir}/icons/hicolor/scalable/apps
-mkdir -p %{buildroot}%{_datadir}/licenses/%{name}
-mkdir -p %{buildroot}%{_datadir}/doc/%{name}
-
-install -m 755 %{_vpath_builddir}/bin/PDFinity %{buildroot}%{_bindir}/pdfinity
-install -m 644 packaging/linux/pdfinity.desktop %{buildroot}%{_datadir}/applications/pdfinity.desktop
+install -m 644 packaging/linux/com.stacksyncsolutions.pdfinity.desktop %{buildroot}%{_datadir}/applications/com.stacksyncsolutions.pdfinity.desktop
+ln -sf com.stacksyncsolutions.pdfinity.desktop %{buildroot}%{_datadir}/applications/pdfinity.desktop
+install -m 644 packaging/linux/com.stacksyncsolutions.pdfinity.metainfo.xml %{buildroot}%{_datadir}/metainfo/com.stacksyncsolutions.pdfinity.metainfo.xml
 install -m 644 packaging/resources/pdfinity.svg %{buildroot}%{_datadir}/icons/hicolor/scalable/apps/pdfinity.svg
-install -m 644 LICENSE %{buildroot}%{_datadir}/licenses/%{name}/LICENSE
-install -m 644 README.md %{buildroot}%{_datadir}/doc/%{name}/README.md
-install -m 644 THIRDPARTY_NOTICES.txt %{buildroot}%{_datadir}/doc/%{name}/THIRDPARTY_NOTICES.txt
+install -m 644 packaging/resources/pdfinity.svg %{buildroot}%{_datadir}/icons/hicolor/scalable/apps/com.stacksyncsolutions.pdfinity.svg
+
+%post
+/bin/touch --no-create %{_datadir}/icons/hicolor &>/dev/null || :
+update-desktop-database &>/dev/null || :
+
+%postun
+if [ $1 -eq 0 ] ; then
+    /bin/touch --no-create %{_datadir}/icons/hicolor &>/dev/null
+    gtk-update-icon-cache %{_datadir}/icons/hicolor &>/dev/null || :
+fi
+update-desktop-database &>/dev/null || :
+
+%posttrans
+gtk-update-icon-cache %{_datadir}/icons/hicolor &>/dev/null || :
 
 %files
 %license LICENSE
-%doc README.md THIRDPARTY_NOTICES.txt
+%doc README.md THIRDPARTY_NOTICES.txt THIRD_PARTY_LICENSES.md
 %{_bindir}/pdfinity
+%{_datadir}/applications/com.stacksyncsolutions.pdfinity.desktop
 %{_datadir}/applications/pdfinity.desktop
+%{_datadir}/metainfo/com.stacksyncsolutions.pdfinity.metainfo.xml
 %{_datadir}/icons/hicolor/scalable/apps/pdfinity.svg
+%{_datadir}/icons/hicolor/scalable/apps/com.stacksyncsolutions.pdfinity.svg
 
 %changelog
 * Sat Nov 14 2026 Jake Ashley Panlilio <jakepanlilio2000@users.noreply.github.com> - 0.1.0-1

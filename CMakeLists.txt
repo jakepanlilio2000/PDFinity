@@ -74,3 +74,37 @@ add_subdirectory(src)
 # Enable testing
 enable_testing()
 add_subdirectory(tests)
+
+# ==============================================================================
+# CPack Packaging Configuration (.deb, .rpm, .tar.gz, .zip)
+# ==============================================================================
+set(CPACK_PACKAGE_NAME "pdfinity")
+set(CPACK_PACKAGE_VENDOR "StackSync Solutions")
+set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "Professional, modular, offline-first PDF productivity suite")
+set(CPACK_PACKAGE_HOMEPAGE_URL "https://www.stacksyncsolutions.com/")
+set(CPACK_PACKAGE_CONTACT "StackSync Solutions <support@stacksyncsolutions.com>")
+set(CPACK_PACKAGE_VERSION "${PROJECT_VERSION}")
+set(CPACK_PACKAGE_VERSION_MAJOR "${PROJECT_VERSION_MAJOR}")
+set(CPACK_PACKAGE_VERSION_MINOR "${PROJECT_VERSION_MINOR}")
+set(CPACK_PACKAGE_VERSION_PATCH "${PROJECT_VERSION_PATCH}")
+set(CPACK_RESOURCE_FILE_LICENSE "${PROJECT_SOURCE_DIR}/LICENSE")
+set(CPACK_RESOURCE_FILE_README "${PROJECT_SOURCE_DIR}/README.md")
+
+# Debian Generator
+set(CPACK_DEBIAN_PACKAGE_MAINTAINER "StackSync Solutions <support@stacksyncsolutions.com>")
+set(CPACK_DEBIAN_PACKAGE_SECTION "text")
+set(CPACK_DEBIAN_PACKAGE_PRIORITY "optional")
+set(CPACK_DEBIAN_PACKAGE_HOMEPAGE "https://www.stacksyncsolutions.com/")
+set(CPACK_DEBIAN_PACKAGE_SHLIBDEPS ON)
+set(CPACK_DEBIAN_PACKAGE_DEPENDS "libc6 (>= 2.31), libstdc++6 (>= 11), libqt6core6 (>= 6.5.0), libqt6gui6 (>= 6.5.0), libqt6widgets6 (>= 6.5.0), libqt6network6 (>= 6.5.0), libqt6printsupport6 (>= 6.5.0)")
+set(CPACK_DEBIAN_PACKAGE_CONTROL_EXTRA "${PROJECT_SOURCE_DIR}/packaging/linux/deb/postinst;${PROJECT_SOURCE_DIR}/packaging/linux/deb/postrm")
+
+# RPM Generator
+set(CPACK_RPM_PACKAGE_LICENSE "MPL-2.0")
+set(CPACK_RPM_PACKAGE_URL "https://www.stacksyncsolutions.com/")
+set(CPACK_RPM_PACKAGE_GROUP "Applications/Publishing")
+set(CPACK_RPM_PACKAGE_REQUIRES "qt6-qtbase >= 6.5.0, qt6-qtbase-gui >= 6.5.0, hicolor-icon-theme")
+set(CPACK_RPM_POST_INSTALL_SCRIPT_FILE "${PROJECT_SOURCE_DIR}/packaging/linux/rpm/postinst")
+set(CPACK_RPM_POST_UNINSTALL_SCRIPT_FILE "${PROJECT_SOURCE_DIR}/packaging/linux/rpm/postrm")
+
+include(CPack)

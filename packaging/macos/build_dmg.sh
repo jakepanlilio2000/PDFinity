@@ -15,6 +15,9 @@ mkdir -p "${APP_BUNDLE}/Contents/Resources"
 
 cp "${BUILD_DIR}/bin/PDFinity" "${APP_BUNDLE}/Contents/MacOS/"
 cp packaging/macos/bundle.plist "${APP_BUNDLE}/Contents/Info.plist"
+if [ -f assets/icons/pdfinity.icns ]; then
+    cp assets/icons/pdfinity.icns "${APP_BUNDLE}/Contents/Resources/"
+fi
 
 echo "=== Packaging Disk Image (DMG) ==="
 mkdir -p "${DIST_DIR}/dmg_staging"
