@@ -87,6 +87,22 @@ bool SettingsManager::LoadSettings(app::AppConfig& config) {
         }
     }
 
+    if (obj.contains("leftRailDrawerExpanded")) {
+        config.leftRailDrawerExpanded = obj["leftRailDrawerExpanded"].toBool(true);
+    }
+    if (obj.contains("leftRailActivePanel")) {
+        config.leftRailActivePanel = obj["leftRailActivePanel"].toInt(0);
+    }
+    if (obj.contains("rightInspectorVisible")) {
+        config.rightInspectorVisible = obj["rightInspectorVisible"].toBool(true);
+    }
+    if (obj.contains("viewerSplitterSizes") && obj["viewerSplitterSizes"].isArray()) {
+        config.viewerSplitterSizes.clear();
+        for (const auto& item : obj["viewerSplitterSizes"].toArray()) {
+            config.viewerSplitterSizes.push_back(item.toInt(200));
+        }
+    }
+
     if (obj.contains("mcpEnabled")) {
         config.mcpEnabled = obj["mcpEnabled"].toBool(false);
     }
@@ -153,6 +169,15 @@ bool SettingsManager::SaveSettings(const app::AppConfig& config) {
         sessionArr.append(QString::fromStdString(path));
     }
     obj["sessionOpenFiles"] = sessionArr;
+
+    obj["leftRailDrawerExpanded"] = config.leftRailDrawerExpanded;
+    obj["leftRailActivePanel"] = config.leftRailActivePanel;
+    obj["rightInspectorVisible"] = config.rightInspectorVisible;
+    QJsonArray splitterArr;
+    for (int sz : config.viewerSplitterSizes) {
+        splitterArr.append(sz);
+    }
+    obj["viewerSplitterSizes"] = splitterArr;
 
     obj["mcpEnabled"] = config.mcpEnabled;
     obj["mcpConsentPolicy"] = QString::fromStdString(config.mcpConsentPolicy);

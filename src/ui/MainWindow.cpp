@@ -703,6 +703,21 @@ void MainWindow::SaveWindowState() {
         config.windowPosY = y();
     }
 
+    if (m_workspace) {
+        if (auto* viewer = m_workspace->GetCurrentViewer()) {
+            if (auto* rail = viewer->GetNavigationRail()) {
+                config.leftRailDrawerExpanded = rail->IsDrawerExpanded();
+            }
+            if (auto* insp = viewer->GetInspector()) {
+                config.rightInspectorVisible = insp->isVisible();
+            }
+            const auto sizes = viewer->GetSplitterSizes();
+            if (sizes.size() == 3) {
+                config.viewerSplitterSizes = sizes;
+            }
+        }
+    }
+
     app::AppContext::Instance().SaveCurrentState();
 }
 

@@ -212,6 +212,7 @@ void PdfViewerWidget::SetupUi() {
     m_splitter->setSizes({44, 850, 280});
 
     mainLayout->addWidget(m_splitter);
+    ApplySettingsState();
 
     // Connect search service
     connect(m_searchService.get(), &services::DocumentSearchService::SearchCompleted,
@@ -445,6 +446,33 @@ void PdfViewerWidget::SetAnnotationToolMode(AnnotationToolMode mode) {
         if (m_toggleAnnotAction) {
             m_toggleAnnotAction->setChecked(true);
         }
+    }
+}
+
+std::vector<int> PdfViewerWidget::GetSplitterSizes() const {
+    std::vector<int> res;
+    if (m_splitter) {
+        for (int sz : m_splitter->sizes()) {
+            res.push_back(sz);
+        }
+    }
+    return res;
+}
+
+void PdfViewerWidget::ApplySettingsState() {
+    const auto& config = app::AppContext::Instance().GetConfig();
+    if (m_leftRail) {
+        m_leftRail->SetDrawerExpanded(config.leftRailDrawerExpanded);
+    }
+    if (m_inspector) {
+        m_inspector->setVisible(config.rightInspectorVisible);
+    }
+    if (m_splitter && config.viewerSplitterSizes.size() == 3) {
+        QList<int> qSizes;
+        for (int sz : config.viewerSplitterSizes) {
+            qSizes.append(sz);
+        }
+        m_splitter->setSizes(qSizes);
     }
 }
 

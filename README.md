@@ -6,8 +6,8 @@
 
 **Professional • Modular • Offline-First PDF Productivity Suite**
 
-[![Release](https://img.shields.io/badge/Release-1.0.6%20Stable-blue.svg)](https://github.com/jakepanlilio2000/PDFinity/releases/tag/v1.0.6)
-[![Version](https://img.shields.io/badge/Version-1.0.6-emerald.svg)](https://github.com/jakepanlilio2000/PDFinity/releases/tag/v1.0.6)
+[![Release](https://img.shields.io/badge/Release-1.0.7%20Stable-blue.svg)](https://github.com/jakepanlilio2000/PDFinity/releases/tag/v1.0.7)
+[![Version](https://img.shields.io/badge/Version-1.0.7-emerald.svg)](https://github.com/jakepanlilio2000/PDFinity/releases/tag/v1.0.7)
 [![License: MPL 2.0](https://img.shields.io/badge/License-MPL_2.0-brightgreen.svg)](LICENSE)
 [![C++ Standard](https://img.shields.io/badge/C%2B%2B-20-00599C.svg?logo=c%2B%2B)](https://en.wikipedia.org/wiki/C%2B%2B20)
 [![Qt Framework](https://img.shields.io/badge/Qt-6.8%2B%20LTS-41CD52.svg?logo=qt)](https://www.qt.io/)

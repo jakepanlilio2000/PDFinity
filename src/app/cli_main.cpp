@@ -44,7 +44,7 @@ void PrintCliHelp() {
 }
 
 void PrintCliVersion() {
-    std::cout << "PDFinity CLI 1.0.6\n"
+    std::cout << "PDFinity CLI 1.0.7\n"
               << "Published by StackSync Solutions (https://www.stacksyncsolutions.com/)\n"
               << "Lead Programmer: Jake Ashley Panlilio (https://github.com/jakepanlilio2000)\n"
               << "License: Mozilla Public License Version 2.0 (MPL-2.0)\n";

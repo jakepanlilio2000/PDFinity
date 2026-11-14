@@ -8,6 +8,7 @@
 #include "ui/MainWindow.hpp"
 #include "ui/PdfViewerWidget.hpp"
 #include "ui/shell/LeftNavRail.hpp"
+#include "ui/shell/RightInspectorPanel.hpp"
 #include "ui/shell/WorkflowRibbon.hpp"
 #include "ui/ThemeManager.hpp"
 #include "ui/AboutDialog.hpp"
@@ -31,6 +32,7 @@ private slots:
     void testDialogs();
     void testWorkflowRibbonWiring();
     void testLeftNavRailPageSync();
+    void testShellSplitterPersistence();
 };
 
 void TestShellSmoke::initTestCase() {
@@ -140,6 +142,40 @@ void TestShellSmoke::testLeftNavRailPageSync() {
     QVERIFY(!rail->IsDrawerExpanded());
     rail->SetDrawerExpanded(true);
     QVERIFY(rail->IsDrawerExpanded());
+
+    window.close();
+}
+
+void TestShellSmoke::testShellSplitterPersistence() {
+    MainWindow window;
+    std::filesystem::path fixturePath = std::filesystem::path(PDFINITY_SOURCE_DIR) / "tests" / "fixtures" / "ordinary.pdf";
+    QVERIFY(std::filesystem::exists(fixturePath));
+    QVERIFY(window.OpenFileByPath(QString::fromStdString(fixturePath.string())));
+
+    auto* viewer = window.findChild<PdfViewerWidget*>();
+    QVERIFY(viewer != nullptr);
+
+    auto sizes = viewer->GetSplitterSizes();
+    QVERIFY(!sizes.empty());
+
+    auto& config = AppContext::Instance().GetConfig();
+    config.leftRailDrawerExpanded = false;
+    config.rightInspectorVisible = false;
+    viewer->ApplySettingsState();
+
+    auto* rail = viewer->GetNavigationRail();
+    QVERIFY(rail != nullptr);
+    QVERIFY(!rail->IsDrawerExpanded());
+
+    auto* insp = viewer->GetInspector();
+    QVERIFY(insp != nullptr);
+    QVERIFY(!insp->isVisible());
+
+    config.leftRailDrawerExpanded = true;
+    config.rightInspectorVisible = true;
+    viewer->ApplySettingsState();
+    QVERIFY(rail->IsDrawerExpanded());
+    QVERIFY(insp->isVisible());
 
     window.close();
 }

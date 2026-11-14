@@ -11,6 +11,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.0.7] - 2026-11-14
+
+### Fixed
+- **Shell Splitter Sizes and Left/Right Panel State Persistence [BUG-U3-03]:** Added serialization and persistence for `leftRailDrawerExpanded`, `leftRailActivePanel`, `rightInspectorVisible`, and `viewerSplitterSizes` in `AppConfig` and `SettingsManager`. Automatically restores panel states on document mount and saves on application close. Added regression coverage in `tests/ui/test_shell_smoke.cpp`.
+
+---
+
 ## [1.0.6] - 2026-11-14
 
 ### Fixed

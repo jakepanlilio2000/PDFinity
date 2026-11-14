@@ -33,6 +33,12 @@ struct AppConfig {
     std::vector<std::string> sessionOpenFiles;
     int sessionActiveTabIndex{0};
 
+    // 3-Pane Document Studio Shell State Persistence
+    bool leftRailDrawerExpanded{true};
+    int leftRailActivePanel{0};
+    bool rightInspectorVisible{true};
+    std::vector<int> viewerSplitterSizes{44, 850, 280};
+
     // Model Context Protocol (MCP) Integration
     bool mcpEnabled{false}; // Strictly off by default
     std::string mcpConsentPolicy{"AskForDestructive"};

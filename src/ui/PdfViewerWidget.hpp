@@ -49,6 +49,8 @@ public:
     [[nodiscard]] pdf_api::PageLayoutMode GetLayoutMode() const { return m_canvas->GetLayoutMode(); }
     [[nodiscard]] RightInspectorPanel* GetInspector() const { return m_inspector; }
     [[nodiscard]] LeftNavRail* GetNavigationRail() const { return m_leftRail; }
+    [[nodiscard]] std::vector<int> GetSplitterSizes() const;
+    void ApplySettingsState();
 
     void SetZoom(double zoom);
     void SetLayout(pdf_api::PageLayoutMode mode);
