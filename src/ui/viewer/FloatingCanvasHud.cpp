@@ -6,6 +6,8 @@
 #include <QHBoxLayout>
 #include <QEvent>
 #include <QResizeEvent>
+#include <QScrollArea>
+#include <QLineEdit>
 #include <cmath>
 
 namespace pdfinity::ui {
@@ -15,6 +17,9 @@ FloatingCanvasHud::FloatingCanvasHud(QWidget* parent) : QWidget(parent) {
     SetupAnimation();
     if (parent) {
         parent->installEventFilter(this);
+        if (auto* sa = qobject_cast<QScrollArea*>(parent)) {
+            sa->viewport()->installEventFilter(this);
+        }
     }
 }
 
@@ -163,6 +168,19 @@ void FloatingCanvasHud::SetupUi() {
     layout->addWidget(m_zoomOutBtn);
 
     m_zoomCombo = new QComboBox(container);
+    m_zoomCombo->setEditable(true);
+    if (m_zoomCombo->lineEdit()) {
+        m_zoomCombo->lineEdit()->setAlignment(Qt::AlignCenter);
+        connect(m_zoomCombo->lineEdit(), &QLineEdit::returnPressed, this, [this]() {
+            WakeUp();
+            QString txt = m_zoomCombo->currentText().remove('%').trimmed();
+            bool ok = false;
+            double val = txt.toDouble(&ok);
+            if (ok && val >= 10.0 && val <= 1000.0) {
+                emit ZoomScaleChanged(val / 100.0);
+            }
+        });
+    }
     m_zoomCombo->addItems({"50%", "75%", "100%", "125%", "150%", "200%", "300%", tr("Fit Width"), tr("Fit Page")});
     m_zoomCombo->setCurrentIndex(2); // 100%
     connect(m_zoomCombo, QOverload<int>::of(&QComboBox::activated), this, &FloatingCanvasHud::OnZoomComboActivated);
@@ -305,7 +323,13 @@ void FloatingCanvasHud::UpdatePageInfo(int currentPage, int totalPages) {
 void FloatingCanvasHud::UpdateZoom(double zoomScale) {
     int percent = static_cast<int>(std::round(zoomScale * 100.0));
     m_zoomCombo->blockSignals(true);
-    m_zoomCombo->setEditText(QString("%1%").arg(percent));
+    QString text = QString("%1%").arg(percent);
+    int idx = m_zoomCombo->findText(text);
+    if (idx != -1) {
+        m_zoomCombo->setCurrentIndex(idx);
+    } else {
+        m_zoomCombo->setEditText(text);
+    }
     m_zoomCombo->blockSignals(false);
     Reposition();
 }
@@ -322,7 +346,11 @@ void FloatingCanvasHud::Reposition() {
 }
 
 bool FloatingCanvasHud::eventFilter(QObject* watched, QEvent* event) {
-    if (watched == parentWidget()) {
+    QWidget* p = parentWidget();
+    auto* sa = qobject_cast<QScrollArea*>(p);
+    QObject* vp = sa ? sa->viewport() : nullptr;
+
+    if (watched == p || watched == vp) {
         if (event->type() == QEvent::Resize) {
             Reposition();
         } else if (event->type() == QEvent::MouseMove || event->type() == QEvent::KeyPress) {

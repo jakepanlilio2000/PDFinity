@@ -15,16 +15,21 @@ void CanvasRulerOverlay::ClearGuides() {
 }
 
 double CanvasRulerOverlay::Snap(double coord, bool isVertical, double threshold) const {
-    if (!m_guidesVisible) return coord;
+    if (!m_guidesVisible || m_guides.empty()) return coord;
+
+    double closestDist = threshold + 1.0;
+    double snapped = coord;
 
     for (const auto& g : m_guides) {
         if (g.isVertical == isVertical) {
-            if (std::abs(coord - g.position) <= threshold) {
-                return g.position;
+            double dist = std::abs(coord - g.position);
+            if (dist <= threshold && dist < closestDist) {
+                closestDist = dist;
+                snapped = g.position;
             }
         }
     }
-    return coord;
+    return snapped;
 }
 
 void CanvasRulerOverlay::DrawRulers(
@@ -53,7 +58,8 @@ void CanvasRulerOverlay::DrawRulers(
     }
 
     double screenStep = unitStep * zoomScale;
-    if (screenStep < 20.0) screenStep *= 2.0;
+    while (screenStep < 25.0) screenStep *= 2.0;
+    while (screenStep > 120.0) screenStep /= 2.0;
 
     // Top Horizontal Ruler bar
     QRectF topRuler(pageRect.left(), pageRect.top() - rulerThickness, pageRect.width(), rulerThickness);

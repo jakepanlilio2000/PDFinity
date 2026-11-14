@@ -2,7 +2,7 @@
 <Wix xmlns="http://wixtoolset.org/schemas/v4/wxs">
   <Package Name="PDFinity"
            Manufacturer="StackSync Solutions"
-           Version="1.0.9"
+           Version="1.0.10"
            UpgradeCode="4E7395BC-2D38-4E86-90DC-F0A1F6E22C74"
            Scope="perMachine">
 

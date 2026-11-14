@@ -14,7 +14,7 @@ namespace pdfinity::mcp {
 
 inline constexpr const char* MCP_PROTOCOL_VERSION = "2024-11-05";
 inline constexpr const char* MCP_SERVER_NAME = "PDFinity";
-inline constexpr const char* MCP_SERVER_VERSION = "1.0.9";
+inline constexpr const char* MCP_SERVER_VERSION = "1.0.10";
 
 enum class McpToolCategory {
     ReadOnly,           // Non-mutating inspection, extraction, search

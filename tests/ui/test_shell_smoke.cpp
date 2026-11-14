@@ -247,6 +247,14 @@ void TestShellSmoke::testFloatingCanvasHudAndRulers() {
     hud->WakeUp();
     hud->UpdatePageInfo(0, 1);
     hud->UpdateZoom(1.25);
+    hud->UpdateZoom(1.18); // Verify non-preset editable zoom [BUG-U4-01]
+
+    // Verify closest snap guide logic [BUG-U4-02]
+    CanvasRulerOverlay overlay;
+    overlay.SetSnapGuidesVisible(true);
+    overlay.AddGuide(true, 100.0);
+    overlay.AddGuide(true, 105.0);
+    QCOMPARE(overlay.Snap(104.0, true, 5.0), 105.0);
 
     // Verify StudioToast creation & auto-dismiss
     StudioToast::Show(&window, "HUD Verified", "Elevated viewport HUD test passed.", ToastType::Success, 500);

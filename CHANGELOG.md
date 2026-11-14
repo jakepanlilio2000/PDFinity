@@ -11,6 +11,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.0.10] - 2026-11-14
+
+### Fixed
+- **Canvas HUD Viewport Wake-Up & Custom Zoom Input [BUG-U4-01]:** Connected scroll area viewport to HUD event filter so canvas mouse movements immediately restore HUD ambient opacity, enabled editable mode on the zoom dropdown with Enter key commit, and synchronized non-preset zoom ratios properly. Added regression coverage in `tests/ui/test_shell_smoke.cpp`.
+- **Ruler Tick Scaling & Closest Guide Snapping [BUG-U4-02]:** Added adaptive tick frequency scaling to prevent tick clustering or label overlap at extreme zoom levels (< 25% or > 200%), and updated snap calculation to resolve to the closest alignment guide within threshold rather than first found. Added regression coverage in `tests/ui/test_shell_smoke.cpp`.
+
+---
+
 ## [1.0.9] - 2026-11-14
 
 ### Added
