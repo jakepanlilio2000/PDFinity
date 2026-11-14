@@ -53,6 +53,7 @@ public:
     void ZoomOut();
     void ZoomFitWidth(int viewportWidth);
     void ZoomFitPage(int viewportWidth, int viewportHeight);
+    void ReloadPageSizes();
 
     // Annotation Studio
     void SetAnnotationToolMode(int mode);

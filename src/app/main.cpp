@@ -45,7 +45,7 @@ void PrintHelp() {
 }
 
 void PrintVersion() {
-    std::cout << "PDFinity 1.0.10 Stable\n"
+    std::cout << "PDFinity 1.0.11 Stable\n"
               << "Published by StackSync Solutions (https://www.stacksyncsolutions.com/)\n"
               << "Lead Programmer: Jake Ashley Panlilio (https://github.com/jakepanlilio2000)\n"
               << "License: Mozilla Public License Version 2.0 (MPL-2.0)\n";
@@ -100,7 +100,7 @@ int main(int argc, char* argv[]) {
 
     QApplication app(argc, argv);
     app.setApplicationName("PDFinity");
-    app.setApplicationVersion("1.0.10");
+    app.setApplicationVersion("1.0.11");
     app.setOrganizationName("StackSync Solutions");
     app.setOrganizationDomain("stacksyncsolutions.com");
 

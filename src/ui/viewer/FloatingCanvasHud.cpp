@@ -277,18 +277,34 @@ void FloatingCanvasHud::leaveEvent(QEvent* /*event*/) {
 }
 
 void FloatingCanvasHud::SetPointerMode(CanvasPointerMode mode) {
+    if (m_currentPointerMode == mode && m_selectModeBtn->isChecked() == (mode == CanvasPointerMode::Select)) {
+        return;
+    }
     m_currentPointerMode = mode;
+    m_selectModeBtn->blockSignals(true);
+    m_panModeBtn->blockSignals(true);
     m_selectModeBtn->setChecked(mode == CanvasPointerMode::Select);
     m_panModeBtn->setChecked(mode == CanvasPointerMode::HandPan);
+    m_selectModeBtn->blockSignals(false);
+    m_panModeBtn->blockSignals(false);
     WakeUp();
     emit PointerModeChanged(mode);
 }
 
 void FloatingCanvasHud::SetLayoutMode(pdf_api::PageLayoutMode mode) {
+    if (m_currentLayoutMode == mode && m_continuousBtn->isChecked() == (mode == pdf_api::PageLayoutMode::Continuous)) {
+        return;
+    }
     m_currentLayoutMode = mode;
+    m_singlePageBtn->blockSignals(true);
+    m_continuousBtn->blockSignals(true);
+    m_facingSpreadBtn->blockSignals(true);
     m_singlePageBtn->setChecked(mode == pdf_api::PageLayoutMode::SinglePage);
     m_continuousBtn->setChecked(mode == pdf_api::PageLayoutMode::Continuous);
     m_facingSpreadBtn->setChecked(mode == pdf_api::PageLayoutMode::FacingPages);
+    m_singlePageBtn->blockSignals(false);
+    m_continuousBtn->blockSignals(false);
+    m_facingSpreadBtn->blockSignals(false);
     WakeUp();
     emit LayoutModeChanged(mode);
 }
@@ -340,7 +356,19 @@ void FloatingCanvasHud::Reposition() {
 
     adjustSize();
     int x = (p->width() - width()) / 2;
-    int y = p->height() - height() - 20; // 20px above bottom
+    int y = p->height() - height() - 20;
+
+    if (auto* sa = qobject_cast<QScrollArea*>(p)) {
+        if (sa->viewport()) {
+            QRect vpGeom = sa->viewport()->geometry();
+            x = vpGeom.x() + (vpGeom.width() - width()) / 2;
+            y = vpGeom.bottom() - height() - 16;
+        }
+    }
+
+    if (x + width() > p->width() - 10) {
+        x = p->width() - width() - 10;
+    }
     move(std::max(10, x), std::max(10, y));
     raise();
 }

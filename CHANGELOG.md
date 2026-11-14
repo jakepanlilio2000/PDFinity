@@ -11,6 +11,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.0.11] - 2026-11-14
+
+### Fixed
+- **Canvas HUD Scrollbar Clearance, Layout Sync & Page Rotation Geometry [BUG-U4-03]:**
+  - Updated `FloatingCanvasHud::Reposition()` to dynamically anchor against inner `QScrollArea::viewport()` geometry, ensuring centered alignment across split panels and full clearance above horizontal scrollbars.
+  - Added `ReloadPageSizes()` to `PdfCanvasWidget` and `RotateClockwise()` to `PdfViewerWidget` to refresh aspect ratio and canvas layout rects upon 90° view rotation, eliminating sheet geometry distortion.
+  - Added two-way signal synchronization between `PdfViewerWidget::SetLayout` and `FloatingCanvasHud` layout mode toggles with recursion guards.
+  - Added regression test coverage in `tests/ui/test_shell_smoke.cpp`.
+
+---
+
 ## [1.0.10] - 2026-11-14
 
 ### Fixed

@@ -66,6 +66,23 @@ int PdfCanvasWidget::GetPageCount() const {
     return static_cast<int>(m_pageSizes.size());
 }
 
+void PdfCanvasWidget::ReloadPageSizes() {
+    if (m_doc && m_doc->IsValid()) {
+        int pageCount = m_doc->GetPageCount();
+        m_pageSizes.clear();
+        m_pageSizes.reserve(pageCount);
+        for (int i = 0; i < pageCount; ++i) {
+            auto sizeRes = m_doc->GetPageSize(i);
+            if (sizeRes.has_value()) {
+                m_pageSizes.push_back(sizeRes.value);
+            } else {
+                m_pageSizes.push_back(pdf_api::PdfSize{612.0, 792.0});
+            }
+        }
+        RecalculateLayout();
+    }
+}
+
 void PdfCanvasWidget::SetLayoutMode(pdf_api::PageLayoutMode mode) {
     if (m_layoutMode == mode) return;
     m_layoutMode = mode;

@@ -175,6 +175,9 @@ void MainWindow::SetupUi() {
     connect(m_workflowRibbon, &WorkflowRibbon::ViewFitPageClicked, this, [this]() {
         if (auto* v = m_workspace ? m_workspace->GetCurrentViewer() : nullptr) v->ZoomFitPage();
     });
+    connect(m_workflowRibbon, &WorkflowRibbon::ViewRotateClicked, this, [this]() {
+        if (auto* v = m_workspace ? m_workspace->GetCurrentViewer() : nullptr) v->RotateClockwise();
+    });
     connect(m_workflowRibbon, &WorkflowRibbon::ViewFullscreenClicked, this, &MainWindow::OnToggleFullScreen);
     connect(m_workflowRibbon, &WorkflowRibbon::PreflightClicked, this, &MainWindow::OnOpenPreflightCompliance);
     connect(m_workflowRibbon, &WorkflowRibbon::ApplyRedactionsClicked, this, &MainWindow::OnApplyRedactions);

@@ -256,6 +256,14 @@ void TestShellSmoke::testFloatingCanvasHudAndRulers() {
     overlay.AddGuide(true, 105.0);
     QCOMPARE(overlay.Snap(104.0, true, 5.0), 105.0);
 
+    // Verify clockwise view rotation and layout mode two-way synchronization [BUG-U4-03]
+    viewer->RotateClockwise();
+    QCOMPARE(viewer->GetDocument()->GetPageRotation(0), 90);
+    viewer->SetLayout(pdf_api::PageLayoutMode::FacingPages);
+    QCOMPARE(viewer->GetLayoutMode(), pdf_api::PageLayoutMode::FacingPages);
+    viewer->SetLayout(pdf_api::PageLayoutMode::Continuous);
+    QCOMPARE(viewer->GetLayoutMode(), pdf_api::PageLayoutMode::Continuous);
+
     // Verify StudioToast creation & auto-dismiss
     StudioToast::Show(&window, "HUD Verified", "Elevated viewport HUD test passed.", ToastType::Success, 500);
 

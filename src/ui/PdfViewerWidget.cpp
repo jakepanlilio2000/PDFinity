@@ -194,18 +194,7 @@ void PdfViewerWidget::SetupUi() {
     connect(m_floatingHud, &FloatingCanvasHud::FitWidthRequested, this, &PdfViewerWidget::ZoomFitWidth);
     connect(m_floatingHud, &FloatingCanvasHud::FitPageRequested, this, &PdfViewerWidget::ZoomFitPage);
     connect(m_floatingHud, &FloatingCanvasHud::LayoutModeChanged, this, &PdfViewerWidget::SetLayout);
-    connect(m_floatingHud, &FloatingCanvasHud::RotateRequested, this, [this]() {
-        if (m_doc) {
-            int p = GetCurrentPage();
-            int rot = (m_doc->GetPageRotation(p) + 90) % 360;
-            m_doc->SetPageRotation(p, rot);
-            if (m_renderService) {
-                m_renderService->GetCache().Clear();
-                m_renderService->RequestPageRender(m_doc, p, GetZoomScale(), devicePixelRatioF(), 10);
-            }
-            m_canvas->update();
-        }
-    });
+    connect(m_floatingHud, &FloatingCanvasHud::RotateRequested, this, &PdfViewerWidget::RotateClockwise);
 
     m_splitter->addWidget(m_scrollArea);
 
@@ -449,6 +438,28 @@ void PdfViewerWidget::SetLayout(pdf_api::PageLayoutMode mode) {
         m_layoutCombo->setCurrentIndex(idx);
     }
     m_canvas->SetLayoutMode(mode);
+    if (m_floatingHud) {
+        m_floatingHud->SetLayoutMode(mode);
+    }
+}
+
+void PdfViewerWidget::RotateClockwise() {
+    if (m_doc) {
+        int p = GetCurrentPage();
+        int rot = (m_doc->GetPageRotation(p) + 90) % 360;
+        m_doc->SetPageRotation(p, rot);
+        if (m_renderService) {
+            m_renderService->GetCache().Clear();
+            m_renderService->RequestPageRender(m_doc, p, GetZoomScale(), devicePixelRatioF(), 10);
+        }
+        if (m_canvas) {
+            m_canvas->ReloadPageSizes();
+            m_canvas->update();
+        }
+        if (m_leftRail) {
+            m_leftRail->RefreshThumbnails();
+        }
+    }
 }
 
 void PdfViewerWidget::GoToPage(int pageIndex) {

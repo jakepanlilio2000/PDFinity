@@ -75,6 +75,7 @@ public slots:
     void ZoomOut();
     void ZoomFitWidth();
     void ZoomFitPage();
+    void RotateClockwise();
     void Undo();
     void Redo();
     void OpenFormInspector();
