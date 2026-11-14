@@ -11,6 +11,7 @@ import io
 import json
 import pathlib
 import re
+import shutil
 import struct
 import sys
 import tarfile
@@ -172,6 +173,24 @@ def validate(directory, version, sha, run_id, attempt, lane=None):
     return sorted(validated, key=lambda a: a['name'])
 
 
+def stage(source, destination, receipt, version, sha, run_id, attempt, lane):
+    """Only export contract files, after a native verifier supplies the bound receipt."""
+    require(not destination.exists(), 'Export directory must be new (stale staging forbidden)')
+    specs = [a for a in contract(version) if a['lane'] == lane]
+    require(receipt.is_file(), f'Native verification receipt missing: {receipt}; lane cannot publish')
+    for spec in specs:
+        require((source / spec['name']).is_file(), f'Missing required package {spec["name"]}')
+    destination.mkdir(parents=True)
+    try:
+        for spec in specs:
+            shutil.copyfile(source / spec['name'], destination / spec['name'])
+        shutil.copyfile(receipt, destination / f'{lane}.json')
+        validate(destination, version, sha, run_id, attempt, lane)
+    except Exception:
+        # Keep failed exports for diagnostics; they never reach an upload step.
+        raise
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--directory', type=pathlib.Path, required=True)
@@ -181,8 +200,14 @@ def main():
     parser.add_argument('--attempt', required=True)
     parser.add_argument('--lane', choices=LANES)
     parser.add_argument('--output', type=pathlib.Path, help='Write validated metadata OUTSIDE input tree')
+    parser.add_argument('--stage-from', type=pathlib.Path)
+    parser.add_argument('--receipt', type=pathlib.Path)
     args = parser.parse_args()
     try:
+        if args.stage_from:
+            require(args.lane and args.receipt, 'Stage requires lane and native receipt')
+            stage(args.stage_from, args.directory, args.receipt, args.version, args.sha,
+                  args.run_id, args.attempt, args.lane)
         assets = validate(args.directory, args.version, args.sha, args.run_id, args.attempt, args.lane)
         result = {'schema': 1, 'version': args.version, 'tag': 'v' + args.version, 'source_sha': args.sha,
                   'run_id': args.run_id, 'run_attempt': args.attempt, 'assets': assets}

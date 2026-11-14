@@ -21,6 +21,10 @@ class VersionTests(unittest.TestCase):
             dest = self.root / name
             dest.parent.mkdir(parents=True, exist_ok=True)
             shutil.copyfile(ROOT / name, dest)
+        # Fixed version fixture, independent of the next real product version.
+        for name, text in versions.plan(self.root, '1.1.0').items():
+            (self.root / name).write_text(text, encoding='utf-8')
+        (self.root / 'CHANGELOG.md').write_text('## [1.1.0] - Fixture\n', encoding='utf-8')
 
     def snapshot(self):
         return {str(p.relative_to(self.root)): p.read_bytes() for p in self.root.rglob('*') if p.is_file()}
