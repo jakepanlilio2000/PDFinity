@@ -90,11 +90,12 @@ def identity(api, tag, sha, rehearsal=False):
 
 
 def ci_gate(api, sha):
-    result = api.request('/actions/workflows/ci.yml/runs?head_sha=' + sha + '&status=success&per_page=100')
+    result = api.request('/actions/workflows/ci.yml/runs?head_sha=' + sha + '&per_page=100')
     require(result is not None, 'Cannot read required CI runs')
-    for run in result['workflow_runs']:
-        if run['head_sha'] != sha or run['head_branch'] != 'main' or run['conclusion'] != 'success':
-            continue
+    candidates = [r for r in result['workflow_runs'] if r['head_sha'] == sha and r['head_branch'] == 'main']
+    # A prior success must not mask a newer failure, cancellation or pending run.
+    for run in sorted(candidates, key=lambda r: r['id'], reverse=True)[:1]:
+        require(run['conclusion'] == 'success', 'Latest required CI run is not successful')
         jobs, page = [], 1
         while True:
             batch = api.request(f'/actions/runs/{run["id"]}/jobs?per_page=100&page={page}')['jobs']

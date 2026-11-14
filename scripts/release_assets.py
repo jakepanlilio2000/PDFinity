@@ -69,7 +69,8 @@ def inspect(path, spec):
     if kind == 'zip':
         members = archive_members(data)
         for suffix in ('PDFinity.exe', 'pdfinity-cli.exe', 'pdfium.dll', 'Qt6Core.dll', 'Qt6Gui.dll',
-                       'Qt6Widgets.dll', 'Qt6Network.dll', 'Qt6PrintSupport.dll', 'platforms/qwindows.dll'):
+                       'Qt6Widgets.dll', 'Qt6Network.dll', 'Qt6PrintSupport.dll', 'vcruntime140.dll',
+                       'vcruntime140_1.dll', 'msvcp140.dll', 'platforms/qwindows.dll'):
             matches = [v for n, v in members.items() if n.endswith('/' + suffix)]
             require(len(matches) == 1, f'Missing/duplicate portable runtime: {suffix}')
             pe(matches[0])

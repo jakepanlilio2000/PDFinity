@@ -81,9 +81,9 @@ jobs:
 
       - name: Validate Desktop and AppStream Metadata
         run: |
-          desktop-file-validate packaging/linux/pdfinity.desktop || true
-          desktop-file-validate packaging/linux/com.stacksyncsolutions.pdfinity.desktop || true
-          appstreamcli validate packaging/linux/flatpak/com.stacksyncsolutions.pdfinity.metainfo.xml || true
+          desktop-file-validate packaging/linux/pdfinity.desktop
+          desktop-file-validate packaging/linux/com.stacksyncsolutions.pdfinity.desktop
+          appstreamcli validate packaging/linux/flatpak/com.stacksyncsolutions.pdfinity.metainfo.xml
 
       - name: Provision PDFium Binaries
         run: python3 scripts/download_pdfium.py --platform linux
@@ -113,7 +113,7 @@ jobs:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
 
       - name: Install Build Tools
-        run: brew install cmake ninja || true
+        run: brew install cmake ninja
 
       - name: Setup Qt 6
         uses: jurplel/install-qt-action@b7840a6733f49e2a39c4355260d2375063d39b61 # v3
@@ -123,8 +123,8 @@ jobs:
 
       - name: Patch Qt 6 for macOS SDK AGL Framework Deprecation
         run: |
-          find "${Qt6_DIR}" -type f \( -name "*.cmake" -o -name "*.prl" -o -name "*.conf" \) -exec sed -i '' 's/-framework AGL//g' {} + || true
-          find "${Qt6_DIR}" -type f -name "FindWrapOpenGL.cmake" -exec sed -i '' 's/"AGL"//g; s/AGL//g' {} + || true
+          find "${Qt6_DIR}" -type f \( -name "*.cmake" -o -name "*.prl" -o -name "*.conf" \) -exec sed -i '' 's/-framework AGL//g' {} +
+          find "${Qt6_DIR}" -type f -name "FindWrapOpenGL.cmake" -exec sed -i '' 's/"AGL"//g; s/AGL//g' {} +
 
       - name: Provision PDFium Binaries
         run: python3 scripts/download_pdfium.py --platform mac
@@ -132,7 +132,7 @@ jobs:
       - name: Configure CMake
         run: |
           cmake --preset macos-release
-          find build/macos-release -type f \( -name "build.ninja" -o -name "*.cmake" \) -exec sed -i '' 's/-framework AGL//g' {} + || true
+          find build/macos-release -type f \( -name "build.ninja" -o -name "*.cmake" \) -exec sed -i '' 's/-framework AGL//g' {} +
 
       - name: Build
         run: |

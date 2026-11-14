@@ -33,7 +33,8 @@ class ReleaseGateTests(unittest.TestCase):
         archive = self.root / self.assets[0]['name']
         with zipfile.ZipFile(archive, 'w') as z:
             for name in ('PDFinity.exe', 'pdfinity-cli.exe', 'pdfium.dll', 'Qt6Core.dll', 'Qt6Gui.dll',
-                         'Qt6Widgets.dll', 'Qt6Network.dll', 'Qt6PrintSupport.dll', 'platforms/qwindows.dll'):
+                         'Qt6Widgets.dll', 'Qt6Network.dll', 'Qt6PrintSupport.dll', 'vcruntime140.dll',
+                         'vcruntime140_1.dll', 'msvcp140.dll', 'platforms/qwindows.dll'):
                 z.writestr('PDFinity-1.1.0-windows-x64-portable/' + name, fake_pe())
         (self.root / self.assets[1]['name']).write_bytes(fake_pe(0x14c))
         self.receipt = {'schema': 1, 'repository': 'jakepanlilio2000/PDFinity', 'lane': 'windows',
@@ -115,6 +116,18 @@ class ReleaseGateTests(unittest.TestCase):
         del self.receipt['assets'][0]['checks']['runtime']
         self.save()
         with self.assertRaisesRegex(ValueError, 'runtime'):
+            self.check()
+
+    def test_host_runtime_cannot_hide_missing_packaged_crt(self):
+        p = self.root / self.assets[0]['name']
+        with zipfile.ZipFile(p) as z:
+            members = {n: z.read(n) for n in z.namelist() if not n.endswith('/vcruntime140.dll')}
+        with zipfile.ZipFile(p, 'w') as z:
+            for n, data in members.items():
+                z.writestr(n, data)
+        self.receipt['assets'][0].update(size=p.stat().st_size, sha256=gate.digest(p))
+        self.save()
+        with self.assertRaisesRegex(ValueError, 'vcruntime140.dll'):
             self.check()
 
     def test_required_android_cannot_be_ignored(self):

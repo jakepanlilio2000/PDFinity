@@ -112,6 +112,14 @@ class TransactionTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, 'lacks all successful'):
             REAL_CI_GATE(api, 'a' * 40)
 
+    def test_newer_failed_ci_does_not_reuse_older_success(self):
+        api = RecordingAPI()
+        api.request = lambda *a, **kw: {'workflow_runs': [
+            {'id': 1, 'head_sha': 'a' * 40, 'head_branch': 'main', 'conclusion': 'success'},
+            {'id': 2, 'head_sha': 'a' * 40, 'head_branch': 'main', 'conclusion': 'failure'}]}
+        with self.assertRaisesRegex(ValueError, 'Latest required CI'):
+            REAL_CI_GATE(api, 'a' * 40)
+
     def test_real_release_rejects_different_workflow_recipe(self):
         with patch.object(gate, 'git', return_value='b' * 40):
             with self.assertRaisesRegex(ValueError, 'Workflow source differs'):

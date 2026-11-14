@@ -14,6 +14,7 @@ import hashlib
 import zipfile
 import re
 import argparse
+from pathlib import Path
 
 def get_sha256(filepath):
     h = hashlib.sha256()
@@ -88,8 +89,18 @@ def main():
                             "--compiler-runtime", "--no-translations"], check=True)
         else:
             raise RuntimeError("windeployqt is required; incomplete runtime fallback is forbidden")
+        crt = ("vcruntime140.dll", "vcruntime140_1.dll", "msvcp140.dll")
+        if not all(os.path.isfile(os.path.join(staged_dir, name)) for name in crt):
+            redist = os.environ.get("VCToolsRedistDir")
+            if not redist:
+                raise RuntimeError("App-local MSVC runtime missing; initialize the MSVC developer environment")
+            directories = list((Path(redist) / "x64").glob("Microsoft.VC*.CRT"))
+            if len(directories) != 1:
+                raise RuntimeError("Cannot identify a unique x64 MSVC redistributable directory")
+            for runtime in directories[0].glob("*.dll"):
+                shutil.copy2(runtime, staged_dir)
         for runtime in ("Qt6Core.dll", "Qt6Gui.dll", "Qt6Widgets.dll", "Qt6Network.dll",
-                        "Qt6PrintSupport.dll", os.path.join("platforms", "qwindows.dll")):
+                        "Qt6PrintSupport.dll", *crt, os.path.join("platforms", "qwindows.dll")):
             if not os.path.isfile(os.path.join(staged_dir, runtime)):
                 raise RuntimeError(f"Deployment omitted required runtime: {runtime}")
 
