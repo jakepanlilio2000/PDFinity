@@ -18,7 +18,7 @@ QIcon VectorIcons::GetIcon(IconType type, const QColor& color) {
 }
 
 QIcon VectorIcons::GetAccentIcon(IconType type) {
-    return GetIcon(type, QColor(37, 99, 235)); // Modern royal blue accent
+    return GetIcon(type, QColor("#DC2626")); // Crimson Brand Accent
 }
 
 QPixmap VectorIcons::CreatePixmap(IconType type, int size, const QColor& color) {

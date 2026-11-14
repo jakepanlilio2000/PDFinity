@@ -110,6 +110,9 @@ void MainWindow::SetupUi() {
         connect(home, &HomeDashboardWidget::OcrRequested, this, &MainWindow::OnOpenOcrStudio);
         connect(home, &HomeDashboardWidget::IntelligenceRequested, this, &MainWindow::OnOpenDocumentIntelligence);
         connect(home, &HomeDashboardWidget::BatchRequested, this, &MainWindow::OnOpenBatchCenter);
+        connect(home, &HomeDashboardWidget::CreateFromImagesRequested, this, &MainWindow::OnOpenConversionCenter);
+        connect(home, &HomeDashboardWidget::CombineFilesRequested, this, &MainWindow::OnMergeDocuments);
+        connect(home, &HomeDashboardWidget::EditPdfRequested, this, &MainWindow::OnToggleContentEditor);
     }
 
     // Wire Workflow Ribbon Actions

@@ -156,6 +156,8 @@ add_library(pdfinity_ui STATIC
     services/PrintService.cpp
     ui/ThemeManager.hpp
     ui/ThemeManager.cpp
+    ui/theme/ThemeTokens.hpp
+    ui/theme/ThemeTokens.cpp
     ui/AboutDialog.hpp
     ui/AboutDialog.cpp
     ui/SettingsDialog.hpp

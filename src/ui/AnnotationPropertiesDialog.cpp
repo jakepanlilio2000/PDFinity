@@ -77,7 +77,7 @@ void AnnotationPropertiesDialog::SetupUi() {
     bottomLayout->addStretch();
 
     auto* okBtn = new QPushButton(tr("OK"), this);
-    okBtn->setStyleSheet("QPushButton { font-weight: bold; background-color: #2563eb; color: white; padding: 5px 14px; border-radius: 4px; }");
+    okBtn->setStyleSheet("QPushButton { font-weight: bold; background-color: #DC2626; color: white; padding: 5px 14px; border-radius: 4px; } QPushButton:hover { background-color: #B91C1C; }");
     auto* cancelBtn = new QPushButton(tr("Cancel"), this);
 
     bottomLayout->addWidget(okBtn);

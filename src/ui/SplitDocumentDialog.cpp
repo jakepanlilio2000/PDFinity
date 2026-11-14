@@ -120,7 +120,7 @@ void SplitDocumentDialog::SetupUi() {
     bottomLayout->addStretch();
 
     m_splitBtn = new QPushButton(tr("Split Document"), this);
-    m_splitBtn->setStyleSheet("QPushButton { font-weight: bold; background-color: #2563eb; color: white; padding: 6px 14px; border-radius: 4px; }");
+    m_splitBtn->setStyleSheet("QPushButton { font-weight: bold; background-color: #DC2626; color: white; padding: 6px 14px; border-radius: 4px; } QPushButton:hover { background-color: #B91C1C; }");
     m_splitBtn->setEnabled(false);
     auto* cancelBtn = new QPushButton(tr("Cancel"), this);
 

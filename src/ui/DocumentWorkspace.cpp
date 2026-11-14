@@ -50,17 +50,6 @@ void DocumentWorkspace::SetupUi() {
     m_tabWidget = new QTabWidget(this);
     m_tabWidget->setTabsClosable(true);
     m_tabWidget->setMovable(true);
-    m_tabWidget->setStyleSheet(
-        "QTabWidget::pane { border: none; background: #ffffff; }"
-        "QTabBar::tab {"
-        "  background: #f1f5f9; border: 1px solid #e2e8f0; border-bottom: none;"
-        "  border-top-left-radius: 6px; border-top-right-radius: 6px;"
-        "  padding: 6px 14px; margin-right: 2px; font-size: 11px; font-weight: 500; color: #475569;"
-        "}"
-        "QTabBar::tab:selected {"
-        "  background: #ffffff; border-bottom: 2px solid #2563eb; color: #1e293b; font-weight: 600;"
-        "}"
-    );
 
     // Pinned Home Dashboard as Tab 0
     m_homeDashboard = new HomeDashboardWidget(this);
@@ -175,7 +164,7 @@ QWidget* DocumentWorkspace::CreateWelcomeView() {
 
     for (const auto* b : badges) {
         auto* badge = new QLabel(QString("✓ %1").arg(b), container);
-        badge->setStyleSheet("background-color: rgba(37, 99, 235, 0.12); color: #2563eb; "
+        badge->setStyleSheet("background-color: rgba(220, 38, 38, 0.12); color: #DC2626; "
                              "padding: 4px 10px; border-radius: 12px; font-size: 11px; font-weight: 600;");
         badgeLayout->addWidget(badge);
     }

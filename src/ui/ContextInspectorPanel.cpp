@@ -54,7 +54,7 @@ void ContextInspectorPanel::SetupUi() {
     m_tabWidget->setStyleSheet(
         "QTabWidget::pane { border: none; background: #ffffff; }"
         "QTabBar::tab { background: #f1f5f9; border: none; padding: 6px 14px; font-weight: 500; font-size: 11px; }"
-        "QTabBar::tab:selected { background: #ffffff; border-bottom: 2px solid #2563eb; color: #2563eb; font-weight: 600; }"
+        "QTabBar::tab:selected { background: #ffffff; border-bottom: 2px solid #DC2626; color: #DC2626; font-weight: 600; }"
     );
 
     m_tabWidget->addTab(CreatePropertiesTab(), tr("Properties"));
@@ -203,7 +203,7 @@ QPushButton* ContextInspectorPanel::CreateToolButton(
         "}"
         "QPushButton:hover {"
         "  background-color: #f1f5f9;"
-        "  border-color: #3b82f6;"
+        "  border-color: #DC2626;"
         "}"
     );
 
@@ -212,7 +212,7 @@ QPushButton* ContextInspectorPanel::CreateToolButton(
     layout->setSpacing(8);
 
     auto* iconLabel = new QLabel(btn);
-    iconLabel->setPixmap(VectorIcons::CreatePixmap(icon, 20, QColor(37, 99, 235)));
+    iconLabel->setPixmap(VectorIcons::CreatePixmap(icon, 20, QColor("#DC2626")));
 
     auto* textCol = new QVBoxLayout();
     textCol->setContentsMargins(0, 0, 0, 0);

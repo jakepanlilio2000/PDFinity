@@ -11,6 +11,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.0.2] - 2026-11-14
+
+### Added
+- **Crimson-Slate Enterprise Design System (`ThemeTokens`):**
+  - Centralized palette token system supporting seamless runtime switching between **Studio Dark (Warm Charcoal)** and **Studio Light (Crisp Daylight)**.
+  - Studio Dark: App Chrome `#18181B`, Ribbon `#222428`, Side Panel `#1E2024`, Canvas Backdrop `#111214`, Surface `#27292E`, Border `#34373E`, Primary Text `#F4F4F5`, Secondary Text `#A1A1AA`.
+  - Studio Light: App Chrome `#F3F4F6`, Ribbon `#FFFFFF`, Side Panel `#F9FAFB`, Canvas Backdrop `#E5E7EB`, Surface `#FFFFFF`, Border `#D1D5DB`, Primary Text `#111827`, Secondary Text `#4B5563`.
+  - Brand Accent Tokens: Primary Crimson `#DC2626`, Hover Crimson `#B91C1C`, Soft Crimson Tint `rgba(220, 38, 38, 0.12)`, Focus Ring `#EF4444`.
+  - Native typography stack (`Segoe UI`, `SF Pro Text`, `Inter`, `Roboto`) with structured type scale (11px, 12px, 13px, 16px, 18px) and 4px–8px border radii.
+- **Crisp Vector SVG Icon Suite (`assets/icons/studio/`):**
+  - 43 pixel-aligned 24x24 vector SVG icons with 1.6px stroke width, rounded caps/joins, and Crimson accents covering all core actions and toolbar tools.
+- **Enhanced Pinned Home Dashboard (`HomeDashboardWidget`):**
+  - Permanent left navigation shortcuts: *Recent*, *Starred / Pinned*, *Local Files*, and *Batch & Automate*.
+  - 7 Hero Quick-Action Cards: *Open PDF*, *Create from Images*, *Combine Files*, *Edit PDF*, *Fill & Sign*, *Protect & Redact*, and *OCR Text Recognition*.
+  - Sortable Recent Documents Table with pin toggle (`⭐`/`☆`), file path, last opened timestamp, formatted size, and quick removal actions.
+  - Real-time search filter and interactive drag-and-drop landing target.
+
+---
+
 ## [1.0.1] - 2026-11-14
 
 ### Added

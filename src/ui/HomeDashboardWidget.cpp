@@ -4,6 +4,7 @@
 #include "HomeDashboardWidget.hpp"
 #include "VectorIcons.hpp"
 #include "persistence/RecentFilesManager.hpp"
+#include "application/AppContext.hpp"
 #include <QVBoxLayout>
 #include <QHBoxLayout>
 #include <QGridLayout>
@@ -17,6 +18,8 @@
 #include <QDateTime>
 #include <QScrollArea>
 #include <QFrame>
+#include <QSplitter>
+#include <QToolButton>
 
 namespace pdfinity::ui {
 
@@ -27,9 +30,14 @@ HomeDashboardWidget::HomeDashboardWidget(QWidget* parent) : QWidget(parent) {
 }
 
 void HomeDashboardWidget::SetupUi() {
-    auto* outerLayout = new QVBoxLayout(this);
-    outerLayout->setContentsMargins(0, 0, 0, 0);
+    auto* rootLayout = new QHBoxLayout(this);
+    rootLayout->setContentsMargins(0, 0, 0, 0);
+    rootLayout->setSpacing(0);
 
+    // 1. Left Sidebar Navigation
+    rootLayout->addWidget(CreateSidebar(), 0);
+
+    // 2. Right Main Scroll Area
     auto* scrollArea = new QScrollArea(this);
     scrollArea->setWidgetResizable(true);
     scrollArea->setFrameShape(QFrame::NoFrame);
@@ -37,25 +45,87 @@ void HomeDashboardWidget::SetupUi() {
     auto* contentWidget = new QWidget(scrollArea);
     auto* contentLayout = new QVBoxLayout(contentWidget);
     contentLayout->setContentsMargins(32, 28, 32, 32);
-    contentLayout->setSpacing(24);
+    contentLayout->setSpacing(22);
 
-    // 1. Header Section
+    // Header Section
     contentLayout->addWidget(CreateHeaderSection());
 
-    // 2. Workflow Quick Action Cards
+    // 7 Hero Quick-Action Cards
     contentLayout->addWidget(CreateWorkflowCardsSection());
 
-    // 3. Middle Area: Recent Files & Dropzone in a 2-column layout
+    // Middle Area: Recent Documents Table + Dropzone
     auto* middleLayout = new QHBoxLayout();
-    middleLayout->setSpacing(24);
-    middleLayout->addWidget(CreateRecentFilesSection(), 6);
-    middleLayout->addWidget(CreateDropzoneSection(), 4);
+    middleLayout->setSpacing(20);
+    middleLayout->addWidget(CreateRecentFilesSection(), 7);
+    middleLayout->addWidget(CreateDropzoneSection(), 3);
 
     contentLayout->addLayout(middleLayout);
     contentLayout->addStretch(1);
 
     scrollArea->setWidget(contentWidget);
-    outerLayout->addWidget(scrollArea);
+    rootLayout->addWidget(scrollArea, 1);
+}
+
+QWidget* HomeDashboardWidget::CreateSidebar() {
+    auto* sidebar = new QFrame(this);
+    sidebar->setFixedWidth(200);
+    sidebar->setStyleSheet(
+        "QFrame { background-color: #1E2024; border-right: 1px solid #34373E; }"
+    );
+
+    auto* layout = new QVBoxLayout(sidebar);
+    layout->setContentsMargins(12, 20, 12, 16);
+    layout->setSpacing(8);
+
+    auto* sectionTitle = new QLabel(tr("STUDIO HOME"), sidebar);
+    sectionTitle->setStyleSheet(
+        "color: #A1A1AA; font-size: 11px; font-weight: 700; letter-spacing: 0.5px; padding-left: 6px; border: none;"
+    );
+    layout->addWidget(sectionTitle);
+
+    m_sidebarList = new QListWidget(sidebar);
+    m_sidebarList->setStyleSheet(
+        "QListWidget { background: transparent; border: none; outline: none; }"
+        "QListWidget::item {"
+        "  padding: 10px 12px; border-radius: 6px; color: #F4F4F5; font-size: 13px; font-weight: 500; margin-bottom: 2px;"
+        "}"
+        "QListWidget::item:hover { background-color: rgba(220, 38, 38, 0.12); color: #F4F4F5; }"
+        "QListWidget::item:selected { background-color: #DC2626; color: #FFFFFF; font-weight: 600; }"
+    );
+
+    auto* itemRecent = new QListWidgetItem(tr("⏱ Recent"), m_sidebarList);
+    auto* itemStarred = new QListWidgetItem(tr("⭐ Starred / Pinned"), m_sidebarList);
+    auto* itemLocal = new QListWidgetItem(tr("📁 Local Files"), m_sidebarList);
+    auto* itemBatch = new QListWidgetItem(tr("⚡ Batch & Automate"), m_sidebarList);
+
+    m_sidebarList->addItem(itemRecent);
+    m_sidebarList->addItem(itemStarred);
+    m_sidebarList->addItem(itemLocal);
+    m_sidebarList->addItem(itemBatch);
+
+    m_sidebarList->setCurrentRow(0);
+    connect(m_sidebarList, &QListWidget::currentRowChanged, this, &HomeDashboardWidget::OnSidebarItemChanged);
+
+    layout->addWidget(m_sidebarList);
+    layout->addStretch();
+
+    return sidebar;
+}
+
+void HomeDashboardWidget::OnSidebarItemChanged(int row) {
+    if (row == 0) {
+        m_currentSection = DashboardSection::Recent;
+        RefreshRecentFiles();
+    } else if (row == 1) {
+        m_currentSection = DashboardSection::Starred;
+        RefreshRecentFiles();
+    } else if (row == 2) {
+        emit OpenFileRequested();
+        m_sidebarList->setCurrentRow(0);
+    } else if (row == 3) {
+        emit BatchRequested();
+        m_sidebarList->setCurrentRow(0);
+    }
 }
 
 QWidget* HomeDashboardWidget::CreateHeaderSection() {
@@ -65,31 +135,31 @@ QWidget* HomeDashboardWidget::CreateHeaderSection() {
 
     auto* textLayout = new QVBoxLayout();
     auto* titleLabel = new QLabel(tr("<h2>PDFinity Document Studio</h2>"), header);
-    titleLabel->setStyleSheet("color: #1e293b; font-weight: 700; margin: 0;");
+    titleLabel->setStyleSheet("color: #F4F4F5; font-weight: 700; margin: 0;");
 
     auto* subtitleLabel = new QLabel(
-        tr("Professional • Modular • Offline-First PDF Productivity Suite"), header
+        tr("Professional • Modular • Offline-First PDF Productivity Workstation"), header
     );
-    subtitleLabel->setStyleSheet("color: #64748b; font-size: 13px; font-weight: 500;");
+    subtitleLabel->setStyleSheet("color: #A1A1AA; font-size: 13px; font-weight: 500;");
 
     textLayout->addWidget(titleLabel);
     textLayout->addWidget(subtitleLabel);
     layout->addLayout(textLayout);
     layout->addStretch();
 
-    // Security Guarantee Pill
+    // Offline Security Guarantee Badge
     auto* shieldPill = new QFrame(header);
     shieldPill->setStyleSheet(
-        "background-color: #ecfdf5; border: 1px solid #10b981; border-radius: 16px; padding: 6px 14px;"
+        "background-color: rgba(220, 38, 38, 0.12); border: 1px solid #DC2626; border-radius: 16px; padding: 6px 14px;"
     );
     auto* shieldLayout = new QHBoxLayout(shieldPill);
     shieldLayout->setContentsMargins(0, 0, 0, 0);
     shieldLayout->setSpacing(8);
 
     auto* shieldIcon = new QLabel(shieldPill);
-    shieldIcon->setPixmap(VectorIcons::CreatePixmap(IconType::Shield, 18, QColor(16, 185, 129)));
+    shieldIcon->setPixmap(VectorIcons::CreatePixmap(IconType::Shield, 18, QColor("#DC2626")));
     auto* shieldText = new QLabel(tr("<b>100% Offline • Zero Telemetry • Local Execution</b>"), shieldPill);
-    shieldText->setStyleSheet("color: #065f46; font-size: 12px;");
+    shieldText->setStyleSheet("color: #DC2626; font-size: 12px; font-weight: 600;");
 
     shieldLayout->addWidget(shieldIcon);
     shieldLayout->addWidget(shieldText);
@@ -102,239 +172,292 @@ QWidget* HomeDashboardWidget::CreateWorkflowCardsSection() {
     auto* container = new QWidget(this);
     auto* grid = new QGridLayout(container);
     grid->setContentsMargins(0, 0, 0, 0);
-    grid->setSpacing(14);
+    grid->setSpacing(12);
 
-    struct CardDef {
+    struct HeroCardDef {
         QString title;
         QString desc;
         IconType icon;
         std::function<void()> onClick;
     };
 
-    std::vector<CardDef> cards = {
-        {tr("Open Document"), tr("Open any standard PDF document (Ctrl+O)"), IconType::Open, [this]() { emit OpenFileRequested(); }},
-        {tr("Organize & Assemble"), tr("Merge, split, extract, rotate, and reorder pages"), IconType::Organize, [this]() { emit OrganizeRequested(); }},
-        {tr("Review & Annotate"), tr("Highlight text, add sticky notes, and vector callouts"), IconType::Annotations, [this]() { emit AnnotateRequested(); }},
-        {tr("Fill Forms & Sign"), tr("Fill interactive AcroForms and apply digital signatures"), IconType::DigitalSign, [this]() { emit SignRequested(); }},
-        {tr("Protect & Redact"), tr("Irreversible content-stream redaction and metadata scrub"), IconType::Redaction, [this]() { emit RedactRequested(); }},
-        {tr("OCR Studio"), tr("Recognize scanned text and create searchable layers"), IconType::Ocr, [this]() { emit OcrRequested(); }},
-        {tr("Document Intelligence"), tr("Inspect fonts, images, layers, and preflight rules"), IconType::Properties, [this]() { emit IntelligenceRequested(); }},
-        {tr("Batch Automation"), tr("Automate multi-file profiles and batch workflows"), IconType::Batch, [this]() { emit BatchRequested(); }}
+    // 7 Hero Quick-Action Cards with Crimson Accent
+    std::vector<HeroCardDef> cards = {
+        {tr("Open PDF"), tr("Browse and open any document (Ctrl+O)"), IconType::Open, [this]() { emit OpenFileRequested(); }},
+        {tr("Create from Images"), tr("Convert JPEG, PNG, TIFF, or BMP into PDF"), IconType::ContentEdit, [this]() { emit CreateFromImagesRequested(); }},
+        {tr("Combine Files"), tr("Merge multiple documents into a single PDF"), IconType::Merge, [this]() { emit CombineFilesRequested(); }},
+        {tr("Edit PDF"), tr("Direct page text and object manipulation"), IconType::ContentEdit, [this]() { emit EditPdfRequested(); }},
+        {tr("Fill & Sign"), tr("Fill AcroForms and place digital signatures"), IconType::DigitalSign, [this]() { emit SignRequested(); }},
+        {tr("Protect & Redact"), tr("Cryptographic encryption and sanitization"), IconType::Redaction, [this]() { emit RedactRequested(); }},
+        {tr("OCR Text Recognition"), tr("Generate searchable text from scanned pages"), IconType::Ocr, [this]() { emit OcrRequested(); }}
     };
 
-    for (size_t i = 0; i < cards.size(); ++i) {
-        int r = static_cast<int>(i / 4);
-        int c = static_cast<int>(i % 4);
+    int col = 0;
+    int row = 0;
+    const int maxCols = 4;
 
-        auto* cardBtn = new QPushButton(container);
-        cardBtn->setStyleSheet(
+    for (const auto& card : cards) {
+        auto* btn = new QPushButton(container);
+        btn->setCursor(Qt::PointingHandCursor);
+        btn->setStyleSheet(
             "QPushButton {"
-            "  background: #ffffff;"
-            "  border: 1px solid #e2e8f0;"
-            "  border-radius: 10px;"
-            "  padding: 14px;"
-            "  text-align: left;"
+            "  background-color: #27292E; border: 1px solid #34373E; border-radius: 8px;"
+            "  padding: 14px; text-align: left; min-height: 80px;"
             "}"
             "QPushButton:hover {"
-            "  border-color: #3b82f6;"
-            "  background-color: #f8fafc;"
+            "  background-color: #2D3036; border-color: #DC2626;"
             "}"
             "QPushButton:pressed {"
-            "  background-color: #eff6ff;"
+            "  background-color: rgba(220, 38, 38, 0.15);"
             "}"
         );
 
-        auto* btnLayout = new QVBoxLayout(cardBtn);
-        btnLayout->setContentsMargins(0, 0, 0, 0);
-        btnLayout->setSpacing(6);
+        auto* btnLayout = new QHBoxLayout(btn);
+        btnLayout->setContentsMargins(6, 6, 6, 6);
+        btnLayout->setSpacing(12);
 
-        auto* iconLabel = new QLabel(cardBtn);
-        iconLabel->setPixmap(VectorIcons::CreatePixmap(cards[i].icon, 28, QColor(37, 99, 235)));
+        auto* iconLabel = new QLabel(btn);
+        iconLabel->setPixmap(VectorIcons::CreatePixmap(card.icon, 28, QColor("#DC2626")));
+        btnLayout->addWidget(iconLabel, 0, Qt::AlignTop);
 
-        auto* titleLabel = new QLabel(QString("<b>%1</b>").arg(cards[i].title), cardBtn);
-        titleLabel->setStyleSheet("color: #1e293b; font-size: 13px;");
+        auto* textLayout = new QVBoxLayout();
+        textLayout->setSpacing(3);
 
-        auto* descLabel = new QLabel(cards[i].desc, cardBtn);
-        descLabel->setStyleSheet("color: #64748b; font-size: 11px;");
-        descLabel->setWordWrap(true);
+        auto* titleLbl = new QLabel(card.title, btn);
+        titleLbl->setStyleSheet("color: #F4F4F5; font-size: 13px; font-weight: 700; border: none;");
 
-        btnLayout->addWidget(iconLabel);
-        btnLayout->addWidget(titleLabel);
-        btnLayout->addWidget(descLabel);
+        auto* descLbl = new QLabel(card.desc, btn);
+        descLbl->setStyleSheet("color: #A1A1AA; font-size: 11px; font-weight: 400; border: none;");
+        descLbl->setWordWrap(true);
 
-        connect(cardBtn, &QPushButton::clicked, this, cards[i].onClick);
-        grid->addWidget(cardBtn, r, c);
+        textLayout->addWidget(titleLbl);
+        textLayout->addWidget(descLbl);
+        btnLayout->addLayout(textLayout, 1);
+
+        connect(btn, &QPushButton::clicked, this, card.onClick);
+        grid->addWidget(btn, row, col);
+
+        col++;
+        if (col >= maxCols) {
+            col = 0;
+            row++;
+        }
     }
 
     return container;
 }
 
 QWidget* HomeDashboardWidget::CreateRecentFilesSection() {
-    auto* box = new QFrame(this);
-    box->setStyleSheet(
-        "QFrame {"
-        "  background: #ffffff;"
-        "  border: 1px solid #e2e8f0;"
-        "  border-radius: 10px;"
-        "  padding: 12px;"
-        "}"
-    );
-
-    auto* layout = new QVBoxLayout(box);
-    layout->setContentsMargins(4, 4, 4, 4);
+    auto* container = new QWidget(this);
+    auto* layout = new QVBoxLayout(container);
+    layout->setContentsMargins(0, 0, 0, 0);
     layout->setSpacing(10);
 
-    auto* headerLayout = new QHBoxLayout();
-    auto* sectionTitle = new QLabel(tr("<b>Recent Documents</b>"), box);
-    sectionTitle->setStyleSheet("color: #1e293b; font-size: 14px; border: none;");
+    // Section title & Filter Toolbar
+    auto* barLayout = new QHBoxLayout();
+    auto* sectionTitle = new QLabel(tr("Recent Documents"), container);
+    sectionTitle->setStyleSheet("color: #F4F4F5; font-size: 16px; font-weight: 700;");
+    barLayout->addWidget(sectionTitle);
+    barLayout->addStretch();
 
-    m_searchFilterEdit = new QLineEdit(box);
-    m_searchFilterEdit->setPlaceholderText(tr("Search recent files..."));
-    m_searchFilterEdit->setStyleSheet(
-        "QLineEdit {"
-        "  background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 6px; padding: 4px 8px; font-size: 12px;"
-        "}"
-    );
+    m_searchFilterEdit = new QLineEdit(container);
+    m_searchFilterEdit->setPlaceholderText(tr("Search recent documents..."));
+    m_searchFilterEdit->setFixedWidth(240);
+    m_searchFilterEdit->setClearButtonEnabled(true);
     connect(m_searchFilterEdit, &QLineEdit::textChanged, this, &HomeDashboardWidget::OnFilterTextChanged);
+    barLayout->addWidget(m_searchFilterEdit);
 
-    auto* clearBtn = new QPushButton(tr("Clear"), box);
-    clearBtn->setStyleSheet(
-        "QPushButton {"
-        "  background: transparent; border: none; color: #94a3b8; font-size: 11px;"
-        "}"
-        "QPushButton:hover { color: #ef4444; }"
-    );
+    auto* clearBtn = new QPushButton(tr("Clear History"), container);
+    clearBtn->setStyleSheet("font-size: 11px; padding: 4px 10px;");
     connect(clearBtn, &QPushButton::clicked, this, &HomeDashboardWidget::OnClearRecentClicked);
+    barLayout->addWidget(clearBtn);
 
-    headerLayout->addWidget(sectionTitle);
-    headerLayout->addStretch();
-    headerLayout->addWidget(m_searchFilterEdit);
-    headerLayout->addWidget(clearBtn);
-    layout->addLayout(headerLayout);
+    layout->addLayout(barLayout);
 
-    // Recent Files Table
-    m_recentTable = new QTableWidget(box);
-    m_recentTable->setColumnCount(3);
-    m_recentTable->setHorizontalHeaderLabels({tr("Document Name"), tr("Location"), tr("Action")});
-    m_recentTable->horizontalHeader()->setSectionResizeMode(0, QHeaderView::ResizeToContents);
-    m_recentTable->horizontalHeader()->setSectionResizeMode(1, QHeaderView::Stretch);
-    m_recentTable->horizontalHeader()->setSectionResizeMode(2, QHeaderView::ResizeToContents);
-    m_recentTable->verticalHeader()->setVisible(false);
+    // Recent Documents Table
+    m_recentTable = new QTableWidget(container);
+    m_recentTable->setColumnCount(6);
+    m_recentTable->setHorizontalHeaderLabels({
+        tr("Pin"), tr("Document Name"), tr("Location"), tr("Last Opened"), tr("Size"), tr("Action")
+    });
+
     m_recentTable->setSelectionBehavior(QAbstractItemView::SelectRows);
+    m_recentTable->setSelectionMode(QAbstractItemView::SingleSelection);
     m_recentTable->setEditTriggers(QAbstractItemView::NoEditTriggers);
-    m_recentTable->setAlternatingRowColors(true);
+    m_recentTable->verticalHeader()->setVisible(false);
     m_recentTable->setShowGrid(false);
-    m_recentTable->setMinimumHeight(220);
-    m_recentTable->setStyleSheet(
-        "QTableWidget {"
-        "  border: none; background: #ffffff;"
-        "}"
-        "QHeaderView::section {"
-        "  background: #f8fafc; border: none; border-bottom: 1px solid #e2e8f0; color: #64748b; font-weight: 600; padding: 6px;"
-        "}"
-    );
-    connect(m_recentTable, &QTableWidget::cellDoubleClicked, this, &HomeDashboardWidget::OnRecentCellDoubleClicked);
+    m_recentTable->setSortingEnabled(true);
+    m_recentTable->setMinimumHeight(240);
 
+    m_recentTable->horizontalHeader()->setSectionResizeMode(0, QHeaderView::Fixed);
+    m_recentTable->setColumnWidth(0, 42);
+    m_recentTable->horizontalHeader()->setSectionResizeMode(1, QHeaderView::Stretch);
+    m_recentTable->horizontalHeader()->setSectionResizeMode(2, QHeaderView::Stretch);
+    m_recentTable->horizontalHeader()->setSectionResizeMode(3, QHeaderView::ResizeToContents);
+    m_recentTable->horizontalHeader()->setSectionResizeMode(4, QHeaderView::ResizeToContents);
+    m_recentTable->horizontalHeader()->setSectionResizeMode(5, QHeaderView::Fixed);
+    m_recentTable->setColumnWidth(5, 60);
+
+    connect(m_recentTable, &QTableWidget::cellDoubleClicked, this, &HomeDashboardWidget::OnRecentCellDoubleClicked);
     layout->addWidget(m_recentTable);
-    return box;
+
+    return container;
 }
 
 QWidget* HomeDashboardWidget::CreateDropzoneSection() {
-    auto* dropBox = new QFrame(this);
-    dropBox->setStyleSheet(
+    auto* frame = new QFrame(this);
+    frame->setStyleSheet(
         "QFrame {"
-        "  background: #f8fafc;"
-        "  border: 2px dashed #94a3b8;"
-        "  border-radius: 12px;"
-        "  padding: 24px;"
+        "  border: 2px dashed #34373E; border-radius: 8px; background-color: rgba(39, 41, 46, 0.5);"
+        "}"
+        "QFrame:hover {"
+        "  border-color: #DC2626; background-color: rgba(220, 38, 38, 0.05);"
         "}"
     );
 
-    auto* layout = new QVBoxLayout(dropBox);
+    auto* layout = new QVBoxLayout(frame);
     layout->setAlignment(Qt::AlignCenter);
     layout->setSpacing(12);
 
-    auto* iconLabel = new QLabel(dropBox);
+    auto* iconLabel = new QLabel(frame);
+    iconLabel->setPixmap(VectorIcons::CreatePixmap(IconType::Open, 36, QColor("#A1A1AA")));
     iconLabel->setAlignment(Qt::AlignCenter);
-    iconLabel->setPixmap(VectorIcons::CreatePixmap(IconType::Open, 48, QColor(148, 163, 184)));
+    iconLabel->setStyleSheet("border: none; background: transparent;");
 
-    auto* promptLabel = new QLabel(tr("<b>Drop PDF Files Here</b><br>or click Browse to open"), dropBox);
+    auto* promptLabel = new QLabel(tr("<b>Drop PDF files here</b><br><span style='font-size: 11px; color: #A1A1AA;'>or click to browse local files</span>"), frame);
     promptLabel->setAlignment(Qt::AlignCenter);
-    promptLabel->setStyleSheet("color: #475569; font-size: 13px; border: none;");
+    promptLabel->setStyleSheet("border: none; background: transparent; color: #F4F4F5; font-size: 13px;");
 
-    auto* browseBtn = new QPushButton(tr("Browse Files..."), dropBox);
-    browseBtn->setStyleSheet(
-        "QPushButton {"
-        "  background: #2563eb; color: #ffffff; border: none; border-radius: 6px; padding: 8px 18px; font-weight: 600;"
-        "}"
-        "QPushButton:hover { background: #1d4ed8; }"
-    );
+    auto* browseBtn = new QPushButton(tr("Browse Files..."), frame);
+    browseBtn->setObjectName("primaryButton");
     connect(browseBtn, &QPushButton::clicked, this, &HomeDashboardWidget::OpenFileRequested);
 
-    layout->addStretch();
     layout->addWidget(iconLabel);
     layout->addWidget(promptLabel);
     layout->addWidget(browseBtn);
-    layout->addStretch();
 
-    return dropBox;
+    return frame;
+}
+
+namespace {
+QString FormatBytes(uint64_t bytes) {
+    if (bytes < 1024) return QString::number(bytes) + " B";
+    if (bytes < 1024 * 1024) return QString::number(bytes / 1024.0, 'f', 1) + " KB";
+    return QString::number(bytes / (1024.0 * 1024.0), 'f', 1) + " MB";
+}
 }
 
 void HomeDashboardWidget::RefreshRecentFiles() {
-    auto recentFiles = persistence::RecentFilesManager::Instance().GetRecentFiles();
+    if (!m_recentTable) return;
+
+    m_recentTable->setSortingEnabled(false);
     m_recentTable->setRowCount(0);
 
-    for (const auto& path : recentFiles) {
-        QFileInfo fi(QString::fromStdString(path.string()));
-        if (!fi.exists()) continue;
+    const auto& recents = app::AppContext::Instance().GetRecentFiles().GetRecentFiles();
+    QString filter = m_searchFilterEdit ? m_searchFilterEdit->text().trimmed().toLower() : "";
 
-        int row = m_recentTable->rowCount();
+    int row = 0;
+    for (const auto& item : recents) {
+        QString pathStr = QString::fromStdString(item.canonicalPath);
+        QString fileName = QString::fromStdString(item.fileName);
+
+        bool isPinned = (m_pinnedPaths.find(item.canonicalPath) != m_pinnedPaths.end());
+
+        // Apply sidebar section filtering
+        if (m_currentSection == DashboardSection::Starred && !isPinned) {
+            continue;
+        }
+
+        // Apply text filter
+        if (!filter.isEmpty() && !fileName.toLower().contains(filter) && !pathStr.toLower().contains(filter)) {
+            continue;
+        }
+
         m_recentTable->insertRow(row);
 
-        auto* nameItem = new QTableWidgetItem(fi.fileName());
-        nameItem->setIcon(VectorIcons::GetIcon(IconType::Properties));
-        nameItem->setToolTip(fi.filePath());
-
-        auto* pathItem = new QTableWidgetItem(fi.absolutePath());
-        pathItem->setToolTip(fi.filePath());
-        pathItem->setForeground(QColor(100, 116, 139));
-
-        m_recentTable->setItem(row, 0, nameItem);
-        m_recentTable->setItem(row, 1, pathItem);
-
-        auto* openBtn = new QPushButton(tr("Open"), m_recentTable);
-        openBtn->setStyleSheet(
-            "QPushButton { background: #f1f5f9; border: 1px solid #cbd5e1; border-radius: 4px; padding: 2px 8px; font-size: 11px; }"
-            "QPushButton:hover { background: #e2e8f0; }"
-        );
-        connect(openBtn, &QPushButton::clicked, this, [this, fp = fi.filePath()]() {
-            emit FileSelected(fp);
+        // Column 0: Star / Pin Button
+        auto* pinBtn = new QToolButton(m_recentTable);
+        pinBtn->setText(isPinned ? "⭐" : "☆");
+        pinBtn->setToolTip(isPinned ? tr("Unpin document") : tr("Pin document to top"));
+        pinBtn->setStyleSheet("QToolButton { border: none; font-size: 14px; background: transparent; }");
+        connect(pinBtn, &QToolButton::clicked, this, [this, pathStr]() {
+            OnTogglePin(pathStr);
         });
-        m_recentTable->setCellWidget(row, 2, openBtn);
+        m_recentTable->setCellWidget(row, 0, pinBtn);
+
+        // Column 1: Document Name
+        auto* nameItem = new QTableWidgetItem(fileName);
+        nameItem->setIcon(VectorIcons::GetIcon(IconType::Open));
+        nameItem->setData(Qt::UserRole, pathStr);
+        m_recentTable->setItem(row, 1, nameItem);
+
+        // Column 2: Folder Location
+        QFileInfo fi(pathStr);
+        auto* dirItem = new QTableWidgetItem(fi.absolutePath());
+        dirItem->setData(Qt::UserRole, pathStr);
+        m_recentTable->setItem(row, 2, dirItem);
+
+        // Column 3: Last Opened
+        QString dateStr = QString::fromStdString(item.lastOpenedIso);
+        if (dateStr.length() >= 10) dateStr = dateStr.left(10);
+        auto* dateItem = new QTableWidgetItem(dateStr);
+        dateItem->setData(Qt::UserRole, pathStr);
+        m_recentTable->setItem(row, 3, dateItem);
+
+        // Column 4: Size
+        auto* sizeItem = new QTableWidgetItem(FormatBytes(item.fileSizeBytes));
+        sizeItem->setData(Qt::UserRole, pathStr);
+        m_recentTable->setItem(row, 4, sizeItem);
+
+        // Column 5: Remove Action Button
+        auto* removeBtn = new QToolButton(m_recentTable);
+        removeBtn->setText("✕");
+        removeBtn->setToolTip(tr("Remove from recent list"));
+        removeBtn->setStyleSheet("QToolButton { border: none; font-size: 11px; color: #A1A1AA; background: transparent; } QToolButton:hover { color: #DC2626; }");
+        connect(removeBtn, &QToolButton::clicked, this, [this, pathStr]() {
+            OnRemoveRecent(pathStr);
+        });
+        m_recentTable->setCellWidget(row, 5, removeBtn);
+
+        row++;
     }
+
+    m_recentTable->setSortingEnabled(true);
 }
 
-void HomeDashboardWidget::OnFilterTextChanged(const QString& text) {
-    for (int r = 0; r < m_recentTable->rowCount(); ++r) {
-        auto* nameItem = m_recentTable->item(r, 0);
-        auto* pathItem = m_recentTable->item(r, 1);
-        bool match = false;
-        if (nameItem && nameItem->text().contains(text, Qt::CaseInsensitive)) match = true;
-        if (pathItem && pathItem->text().contains(text, Qt::CaseInsensitive)) match = true;
-        m_recentTable->setRowHidden(r, !match);
+void HomeDashboardWidget::OnTogglePin(const QString& filePath) {
+    std::string path = filePath.toStdString();
+    if (m_pinnedPaths.find(path) != m_pinnedPaths.end()) {
+        m_pinnedPaths.erase(path);
+    } else {
+        m_pinnedPaths.insert(path);
     }
+    RefreshRecentFiles();
+}
+
+void HomeDashboardWidget::OnRemoveRecent(const QString& filePath) {
+    app::AppContext::Instance().GetRecentFiles().RemoveFile(std::filesystem::path(filePath.toStdString()));
+    m_pinnedPaths.erase(filePath.toStdString());
+    RefreshRecentFiles();
+}
+
+void HomeDashboardWidget::OnFilterTextChanged(const QString& /*text*/) {
+    RefreshRecentFiles();
 }
 
 void HomeDashboardWidget::OnRecentCellDoubleClicked(int row, int /*column*/) {
-    auto* nameItem = m_recentTable->item(row, 0);
-    if (nameItem) {
-        QString fp = nameItem->toolTip();
-        emit FileSelected(fp);
+    auto* item = m_recentTable->item(row, 1);
+    if (item) {
+        QString path = item->data(Qt::UserRole).toString();
+        if (!path.isEmpty()) {
+            emit FileSelected(path);
+        }
     }
 }
 
 void HomeDashboardWidget::OnClearRecentClicked() {
-    persistence::RecentFilesManager::Instance().ClearRecentFiles();
+    app::AppContext::Instance().GetRecentFiles().Clear();
+    m_pinnedPaths.clear();
     RefreshRecentFiles();
 }
 

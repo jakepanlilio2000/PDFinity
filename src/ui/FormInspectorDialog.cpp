@@ -111,8 +111,8 @@ void FormInspectorDialog::SetupUi() {
 
     m_applyButton = new QPushButton(tr("Apply Value"), editorBox);
     m_applyButton->setStyleSheet(
-        "QPushButton { background: #2563eb; color: white; font-weight: 600; padding: 6px 12px; border-radius: 4px; border: none; }"
-        "QPushButton:hover { background: #1d4ed8; }"
+        "QPushButton { background: #DC2626; color: white; font-weight: 600; padding: 6px 12px; border-radius: 4px; border: none; }"
+        "QPushButton:hover { background: #B91C1C; }"
         "QPushButton:disabled { background: #9ca3af; }"
     );
     m_applyButton->setEnabled(false);

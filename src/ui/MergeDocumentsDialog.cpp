@@ -85,7 +85,7 @@ void MergeDocumentsDialog::SetupUi() {
     auto* bottomLayout = new QHBoxLayout();
     bottomLayout->addStretch();
     m_mergeBtn = new QPushButton(tr("Merge Documents"), this);
-    m_mergeBtn->setStyleSheet("QPushButton { font-weight: bold; background-color: #2563eb; color: white; padding: 6px 14px; border-radius: 4px; }");
+    m_mergeBtn->setStyleSheet("QPushButton { font-weight: bold; background-color: #DC2626; color: white; padding: 6px 14px; border-radius: 4px; } QPushButton:hover { background-color: #B91C1C; }");
     auto* cancelBtn = new QPushButton(tr("Cancel"), this);
 
     bottomLayout->addWidget(m_mergeBtn);

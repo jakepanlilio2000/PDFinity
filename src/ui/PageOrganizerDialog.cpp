@@ -100,7 +100,7 @@ void PageOrganizerDialog::SetupUi() {
     m_pageListWidget->setStyleSheet(
         "QListWidget { background-color: #f8fafc; border: 1px solid #cbd5e1; border-radius: 6px; }"
         "QListWidget::item { border: 2px solid transparent; border-radius: 6px; padding: 4px; }"
-        "QListWidget::item:selected { border: 2px solid #2563eb; background-color: #eff6ff; }"
+        "QListWidget::item:selected { border: 2px solid #DC2626; background-color: rgba(220, 38, 38, 0.12); }"
     );
 
     mainLayout->addWidget(m_pageListWidget, 1);
@@ -112,7 +112,7 @@ void PageOrganizerDialog::SetupUi() {
     bottomLayout->addStretch();
 
     m_saveAsBtn = new QPushButton(tr("Save As New Document..."), this);
-    m_saveAsBtn->setStyleSheet("QPushButton { font-weight: bold; background-color: #2563eb; color: white; padding: 6px 14px; border-radius: 4px; }");
+    m_saveAsBtn->setStyleSheet("QPushButton { font-weight: bold; background-color: #DC2626; color: white; padding: 6px 14px; border-radius: 4px; } QPushButton:hover { background-color: #B91C1C; }");
     auto* closeBtn = new QPushButton(tr("Close"), this);
 
     bottomLayout->addWidget(m_saveAsBtn);
