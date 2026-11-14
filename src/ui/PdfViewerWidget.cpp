@@ -14,6 +14,7 @@
 #include "services/AnnotationCommandManager.hpp"
 #include "services/PrintService.hpp"
 #include "application/Logger.hpp"
+#include "application/AppContext.hpp"
 
 #include <QVBoxLayout>
 #include <QHBoxLayout>
@@ -125,7 +126,7 @@ void PdfViewerWidget::SetupUi() {
             SelectionPropertiesInfo info;
             const auto* data = m_canvas->GetSelectedAnnotationData();
             if (data) {
-                QString sub = QString::fromStdString(data->subtype);
+                QString sub = QString::fromStdString(data->subject);
                 info.objectType = sub.isEmpty() ? tr("Markup Annotation #%1").arg(annotIdx + 1) : sub;
                 info.x = data->rect.x;
                 info.y = data->rect.y;

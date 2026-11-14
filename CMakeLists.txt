@@ -51,7 +51,7 @@ if(MSVC)
     # Enable multi-processor compilation
     add_compile_options(/MP)
     # Disable secure CRT warnings for standard portable functions
-    add_compile_definitions(_CRT_SECURE_NO_WARNINGS _SILENCE_CXX20_U8PATH_DEPRECATION_WARNING)
+    add_compile_definitions(_CRT_SECURE_NO_WARNINGS _SILENCE_CXX20_U8PATH_DEPRECATION_WARNING NOMINMAX)
 else()
     add_compile_options(-Wall -Wextra -Wpedantic)
 endif()

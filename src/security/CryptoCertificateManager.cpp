@@ -50,10 +50,14 @@ std::string ComputeSha256Thumbprint(const uint8_t* certData, size_t certLen) {
         }
         CryptReleaseContext(hProv, 0);
     }
+#else
+    (void)certData;
+    (void)certLen;
 #endif
     return "";
 }
 
+#if defined(_WIN32)
 pdf_api::CertificateInfo ParseCertContext(PCCERT_CONTEXT pCert) {
     pdf_api::CertificateInfo info;
     if (!pCert) return info;
@@ -108,6 +112,7 @@ pdf_api::CertificateInfo ParseCertContext(PCCERT_CONTEXT pCert) {
 
     return info;
 }
+#endif
 
 } // namespace
 
@@ -175,6 +180,7 @@ pdf_api::EngineResult<pdf_api::CertificateInfo> CryptoCertificateManager::Import
 ) {
     std::lock_guard<std::mutex> lock(m_mutex);
 
+#if defined(_WIN32)
     std::ifstream file(pfxPath, std::ios::binary);
     if (!file.is_open()) {
         return pdf_api::EngineResult<pdf_api::CertificateInfo>::Fail(
@@ -190,7 +196,6 @@ pdf_api::EngineResult<pdf_api::CertificateInfo> CryptoCertificateManager::Import
         );
     }
 
-#if defined(_WIN32)
     CRYPT_DATA_BLOB pfxBlob;
     pfxBlob.pbData = pfxData.data();
     pfxBlob.cbData = static_cast<DWORD>(pfxData.size());
@@ -256,8 +261,11 @@ pdf_api::EngineResult<pdf_api::CertificateInfo> CryptoCertificateManager::Import
     LOG_INFO("Security", "PKCS#12 certificate successfully imported to secure vault: " + info.subject + " (" + info.thumbprintSha256 + ")");
     return pdf_api::EngineResult<pdf_api::CertificateInfo>::Ok(std::move(info));
 #else
+    (void)pfxPath;
+    (void)password;
+    (void)friendlyName;
     return pdf_api::EngineResult<pdf_api::CertificateInfo>::Fail(
-        pdf_api::EngineError::NotSupported, "PKCS#12 import not supported on this platform"
+        pdf_api::EngineError::UnsupportedFeature, "PKCS#12 import not supported on this platform"
     );
 #endif
 }
@@ -266,6 +274,7 @@ std::vector<pdf_api::CertificateInfo> CryptoCertificateManager::GetInstalledCert
     std::lock_guard<std::mutex> lock(m_mutex);
     std::vector<pdf_api::CertificateInfo> list;
 
+#if defined(_WIN32)
     if (!std::filesystem::exists(m_vaultDir)) return list;
 
     for (const auto& entry : std::filesystem::directory_iterator(m_vaultDir)) {
@@ -300,7 +309,6 @@ std::vector<pdf_api::CertificateInfo> CryptoCertificateManager::GetInstalledCert
                 }
             }
 
-#if defined(_WIN32)
             CRYPT_DATA_BLOB pfxBlob;
             pfxBlob.pbData = pfxData.data();
             pfxBlob.cbData = static_cast<DWORD>(pfxData.size());
@@ -313,9 +321,9 @@ std::vector<pdf_api::CertificateInfo> CryptoCertificateManager::GetInstalledCert
                 }
                 CertCloseStore(hStore, 0);
             }
-#endif
         }
     }
+#endif
 
     return list;
 }
@@ -461,8 +469,11 @@ pdf_api::EngineResult<std::vector<uint8_t>> CryptoCertificateManager::CreateDeta
 
     return pdf_api::EngineResult<std::vector<uint8_t>>::Ok(std::move(signedBlob));
 #else
+    (void)thumbprint;
+    (void)password;
+    (void)dataToSign;
     return pdf_api::EngineResult<std::vector<uint8_t>>::Fail(
-        pdf_api::EngineError::NotSupported, "Cryptographic signing not supported on this platform"
+        pdf_api::EngineError::UnsupportedFeature, "Cryptographic signing not supported on this platform"
     );
 #endif
 }
@@ -534,8 +545,10 @@ pdf_api::EngineResult<pdf_api::SignatureValidationResult> CryptoCertificateManag
         return pdf_api::EngineResult<pdf_api::SignatureValidationResult>::Ok(std::move(res));
     }
 #else
+    (void)signedData;
+    (void)pkcs7Der;
     return pdf_api::EngineResult<pdf_api::SignatureValidationResult>::Fail(
-        pdf_api::EngineError::NotSupported, "Cryptographic verification not supported on this platform"
+        pdf_api::EngineError::UnsupportedFeature, "Cryptographic verification not supported on this platform"
     );
 #endif
 }

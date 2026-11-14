@@ -179,24 +179,28 @@ QWidget* DocumentWorkspace::CreateWelcomeView() {
 }
 
 void DocumentWorkspace::RefreshRecentFilesList() {
-    m_recentListWidget->clear();
-    const auto& recents = app::AppContext::Instance().GetRecentFiles().GetRecentFiles();
+    if (m_recentListWidget) {
+        m_recentListWidget->clear();
+        const auto& recents = app::AppContext::Instance().GetRecentFiles().GetRecentFiles();
 
-    if (recents.empty()) {
-        auto* item = new QListWidgetItem(tr("No recent documents. Open a PDF to begin."), m_recentListWidget);
-        item->setFlags(Qt::NoItemFlags);
-        return;
+        if (recents.empty()) {
+            auto* item = new QListWidgetItem(tr("No recent documents. Open a PDF to begin."), m_recentListWidget);
+            item->setFlags(Qt::NoItemFlags);
+        } else {
+            for (const auto& item : recents) {
+                QString text = QString("%1  •  %2  •  %3")
+                    .arg(QString::fromStdString(item.fileName))
+                    .arg(FormatFileSize(item.fileSizeBytes))
+                    .arg(QString::fromStdString(item.canonicalPath));
+
+                auto* listItem = new QListWidgetItem(text, m_recentListWidget);
+                listItem->setData(Qt::UserRole, QString::fromStdString(item.canonicalPath));
+                listItem->setToolTip(QString::fromStdString(item.canonicalPath));
+            }
+        }
     }
-
-    for (const auto& item : recents) {
-        QString text = QString("%1  •  %2  •  %3")
-            .arg(QString::fromStdString(item.fileName))
-            .arg(FormatFileSize(item.fileSizeBytes))
-            .arg(QString::fromStdString(item.canonicalPath));
-
-        auto* listItem = new QListWidgetItem(text, m_recentListWidget);
-        listItem->setData(Qt::UserRole, QString::fromStdString(item.canonicalPath));
-        listItem->setToolTip(QString::fromStdString(item.canonicalPath));
+    if (m_homeDashboard) {
+        m_homeDashboard->RefreshRecentFiles();
     }
 }
 
@@ -373,7 +377,7 @@ void DocumentWorkspace::CloseAllTabs() {
 }
 
 int DocumentWorkspace::GetOpenDocumentCount() const {
-    return std::max(0, m_tabWidget->count() - 1);
+    return (std::max)(0, m_tabWidget->count() - 1);
 }
 
 QString DocumentWorkspace::GetCurrentDocumentPath() const {
@@ -450,12 +454,6 @@ void DocumentWorkspace::OnRecentItemDoubleClicked(QListWidgetItem* item) {
 void DocumentWorkspace::OnClearRecentClicked() {
     app::AppContext::Instance().GetRecentFiles().Clear();
     RefreshRecentFilesList();
-}
-
-void DocumentWorkspace::RefreshRecentFilesList() {
-    if (m_homeDashboard) {
-        m_homeDashboard->RefreshRecentFiles();
-    }
 }
 
 void DocumentWorkspace::dragEnterEvent(QDragEnterEvent* event) {
