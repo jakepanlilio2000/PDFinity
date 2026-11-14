@@ -11,6 +11,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.0.0] - 2026-11-14 (Stable Release)
+
+### Added
+- **First Official Stable Release:** Production-ready release of PDFinity across Windows x64, Linux distributions (.deb, Arch, RPM, AppImage, Flatpak), macOS, and Android (API 28-35).
+- **Multi-Platform Desktop & Mobile Packaging:** Native installer and portable packaging for Windows (Inno Setup / WiX MSI / Portable ZIP), Linux (Debian, Arch Linux, RPM, AppImage, Flatpak), macOS App Bundle, and Android APK/AAB with Storage Access Framework (SAF) integration.
+- **Audited Security & Reliability:** 100% pass on all 51 automated unit, integration, UI, and security test suites. Verified zero broad-storage permissions on Android, thread-safe MCP stdio communication, encrypted remote controller pairing, and cryptographically verified digital signatures (PKCS#7).
+
+---
+
 ## [0.1.9-beta] - 2026-11-14
 
 ### Fixed

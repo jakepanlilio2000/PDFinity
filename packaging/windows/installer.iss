@@ -3,7 +3,7 @@
 ; Lead Programmer: Jake Ashley Panlilio (https://github.com/jakepanlilio2000)
 
 #define MyAppName "PDFinity"
-#define MyAppVersion "0.1.9-Beta"
+#define MyAppVersion "1.0 Stable"
 #define MyAppPublisher "StackSync Solutions"
 #define MyAppURL "https://www.stacksyncsolutions.com/"
 #define MyAppRepoURL "https://github.com/jakepanlilio2000/PDFinity"

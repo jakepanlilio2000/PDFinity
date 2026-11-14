@@ -1,5 +1,5 @@
 Package: pdfinity
-Version: 0.1.9
+Version: 1.0.0
 Section: text
 Priority: optional
 Architecture: amd64

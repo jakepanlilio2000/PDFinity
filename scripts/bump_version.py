@@ -206,14 +206,16 @@ def bump_all(root_dir, ver_info):
     if os.path.exists(readme_path):
         with open(readme_path, "r", encoding="utf-8") as f:
             readme_content = f.read()
+        badge_release = display.replace(" ", "%20").replace("-", "--")
+        badge_version = semver
         readme_content = re.sub(
             r'\[!\[Release\]\(https://img\.shields\.io/badge/Release-[^)]+\)\]\([^)]+\)',
-            f'[![Release](https://img.shields.io/badge/Release-0.1--Beta-blue.svg)](https://github.com/jakepanlilio2000/PDFinity/releases/tag/{tag})',
+            f'[![Release](https://img.shields.io/badge/Release-{badge_release}-blue.svg)](https://github.com/jakepanlilio2000/PDFinity/releases/tag/{tag})',
             readme_content
         )
         readme_content = re.sub(
-            r'\[!\[(?:Stable\s+)?Release\]\(https://img\.shields\.io/badge/Version-[^)]+\)\]\([^)]+\)',
-            f'[![Version](https://img.shields.io/badge/Version-0.1.0--beta-emerald.svg)](https://github.com/jakepanlilio2000/PDFinity/releases/tag/{tag})',
+            r'\[!\[Version\]\(https://img\.shields\.io/badge/Version-[^)]+\)\]\([^)]+\)',
+            f'[![Version](https://img.shields.io/badge/Version-{badge_version}-emerald.svg)](https://github.com/jakepanlilio2000/PDFinity/releases/tag/{tag})',
             readme_content
         )
         with open(readme_path, "w", encoding="utf-8", newline="\n") as f:
