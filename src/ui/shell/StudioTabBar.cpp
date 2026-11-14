@@ -23,13 +23,13 @@ StudioTabBar::StudioTabBar(QWidget* parent) : QTabWidget(parent) {
 }
 
 void StudioTabBar::SetupCornerControls() {
-    auto* container = new QWidget(this);
-    auto* layout = new QHBoxLayout(container);
+    m_cornerContainer = new QWidget(this);
+    auto* layout = new QHBoxLayout(m_cornerContainer);
     layout->setContentsMargins(4, 2, 4, 2);
     layout->setSpacing(4);
 
     // 1. '+' Open Tab Button
-    m_newTabBtn = new QToolButton(container);
+    m_newTabBtn = new QToolButton(m_cornerContainer);
     m_newTabBtn->setText("+");
     m_newTabBtn->setToolTip(tr("Open Document in New Tab (Ctrl+O)"));
     m_newTabBtn->setStyleSheet(
@@ -40,7 +40,7 @@ void StudioTabBar::SetupCornerControls() {
     layout->addWidget(m_newTabBtn);
 
     // 2. Tab Overflow Menu Button
-    m_overflowBtn = new QToolButton(container);
+    m_overflowBtn = new QToolButton(m_cornerContainer);
     m_overflowBtn->setText("▾");
     m_overflowBtn->setToolTip(tr("Open Document Tabs"));
     m_overflowBtn->setStyleSheet(
@@ -54,7 +54,7 @@ void StudioTabBar::SetupCornerControls() {
     layout->addWidget(m_overflowBtn);
 
     // 3. Search / Find Trigger
-    m_findBtn = new QToolButton(container);
+    m_findBtn = new QToolButton(m_cornerContainer);
     m_findBtn->setText("🔍");
     m_findBtn->setToolTip(tr("Find in Document (Ctrl+F)"));
     m_findBtn->setStyleSheet(
@@ -65,7 +65,7 @@ void StudioTabBar::SetupCornerControls() {
     layout->addWidget(m_findBtn);
 
     // 4. Quick Theme Toggle
-    m_themeBtn = new QToolButton(container);
+    m_themeBtn = new QToolButton(m_cornerContainer);
     m_themeBtn->setText("🌓");
     m_themeBtn->setToolTip(tr("Toggle Dark / Light Theme"));
     m_themeBtn->setStyleSheet(
@@ -75,7 +75,7 @@ void StudioTabBar::SetupCornerControls() {
     connect(m_themeBtn, &QToolButton::clicked, this, &StudioTabBar::ToggleThemeRequested);
     layout->addWidget(m_themeBtn);
 
-    setCornerWidget(container, Qt::TopRightCorner);
+    setCornerWidget(m_cornerContainer, Qt::TopRightCorner);
 }
 
 void StudioTabBar::SetTabDirty(int index, bool isDirty) {
@@ -124,6 +124,16 @@ void StudioTabBar::mouseReleaseEvent(QMouseEvent* event) {
         }
     }
     QTabWidget::mouseReleaseEvent(event);
+}
+
+void StudioTabBar::SetCornerControlsVisible(bool visible) {
+    if (m_cornerContainer) {
+        m_cornerContainer->setVisible(visible);
+    }
+}
+
+bool StudioTabBar::AreCornerControlsVisible() const {
+    return m_cornerContainer && m_cornerContainer->isVisible();
 }
 
 } // namespace pdfinity::ui

@@ -6,6 +6,8 @@
 #include <QHBoxLayout>
 #include <QFrame>
 #include <QEvent>
+#include <QMouseEvent>
+#include <QKeyEvent>
 
 namespace pdfinity::ui {
 
@@ -158,10 +160,27 @@ void MobileBottomSheet::Reposition() {
 }
 
 bool MobileBottomSheet::eventFilter(QObject* watched, QEvent* event) {
-    if (watched == parentWidget() && event->type() == QEvent::Resize) {
-        Reposition();
+    if (watched == parentWidget()) {
+        if (event->type() == QEvent::Resize) {
+            Reposition();
+        } else if (event->type() == QEvent::MouseButtonPress && m_isOpen) {
+            auto* me = static_cast<QMouseEvent*>(event);
+            if (!geometry().contains(me->pos())) {
+                HideSheet();
+                return true;
+            }
+        }
     }
     return QWidget::eventFilter(watched, event);
+}
+
+void MobileBottomSheet::keyPressEvent(QKeyEvent* event) {
+    if (event->key() == Qt::Key_Escape && m_isOpen) {
+        HideSheet();
+        event->accept();
+        return;
+    }
+    QWidget::keyPressEvent(event);
 }
 
 } // namespace pdfinity::ui

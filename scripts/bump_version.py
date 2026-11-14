@@ -191,12 +191,18 @@ def bump_all(root_dir, ver_info):
     )
 
     # 13. android/build.gradle and packaging/android/build.gradle
+    version_code = int(major) * 10000 + int(minor) * 100 + int(patch)
     for bg_path in [os.path.join(root_dir, "android", "build.gradle"),
                     os.path.join(root_dir, "packaging", "android", "build.gradle")]:
         update_file(
             bg_path,
             r'(versionName\s+")[^"]+(")',
             rf'\g<1>{display}\g<2>'
+        )
+        update_file(
+            bg_path,
+            r'(versionCode\s+)\d+',
+            rf'\g<1>{version_code}'
         )
 
     # 14. android/AndroidManifest.xml and packaging/android/AndroidManifest.xml
@@ -206,6 +212,11 @@ def bump_all(root_dir, ver_info):
             mf_path,
             r'(android:versionName=")[^"]+(")',
             rf'\g<1>{display}\g<2>'
+        )
+        update_file(
+            mf_path,
+            r'(android:versionCode=")\d+(")',
+            rf'\g<1>{version_code}\g<2>'
         )
 
     # 15. README.md badges & links

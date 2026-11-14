@@ -1587,10 +1587,14 @@ bool MainWindow::OnRemoteSensitiveActionConfirmation(const std::string& clientNa
 
 void MainWindow::OnViewportClassChanged(ViewportClass newClass, ViewportClass /*oldClass*/) {
     if (newClass == ViewportClass::PhoneMobile) {
+        if (menuBar()) menuBar()->hide();
+        if (statusBar()) statusBar()->hide();
         if (m_workflowRibbon) m_workflowRibbon->hide();
         if (m_mobileTopBar) m_mobileTopBar->show();
         if (m_mobileBottomNav) m_mobileBottomNav->show();
     } else {
+        if (menuBar()) menuBar()->show();
+        if (statusBar()) statusBar()->show();
         if (m_mobileTopBar) m_mobileTopBar->hide();
         if (m_mobileBottomNav) m_mobileBottomNav->hide();
         if (m_workflowRibbon) m_workflowRibbon->show();

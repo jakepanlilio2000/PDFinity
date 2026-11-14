@@ -11,6 +11,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.0.14] - 2026-11-14
+
+### Fixed
+- **Mobile Bottom Sheet Outside Tap & Escape Dismissal [BUG-U5-03]:**
+  - Added parent widget mouse event filter to detect clicks/taps outside bottom sheet geometry and dismiss the sheet automatically, eliminating trapped modal states.
+  - Implemented `keyPressEvent` handling for `Qt::Key_Escape` (and device hardware back buttons) to dismiss open bottom sheets smoothly.
+  - Added regression test coverage in `tests/ui/test_shell_smoke.cpp`.
+- **Desktop Chrome Suppression on Mobile Viewports [BUG-U5-04]:**
+  - Automatically hidden desktop `QMenuBar` and `QStatusBar` when transitioning into `ViewportClass::PhoneMobile` (< 700px), eliminating dual headers and recovering vertical reading area on handset displays while preserving clean restoration upon expanding to tablet or desktop widths.
+  - Added regression test coverage in `tests/ui/test_shell_smoke.cpp`.
+- **Studio Tab Bar Corner Controls Adaptation [BUG-U5-05]:**
+  - Added `SetCornerControlsVisible()` to `StudioTabBar` and connected viewport transition engine to hide corner action buttons on narrow mobile viewports, preventing tab title squeezing and crowding.
+  - Synchronized Android `versionCode` calculation in `scripts/bump_version.py` across `android/build.gradle`, `packaging/android/build.gradle`, `android/AndroidManifest.xml`, and `packaging/android/AndroidManifest.xml`.
+  - Added regression test coverage in `tests/ui/test_shell_smoke.cpp`.
+
+---
+
 ## [1.0.13] - 2026-11-14
 
 ### Fixed

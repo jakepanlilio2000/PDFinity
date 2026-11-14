@@ -21,6 +21,9 @@
 #include "ui/shell/MobileTopAppBar.hpp"
 #include "ui/shell/MobileBottomNavBar.hpp"
 #include "ui/shell/MobileBottomSheet.hpp"
+#include "ui/shell/StudioTabBar.hpp"
+#include <QMenuBar>
+#include <QStatusBar>
 #include "application/AppContext.hpp"
 
 using namespace pdfinity::ui;
@@ -311,6 +314,22 @@ void TestShellSmoke::testResponsiveLayoutAndMobileStudio() {
     sheet.HideSheet();
     QVERIFY(!sheet.IsVisible());
 
+    // Test Escape key dismissal on bottom sheet [BUG-U5-03]
+    QWidget* dummyContent3 = new QWidget();
+    sheet.ShowSheet("Escape Test", dummyContent3);
+    QVERIFY(sheet.IsVisible());
+    QKeyEvent escEvent(QEvent::KeyPress, Qt::Key_Escape, Qt::NoModifier);
+    QCoreApplication::sendEvent(&sheet, &escEvent);
+    QVERIFY(!sheet.IsVisible());
+
+    // Test Outside tap dismissal on bottom sheet [BUG-U5-03]
+    QWidget* dummyContent4 = new QWidget();
+    sheet.ShowSheet("Outside Tap Test", dummyContent4);
+    QVERIFY(sheet.IsVisible());
+    QMouseEvent outsideClick(QEvent::MouseButtonPress, QPointF(10, 10), QPointF(10, 10), Qt::LeftButton, Qt::LeftButton, Qt::NoModifier);
+    QCoreApplication::sendEvent(&parentWidget, &outsideClick);
+    QVERIFY(!sheet.IsVisible());
+
     // 3. Full Studio window responsive transitions
     MainWindow window;
     std::filesystem::path fixturePath = std::filesystem::path(PDFINITY_SOURCE_DIR) / "tests" / "fixtures" / "ordinary.pdf";
@@ -321,6 +340,28 @@ void TestShellSmoke::testResponsiveLayoutAndMobileStudio() {
     auto* topBarChild = window.findChild<MobileTopAppBar*>();
     QVERIFY(topBarChild != nullptr);
     QCOMPARE(topBarChild->GetDocumentTitle(), QString("ordinary.pdf"));
+
+    // Verify phone mobile mode hides menuBar, statusBar, and tab corner controls [BUG-U5-04] [BUG-U5-05]
+    window.resize(500, 800);
+    if (auto* resp = window.findChild<ResponsiveLayoutManager*>()) {
+        resp->UpdateWidth(500);
+    }
+    QVERIFY(window.menuBar() == nullptr || !window.menuBar()->isVisible());
+    QVERIFY(window.statusBar() == nullptr || !window.statusBar()->isVisible());
+    auto* studioTabs = window.findChild<StudioTabBar*>();
+    if (studioTabs) {
+        QVERIFY(!studioTabs->AreCornerControlsVisible());
+    }
+
+    // Restore desktop mode (1280px)
+    if (auto* resp = window.findChild<ResponsiveLayoutManager*>()) {
+        resp->UpdateWidth(1280);
+    }
+    QVERIFY(window.menuBar()->isVisible());
+    QVERIFY(window.statusBar()->isVisible());
+    if (studioTabs) {
+        QVERIFY(studioTabs->AreCornerControlsVisible());
+    }
 
     auto* viewer = window.findChild<PdfViewerWidget*>();
     QVERIFY(viewer != nullptr);

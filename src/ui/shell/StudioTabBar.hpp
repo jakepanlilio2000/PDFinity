@@ -22,6 +22,8 @@ public:
     void SetTabDirty(int index, bool isDirty);
     void SetTabPageInfo(int index, int pageCount, const QString& fileSize, const QString& fullPath);
     void UpdateTabOverflowMenu();
+    void SetCornerControlsVisible(bool visible);
+    [[nodiscard]] bool AreCornerControlsVisible() const;
 
 signals:
     void OpenFileRequested();
@@ -34,6 +36,7 @@ protected:
 private:
     void SetupCornerControls();
 
+    QWidget* m_cornerContainer{nullptr};
     QToolButton* m_newTabBtn{nullptr};
     QToolButton* m_findBtn{nullptr};
     QToolButton* m_themeBtn{nullptr};

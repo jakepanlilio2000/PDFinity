@@ -483,6 +483,7 @@ void DocumentWorkspace::dropEvent(QDropEvent* event) {
 void DocumentWorkspace::SetViewportClass(ViewportClass vClass) {
     m_currentViewportClass = vClass;
     if (m_tabWidget) {
+        m_tabWidget->SetCornerControlsVisible(vClass != ViewportClass::PhoneMobile);
         for (int i = 0; i < m_tabWidget->count(); ++i) {
             if (auto* viewer = qobject_cast<PdfViewerWidget*>(m_tabWidget->widget(i))) {
                 viewer->SetViewportClass(vClass);
