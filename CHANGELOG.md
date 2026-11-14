@@ -11,6 +11,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.1.1-beta] - 2026-11-14
+
+### Fixed
+- **AppStream License Alignment:** Corrected `<metadata_license>` in AppStream metainfo XML to `MPL-2.0` conforming to repository licensing requirements.
+- **RPM Spec Extraction Macro:** Corrected `%prep` in `packaging/linux/rpm/pdfinity.spec` using `%global tag_version` to match GitHub archive extraction directory.
+- **Arch PKGBUILD Build Isolation:** Explicitly anchored build and install targets to `"${srcdir}/build"` in `packaging/linux/arch/PKGBUILD`.
+- **Flatpak App-ID Consistency:** Unified Flatpak manifest `app-id` casing to `com.stacksyncsolutions.pdfinity` ensuring exact alignment with AppStream metadata identifier.
+
+---
+
 ## [0.1-Beta] - Initial Public Beta
 
 ### Added

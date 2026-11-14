@@ -1,4 +1,5 @@
-app-id: com.stacksyncsolutions.PDFinity
+app-id: com.stacksyncsolutions.pdfinity
+app-id: com.stacksyncsolutions.pdfinity
 runtime: org.kde.Platform
 runtime-version: '6.8'
 sdk: org.kde.Sdk
@@ -33,7 +34,10 @@ modules:
       - type: dir
         path: ../../../
     post-install:
+      - install -Dm644 packaging/linux/com.stacksyncsolutions.pdfinity.desktop /app/share/applications/com.stacksyncsolutions.pdfinity.desktop
+      - install -Dm644 packaging/resources/pdfinity.svg /app/share/icons/hicolor/scalable/apps/com.stacksyncsolutions.pdfinity.svg
       - install -Dm644 packaging/linux/com.stacksyncsolutions.pdfinity.desktop /app/share/applications/com.stacksyncsolutions.PDFinity.desktop
       - install -Dm644 packaging/resources/pdfinity.svg /app/share/icons/hicolor/scalable/apps/com.stacksyncsolutions.PDFinity.svg
       - install -Dm644 packaging/resources/pdfinity.svg /app/share/icons/hicolor/scalable/apps/pdfinity.svg
+      - install -Dm644 packaging/linux/com.stacksyncsolutions.pdfinity.metainfo.xml /app/share/metainfo/com.stacksyncsolutions.pdfinity.metainfo.xml
       - install -Dm644 packaging/linux/com.stacksyncsolutions.pdfinity.metainfo.xml /app/share/metainfo/com.stacksyncsolutions.PDFinity.metainfo.xml

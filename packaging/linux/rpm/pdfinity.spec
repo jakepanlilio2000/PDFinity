@@ -1,11 +1,13 @@
 Name:           pdfinity
-Version:        0.1.0
+Version:        0.1.1
 Release:        1%{?dist}
 Summary:        Professional, modular, offline-first PDF productivity suite
 
+%global tag_version 0.1-beta
+
 License:        MPL-2.0
 URL:            https://www.stacksyncsolutions.com/
-Source0:        https://github.com/jakepanlilio2000/PDFinity/archive/v%{version}-beta.tar.gz
+Source0:        https://github.com/jakepanlilio2000/PDFinity/archive/v%{tag_version}.tar.gz
 
 BuildRequires:  cmake >= 3.25
 BuildRequires:  ninja-build
@@ -24,7 +26,7 @@ offline OCR, format conversion, and headless batch CLI automation, operating 100
 offline with zero telemetry.
 
 %prep
-%autosetup -n PDFinity-%{version}-beta
+%autosetup -n PDFinity-%{tag_version}
 
 %build
 %cmake -G Ninja -DCMAKE_BUILD_TYPE=Release

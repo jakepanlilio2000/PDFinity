@@ -1,7 +1,7 @@
 # Maintainer: Jake Ashley Panlilio <jakepanlilio2000@users.noreply.github.com>
 # Contributor: StackSync Solutions <support@stacksyncsolutions.com>
 pkgname=pdfinity
-pkgver=0.1.0
+pkgver=0.1.1
 pkgrel=1
 pkgdesc="Professional, modular, offline-first PDF productivity suite"
 arch=('x86_64' 'aarch64')
@@ -17,16 +17,16 @@ source=("https://github.com/jakepanlilio2000/PDFinity/archive/v0.1-beta.tar.gz")
 sha256sums=('SKIP')
 
 build() {
-    cmake -B build -S "PDFinity-0.1-beta" -G Ninja \
+    cmake -B "${srcdir}/build" -S "${srcdir}/PDFinity-0.1-beta" -G Ninja \
         -DCMAKE_BUILD_TYPE=Release \
         -DCMAKE_INSTALL_PREFIX=/usr
-    cmake --build build
+    cmake --build "${srcdir}/build"
 }
 
 check() {
-    ctest --test-dir build --output-on-failure
+    ctest --test-dir "${srcdir}/build" --output-on-failure
 }
 
 package() {
-    DESTDIR="${pkgdir}" cmake --install build
+    DESTDIR="${pkgdir}" cmake --install "${srcdir}/build"
 }
