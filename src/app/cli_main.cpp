@@ -20,6 +20,7 @@
 #include <filesystem>
 
 namespace {
+namespace pdf_api = pdfinity::pdf_api;
 void PrintCliHelp() {
     std::cout << "PDFinity CLI 1.1.0 Stable\n"
               << "Published by StackSync Solutions (https://www.stacksyncsolutions.com/)\n"

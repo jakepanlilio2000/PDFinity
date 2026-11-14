@@ -29,6 +29,7 @@
 
 using namespace pdfinity::ui;
 using namespace pdfinity::app;
+namespace pdf_api = pdfinity::pdf_api;
 
 class TestShellSmoke : public QObject {
     Q_OBJECT
