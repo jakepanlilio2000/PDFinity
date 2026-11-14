@@ -17,6 +17,7 @@ else
 fi
 DIST_DIR="${REPO_ROOT}/dist"
 BUILD_TYPE="${1:-Release}"
+VERSION="$(python3 "${REPO_ROOT}/scripts/release_versions.py" --print)"
 
 echo "=========================================================="
 echo " PDFinity Android APK Packaging"
@@ -54,9 +55,9 @@ if [ "${BUILD_TYPE}" = "Debug" ]; then
     APK_CANDIDATE=$(find "${ANDROID_DIR}/build/outputs/apk" -name "*debug*.apk" 2>/dev/null | head -n 1)
     TARGET_APK="${DIST_DIR}/PDFinity-debug.apk"
 else
-    ${GRADLE_CMD} assembleRelease
+    ${GRADLE_CMD} assembleRelease bundleRelease
     APK_CANDIDATE=$(find "${ANDROID_DIR}/build/outputs/apk" -name "*release*.apk" 2>/dev/null | head -n 1)
-    TARGET_APK="${DIST_DIR}/PDFinity-release.apk"
+    TARGET_APK="${DIST_DIR}/PDFinity-${VERSION}-android-universal-release.apk"
 fi
 
 if [ -n "${APK_CANDIDATE:-}" ] && [ -f "${APK_CANDIDATE}" ]; then
@@ -64,7 +65,15 @@ if [ -n "${APK_CANDIDATE:-}" ] && [ -f "${APK_CANDIDATE}" ]; then
     echo "[+] Successfully packaged APK: ${TARGET_APK}"
     ls -lh "${TARGET_APK}"
 else
-    echo "[!] Notice: Gradle completed. Check ${ANDROID_DIR}/build/outputs/apk for generated packages."
+    echo "ERROR: required APK missing after Gradle success" >&2
+    exit 1
+fi
+
+if [ "${BUILD_TYPE}" != "Debug" ]; then
+    mapfile -t bundles < <(find "${ANDROID_DIR}/build/outputs/bundle" -name '*release*.aab' -type f)
+    [ "${#bundles[@]}" -eq 1 ] || { echo "ERROR: required unique release AAB missing" >&2; exit 1; }
+    test -s "${bundles[0]}"
+    cp "${bundles[0]}" "${DIST_DIR}/PDFinity-${VERSION}-android-universal-release.aab"
 fi
 
 echo "=========================================================="

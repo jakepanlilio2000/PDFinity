@@ -1,0 +1,14 @@
+{
+  "schema": 1,
+  "repository": "jakepanlilio2000/PDFinity",
+  "assets": [
+    {"lane": "windows", "arch": "x86_64", "type": "zip", "name": "PDFinity-{version}-windows-x64-portable.zip"},
+    {"lane": "windows", "arch": "x86_64", "type": "installer", "name": "PDFinity-{version}-Setup-x64.exe"},
+    {"lane": "linux", "arch": "x86_64", "type": "deb", "name": "pdfinity_{version}_amd64.deb"},
+    {"lane": "linux", "arch": "x86_64", "type": "rpm", "name": "pdfinity-{version}-1.x86_64.rpm"},
+    {"lane": "linux", "arch": "x86_64", "type": "appimage", "name": "PDFinity-{version}-x86_64.AppImage"},
+    {"lane": "macos", "arch": "universal", "type": "dmg", "name": "PDFinity-{version}-macOS.dmg"},
+    {"lane": "android", "arch": "arm64-v8a+armeabi-v7a+x86_64", "type": "apk", "name": "PDFinity-{version}-android-universal-release.apk"},
+    {"lane": "android", "arch": "arm64-v8a+armeabi-v7a+x86_64", "type": "aab", "name": "PDFinity-{version}-android-universal-release.aab"}
+  ]
+}

@@ -13,13 +13,12 @@ echo "=== Staging RPM build for PDFinity ${VERSION} ==="
 mkdir -p "${TOPDIR}"/{BUILD,RPMS,SOURCES,SPECS,SRPMS}
 cp packaging/linux/rpm/pdfinity.spec "${TOPDIR}/SPECS/"
 
-if command -v rpmbuild >/dev/null 2>&1; then
-    rpmbuild --define "_topdir ${TOPDIR}" -ba "${TOPDIR}/SPECS/pdfinity.spec" || {
-        echo "Source tarball not found; attempting short-circuit binary package build..."
-        rpmbuild --define "_topdir ${TOPDIR}" -bb --nodeps "${TOPDIR}/SPECS/pdfinity.spec" || true
-    }
-    echo "[+] RPM successfully verified in ${TOPDIR}/RPMS"
-    find "${TOPDIR}/RPMS" -name "*.rpm" -exec cp -v {} dist/ \; || true
-else
-    echo "rpmbuild command not found on host. Staging spec verified at ${TOPDIR}/SPECS/pdfinity.spec."
-fi
+command -v rpmbuild >/dev/null
+# Build the exact checkout, never fetch a mutable version URL or substitute current source.
+git diff --quiet HEAD --
+git archive --format=tar.gz --prefix="PDFinity-${VERSION}/" HEAD > "${TOPDIR}/SOURCES/v${VERSION}.tar.gz"
+rpmbuild --define "_topdir ${TOPDIR}" -ba "${TOPDIR}/SPECS/pdfinity.spec"
+mapfile -t packages < <(find "${TOPDIR}/RPMS" -name "pdfinity-${VERSION}-1.*.rpm" -type f)
+[ "${#packages[@]}" -eq 1 ] || { echo "ERROR: expected exactly one binary RPM" >&2; exit 1; }
+test -s "${packages[0]}"
+cp -v "${packages[0]}" dist/

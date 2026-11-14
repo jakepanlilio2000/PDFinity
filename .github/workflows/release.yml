@@ -1,29 +1,102 @@
 name: PDFinity Multi-Platform Release
+run-name: PDFinity ${{ inputs.release_tag || github.ref_name }} ${{ inputs.mode || 'release' }} ${{ inputs.probe_parent }}
 
 on:
   push:
     tags:
       - 'v*'
   workflow_dispatch:
+    inputs:
+      release_tag:
+        description: Existing merged stable tag (vMAJOR.MINOR.PATCH)
+        required: true
+        type: string
+      source_sha:
+        description: Full immutable commit SHA (must match workflow source and tag)
+        required: true
+        type: string
+      probe_parent:
+        description: Internal GITHUB_TOKEN dispatch probe parent run (leave empty)
+        required: false
+        default: ''
+        type: string
+      mode:
+        description: Rehearsal never creates, edits or publishes a release
+        required: true
+        default: rehearsal
+        type: choice
+        options: [rehearsal, release]
 
 permissions:
-  contents: write
+  contents: read
+  actions: read
+
+concurrency:
+  group: pdfinity-release-${{ inputs.release_tag || github.ref_name }}
+  cancel-in-progress: false
 
 jobs:
+  preflight:
+    name: Verify merged tag, source, versions and required checks
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    outputs:
+      version: ${{ steps.identity.outputs.version }}
+      tag: ${{ steps.identity.outputs.tag }}
+      sha: ${{ steps.identity.outputs.sha }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Check release identity (no tag or release writes)
+        id: identity
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ inputs.release_tag || github.ref_name }}
+          SOURCE_SHA: ${{ inputs.source_sha || github.sha }}
+          MODE: ${{ inputs.mode || 'release' }}
+        run: |
+          args=()
+          if [ "$MODE" = rehearsal ]; then args+=(--rehearsal); fi
+          python3 scripts/release_gate.py preflight --tag "$RELEASE_TAG" --sha "$SOURCE_SHA" "${args[@]}"
+      - name: Run deterministic gate and version regression checks
+        run: python3 -m unittest discover -s tests/pipeline -v
+      - name: Prove missing packages reject without publication
+        if: inputs.mode == 'rehearsal'
+        env:
+          VERSION: ${{ steps.identity.outputs.version }}
+          SHA: ${{ steps.identity.outputs.sha }}
+        run: |
+          mkdir rehearsal-empty
+          if python3 scripts/release_assets.py --directory rehearsal-empty --version "$VERSION" --sha "$SHA" --run-id "$GITHUB_RUN_ID" --attempt "$GITHUB_RUN_ATTEMPT"; then
+            echo 'ERROR: missing assets were accepted'
+            exit 1
+          fi
+
   build-windows:
+    needs: preflight
+    if: inputs.mode != 'rehearsal'
+    timeout-minutes: 60
+    env:
+      RELEASE_VERSION: ${{ needs.preflight.outputs.version }}
+      RELEASE_SHA: ${{ needs.preflight.outputs.sha }}
     name: Windows x64 Build & Package
     runs-on: windows-2022
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v4
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          ref: ${{ needs.preflight.outputs.sha }}
+          persist-credentials: false
 
       - name: Setup MSVC Toolchain
-        uses: ilammy/msvc-dev-cmd@v1
+        uses: ilammy/msvc-dev-cmd@0b201ec74fa43914dc39ae48a89fd1d8cb592756 # v1
         with:
           arch: x64
 
       - name: Setup Qt 6.8 LTS
-        uses: jurplel/install-qt-action@v3
+        uses: jurplel/install-qt-action@b7840a6733f49e2a39c4355260d2375063d39b61 # v3
         with:
           version: '6.8.2'
           arch: 'win64_msvc2022_64'
@@ -43,20 +116,57 @@ jobs:
           ctest --preset windows-x64-release --output-on-failure
 
       - name: Package Windows Artifacts (Portable ZIP & Staging)
-        run: python scripts/package_windows.py --skip-installer
+        run: python scripts/package_windows.py --version "$env:RELEASE_VERSION"
 
-      - name: Upload Windows Artifacts
-        uses: actions/upload-artifact@v4
+      - name: Verify native install, runtime, version and removal
+        shell: bash
+        run: >-
+          python3 scripts/verify_native_packages.py --lane windows
+          --version "$RELEASE_VERSION" --sha "$RELEASE_SHA"
+      - name: Validate native package evidence and export only contracted assets
+        shell: bash
+        run: >-
+          python3 scripts/release_assets.py --stage-from dist --directory release-export
+          --receipt verification/receipts/windows.json --lane windows
+          --version "$RELEASE_VERSION" --sha "$RELEASE_SHA"
+          --run-id "$GITHUB_RUN_ID" --attempt "$GITHUB_RUN_ATTEMPT"
+      - name: Upload windows zip
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
-          name: windows-release-artifacts
-          path: dist/*
+          name: pdfinity-${{ needs.preflight.outputs.version }}-windows-x86_64-zip
+          path: release-export/PDFinity-${{ needs.preflight.outputs.version }}-windows-x64-portable.zip
+          if-no-files-found: error
+          retention-days: 14
+      - name: Upload windows installer
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: pdfinity-${{ needs.preflight.outputs.version }}-windows-x86_64-installer
+          path: release-export/PDFinity-${{ needs.preflight.outputs.version }}-Setup-x64.exe
+          if-no-files-found: error
+          retention-days: 14
+      - name: Upload windows verification receipt
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: pdfinity-${{ needs.preflight.outputs.version }}-windows-x86_64-receipt
+          path: release-export/windows.json
+          if-no-files-found: error
+          retention-days: 14
 
   build-linux:
+    needs: preflight
+    if: inputs.mode != 'rehearsal'
+    timeout-minutes: 60
+    env:
+      RELEASE_VERSION: ${{ needs.preflight.outputs.version }}
+      RELEASE_SHA: ${{ needs.preflight.outputs.sha }}
     name: Linux Multi-Distribution Packages
     runs-on: ubuntu-22.04
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v4
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          ref: ${{ needs.preflight.outputs.sha }}
+          persist-credentials: false
 
       - name: Install System Toolchain & Distro Packagers
         run: |
@@ -65,7 +175,7 @@ jobs:
             libxcb-cursor0 libxcb-icccm4 libxcb-image0 libxcb-keysyms1 libxcb-randr0 libxcb-render-util0 libxcb-shape0 libxcb-xfixes0 libxkbcommon-x11-0
 
       - name: Setup Qt 6.8 LTS
-        uses: jurplel/install-qt-action@v3
+        uses: jurplel/install-qt-action@b7840a6733f49e2a39c4355260d2375063d39b61 # v3
         with:
           version: '6.8.2'
           arch: 'linux_gcc_64'
@@ -86,17 +196,17 @@ jobs:
 
       - name: Package Debian (.deb)
         run: |
-          TAG_VER="${GITHUB_REF_NAME#v}"
+          TAG_VER="$RELEASE_VERSION"
           bash packaging/linux/build_deb.sh build/linux-x64-release "${TAG_VER:-1.1.0}" amd64
 
       - name: Package Red Hat / Fedora (.rpm)
         run: |
-          TAG_VER="${GITHUB_REF_NAME#v}"
+          TAG_VER="$RELEASE_VERSION"
           bash packaging/linux/rpm/build_rpm.sh "${TAG_VER:-1.1.0}"
 
       - name: Package Portable AppImage
         run: |
-          TAG_VER="${GITHUB_REF_NAME#v}"
+          TAG_VER="$RELEASE_VERSION"
           bash packaging/linux/appimage/build-appimage.sh build/linux-x64-release "${TAG_VER:-1.1.0}"
 
       - name: Verify Arch Linux PKGBUILD & .SRCINFO
@@ -105,30 +215,68 @@ jobs:
           test -f PKGBUILD && test -f .SRCINFO
           echo "[+] Arch Linux PKGBUILD and .SRCINFO verified."
 
-      - name: Ensure Staged Release Artifacts Fallback
-        run: python3 scripts/prepare_release_artifacts.py "${GITHUB_REF_NAME#v}" || true
-
-      - name: Upload Linux Artifacts
-        uses: actions/upload-artifact@v4
+      - name: Verify native install, runtime, version and removal
+        shell: bash
+        run: >-
+          python3 scripts/verify_native_packages.py --lane linux
+          --version "$RELEASE_VERSION" --sha "$RELEASE_SHA"
+      - name: Validate native package evidence and export only contracted assets
+        shell: bash
+        run: >-
+          python3 scripts/release_assets.py --stage-from dist --directory release-export
+          --receipt verification/receipts/linux.json --lane linux
+          --version "$RELEASE_VERSION" --sha "$RELEASE_SHA"
+          --run-id "$GITHUB_RUN_ID" --attempt "$GITHUB_RUN_ATTEMPT"
+      - name: Upload linux deb
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
-          name: linux-release-artifacts
-          path: |
-            dist/*.deb
-            dist/*.rpm
-            dist/*.AppImage
+          name: pdfinity-${{ needs.preflight.outputs.version }}-linux-x86_64-deb
+          path: release-export/pdfinity_${{ needs.preflight.outputs.version }}_amd64.deb
+          if-no-files-found: error
+          retention-days: 14
+      - name: Upload linux rpm
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: pdfinity-${{ needs.preflight.outputs.version }}-linux-x86_64-rpm
+          path: release-export/pdfinity-${{ needs.preflight.outputs.version }}-1.x86_64.rpm
+          if-no-files-found: error
+          retention-days: 14
+      - name: Upload linux appimage
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: pdfinity-${{ needs.preflight.outputs.version }}-linux-x86_64-appimage
+          path: release-export/PDFinity-${{ needs.preflight.outputs.version }}-x86_64.AppImage
+          if-no-files-found: error
+          retention-days: 14
+      - name: Upload linux verification receipt
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: pdfinity-${{ needs.preflight.outputs.version }}-linux-x86_64-receipt
+          path: release-export/linux.json
+          if-no-files-found: error
+          retention-days: 14
 
   build-macos:
+    needs: preflight
+    if: inputs.mode != 'rehearsal'
+    timeout-minutes: 60
+    env:
+      RELEASE_VERSION: ${{ needs.preflight.outputs.version }}
+      RELEASE_SHA: ${{ needs.preflight.outputs.sha }}
     name: macOS Universal DMG Bundle
     runs-on: macos-latest
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v4
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          ref: ${{ needs.preflight.outputs.sha }}
+          persist-credentials: false
 
       - name: Install Build Tools
-        run: brew install cmake ninja || true
+        run: brew install cmake ninja
 
       - name: Setup Qt 6.8 LTS
-        uses: jurplel/install-qt-action@v3
+        uses: jurplel/install-qt-action@b7840a6733f49e2a39c4355260d2375063d39b61 # v3
         with:
           version: '6.8.2'
           arch: 'clang_64'
@@ -154,24 +302,54 @@ jobs:
 
       - name: Package DMG Disk Image
         run: |
-          TAG_VER="${GITHUB_REF_NAME#v}"
+          TAG_VER="$RELEASE_VERSION"
           bash packaging/macos/build_dmg.sh build/macos-release "${TAG_VER:-1.1.0}"
 
-      - name: Upload macOS Artifacts
-        uses: actions/upload-artifact@v4
+      - name: Verify native install, runtime, version and removal
+        shell: bash
+        run: >-
+          python3 scripts/verify_native_packages.py --lane macos
+          --version "$RELEASE_VERSION" --sha "$RELEASE_SHA"
+      - name: Validate native package evidence and export only contracted assets
+        shell: bash
+        run: >-
+          python3 scripts/release_assets.py --stage-from dist --directory release-export
+          --receipt verification/receipts/macos.json --lane macos
+          --version "$RELEASE_VERSION" --sha "$RELEASE_SHA"
+          --run-id "$GITHUB_RUN_ID" --attempt "$GITHUB_RUN_ATTEMPT"
+      - name: Upload macos dmg
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
-          name: macos-release-artifacts
-          path: dist/*.dmg
+          name: pdfinity-${{ needs.preflight.outputs.version }}-macos-universal-dmg
+          path: release-export/PDFinity-${{ needs.preflight.outputs.version }}-macOS.dmg
+          if-no-files-found: error
+          retention-days: 14
+      - name: Upload macos verification receipt
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: pdfinity-${{ needs.preflight.outputs.version }}-macos-universal-receipt
+          path: release-export/macos.json
+          if-no-files-found: error
+          retention-days: 14
 
   build-android:
+    needs: preflight
+    if: inputs.mode != 'rehearsal'
+    timeout-minutes: 60
+    env:
+      RELEASE_VERSION: ${{ needs.preflight.outputs.version }}
+      RELEASE_SHA: ${{ needs.preflight.outputs.sha }}
     name: Android APK & AAB Packaging
     runs-on: ubuntu-22.04
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v4
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          ref: ${{ needs.preflight.outputs.sha }}
+          persist-credentials: false
 
       - name: Set up JDK 17
-        uses: actions/setup-java@v5
+        uses: actions/setup-java@b6effb05e454b25005698d916606bdc6ffcbf961 # v5
         with:
           distribution: 'temurin'
           java-version: '17'
@@ -184,65 +362,93 @@ jobs:
       - name: Build Android Packages (APK & AAB)
         run: |
           chmod +x packaging/android/build_apk.sh
-          ./packaging/android/build_apk.sh Release || true
-          python3 scripts/prepare_release_artifacts.py "${GITHUB_REF_NAME#v}" || true
+          ./packaging/android/build_apk.sh Release
 
-      - name: Upload Android Artifacts
-        uses: actions/upload-artifact@v4
+      - name: Verify native install, runtime, version and removal
+        shell: bash
+        run: >-
+          python3 scripts/verify_native_packages.py --lane android
+          --version "$RELEASE_VERSION" --sha "$RELEASE_SHA"
+      - name: Validate native package evidence and export only contracted assets
+        shell: bash
+        run: >-
+          python3 scripts/release_assets.py --stage-from dist --directory release-export
+          --receipt verification/receipts/android.json --lane android
+          --version "$RELEASE_VERSION" --sha "$RELEASE_SHA"
+          --run-id "$GITHUB_RUN_ID" --attempt "$GITHUB_RUN_ATTEMPT"
+      - name: Upload android apk
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
-          name: android-release-artifacts
-          path: |
-            android/build/outputs/apk/**/*.apk
-            dist/*.apk
-          if-no-files-found: ignore
+          name: pdfinity-${{ needs.preflight.outputs.version }}-android-universal-apk
+          path: release-export/PDFinity-${{ needs.preflight.outputs.version }}-android-universal-release.apk
+          if-no-files-found: error
+          retention-days: 14
+      - name: Upload android aab
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: pdfinity-${{ needs.preflight.outputs.version }}-android-universal-aab
+          path: release-export/PDFinity-${{ needs.preflight.outputs.version }}-android-universal-release.aab
+          if-no-files-found: error
+          retention-days: 14
+      - name: Upload android verification receipt
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: pdfinity-${{ needs.preflight.outputs.version }}-android-universal-receipt
+          path: release-export/android.json
+          if-no-files-found: error
+          retention-days: 14
 
   publish-release:
-    name: Consolidate & Publish GitHub Release
-    needs: [build-windows, build-linux, build-macos, build-android]
+    name: Consolidate, draft, verify downloads and publish
+    needs: [preflight, build-windows, build-linux, build-macos, build-android]
+    if: >-
+      always() && needs.preflight.result == 'success' &&
+      (inputs.mode == 'rehearsal' ||
+      (needs.build-windows.result == 'success' && needs.build-linux.result == 'success' &&
+      needs.build-macos.result == 'success' && needs.build-android.result == 'success'))
     runs-on: ubuntu-latest
+    timeout-minutes: 30
+    environment: release
+    permissions:
+      contents: write
+      actions: write # Only this publishing job can explicitly dispatch the no-write probe.
     steps:
-      - name: Checkout Code
-        uses: actions/checkout@v4
-
-      - name: Download Windows Artifacts
-        uses: actions/download-artifact@v4
+      - name: Prove repository GITHUB_TOKEN explicitly triggers a safe workflow
+        if: inputs.mode == 'rehearsal' && inputs.probe_parent == ''
+        env:
+          GH_TOKEN: ${{ github.token }}
+          WORKFLOW_REF: ${{ github.ref_name }}
+          RELEASE_TAG: ${{ needs.preflight.outputs.tag }}
+          RELEASE_SHA: ${{ needs.preflight.outputs.sha }}
+        run: >-
+          gh workflow run release.yml --repo jakepanlilio2000/PDFinity --ref "$WORKFLOW_REF"
+          --field release_tag="$RELEASE_TAG" --field source_sha="$RELEASE_SHA"
+          --field mode=rehearsal --field probe_parent="$GITHUB_RUN_ID"
+      - name: Record child probe completion
+        if: inputs.mode == 'rehearsal' && inputs.probe_parent != ''
+        env:
+          PARENT_RUN: ${{ inputs.probe_parent }}
+        run: echo "GITHUB_TOKEN workflow_dispatch child executed; parent=$PARENT_RUN; no release writes."
+      - name: Checkout verified release source
+        if: inputs.mode != 'rehearsal'
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
-          name: windows-release-artifacts
-          path: release-dist/
-
-      - name: Download Linux Artifacts
-        uses: actions/download-artifact@v4
+          ref: ${{ needs.preflight.outputs.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Download all build artifacts without flattening
+        if: inputs.mode != 'rehearsal'
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
         with:
-          name: linux-release-artifacts
-          path: release-dist/
-
-      - name: Download macOS Artifacts
-        uses: actions/download-artifact@v4
-        with:
-          name: macos-release-artifacts
-          path: release-dist/
-
-      - name: Download Android Artifacts
-        uses: actions/download-artifact@v4
-        with:
-          name: android-release-artifacts
-          path: release-dist/
-        continue-on-error: true
-
-      - name: Flatten and Generate Cryptographic Checksums (SHA-256)
-        run: |
-          cd release-dist
-          find . -mindepth 2 -type f -exec mv -t . {} + || true
-          find . -mindepth 1 -type d -empty -delete || true
-          sha256sum * > SHA256SUMS.txt 2>/dev/null || true
-          cat SHA256SUMS.txt || true
-
-      - name: Publish Release to GitHub
-        uses: softprops/action-gh-release@v2
-        with:
-          files: |
-            release-dist/*
-            docs/SBOM.md
-          draft: false
-          prerelease: ${{ contains(github.ref, 'beta') || contains(github.ref, 'rc') }}
-          generate_release_notes: true
+          pattern: pdfinity-${{ needs.preflight.outputs.version }}-*
+          path: release-input/
+          merge-multiple: false
+      - name: Validate entire contract, upload draft, verify, then promote
+        if: inputs.mode != 'rehearsal'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ needs.preflight.outputs.tag }}
+          RELEASE_SHA: ${{ needs.preflight.outputs.sha }}
+        run: >-
+          python3 scripts/release_gate.py transaction --tag "$RELEASE_TAG" --sha "$RELEASE_SHA"
+          --directory release-input --run-id "$GITHUB_RUN_ID" --attempt "$GITHUB_RUN_ATTEMPT"

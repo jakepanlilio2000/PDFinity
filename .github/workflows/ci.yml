@@ -7,20 +7,35 @@ on:
     branches: [ main ]
   workflow_dispatch:
 
+permissions:
+  contents: read
+
 jobs:
+  release-validation:
+    name: Release Pipeline Validation
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - name: Validate current version mapping
+        run: python3 scripts/release_versions.py
+      - name: Run release safety regression checks
+        run: python3 -m unittest discover -s tests/pipeline -v
   build-windows:
     name: Windows x64 (MSVC + Qt 6)
     runs-on: windows-2022
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
 
       - name: Setup MSVC Toolchain
-        uses: ilammy/msvc-dev-cmd@v1
+        uses: ilammy/msvc-dev-cmd@0b201ec74fa43914dc39ae48a89fd1d8cb592756 # v1
         with:
           arch: x64
 
       - name: Setup Qt 6
-        uses: jurplel/install-qt-action@v3
+        uses: jurplel/install-qt-action@b7840a6733f49e2a39c4355260d2375063d39b61 # v3
         with:
           version: '6.8.2'
           arch: 'win64_msvc2022_64'
@@ -49,7 +64,7 @@ jobs:
     name: Linux x64 (GCC + Qt 6)
     runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
 
       - name: Install System Dependencies
         run: |
@@ -59,7 +74,7 @@ jobs:
             libxcb-cursor0 libxcb-icccm4 libxcb-image0 libxcb-keysyms1 libxcb-randr0 libxcb-render-util0 libxcb-shape0 libxcb-xfixes0 libxkbcommon-x11-0
 
       - name: Setup Qt 6
-        uses: jurplel/install-qt-action@v3
+        uses: jurplel/install-qt-action@b7840a6733f49e2a39c4355260d2375063d39b61 # v3
         with:
           version: '6.8.2'
           arch: 'linux_gcc_64'
@@ -89,19 +104,19 @@ jobs:
       - name: Validate Linux Packaging Scripts
         run: |
           chmod +x packaging/linux/*.sh packaging/linux/rpm/*.sh packaging/linux/appimage/*.sh
-          ./packaging/linux/tarball.sh build/linux-x64-release 1.1.0
+          ./packaging/linux/tarball.sh build/linux-x64-release "$(python3 scripts/release_versions.py --print)"
 
   build-macos:
     name: macOS (Apple Clang + Qt 6)
     runs-on: macos-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
 
       - name: Install Build Tools
         run: brew install cmake ninja || true
 
       - name: Setup Qt 6
-        uses: jurplel/install-qt-action@v3
+        uses: jurplel/install-qt-action@b7840a6733f49e2a39c4355260d2375063d39b61 # v3
         with:
           version: '6.8.2'
           arch: 'clang_64'
@@ -130,16 +145,16 @@ jobs:
       - name: Validate macOS Packaging
         run: |
           chmod +x packaging/macos/build_dmg.sh
-          ./packaging/macos/build_dmg.sh build/macos-release 1.1.0
+          ./packaging/macos/build_dmg.sh build/macos-release "$(python3 scripts/release_versions.py --print)"
 
   build-android:
     name: Android Verification (Gradle + C++20 NDK)
     runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
 
       - name: Setup Java JDK
-        uses: actions/setup-java@v5
+        uses: actions/setup-java@b6effb05e454b25005698d916606bdc6ffcbf961 # v5
         with:
           distribution: 'temurin'
           java-version: '17'

@@ -39,16 +39,17 @@ fi
 if [ -f "${BUILD_DIR}/bin/PDFinity" ]; then
     install -m 755 "${BUILD_DIR}/bin/PDFinity" "${STAGE_DIR}/usr/bin/pdfinity"
 else
-    echo "Notice: ${BUILD_DIR}/bin/PDFinity not found. Generating staged placeholder binary for package validation."
-    mkdir -p "${BUILD_DIR}/bin"
-    echo -e '#!/bin/sh\necho "PDFinity 1.1.0 (StackSync Solutions)"' > "${BUILD_DIR}/bin/PDFinity"
-    chmod 755 "${BUILD_DIR}/bin/PDFinity"
-    install -m 755 "${BUILD_DIR}/bin/PDFinity" "${STAGE_DIR}/usr/bin/pdfinity"
+    echo "ERROR: native PDFinity executable missing; no placeholder will be generated" >&2
+    exit 1
 fi
 
+test -s "third_party/pdfium/lib/libpdfium.so"
+test -s "${BUILD_DIR}/bin/pdfinity-cli"
 if [ -f "third_party/pdfium/lib/libpdfium.so" ]; then
     install -m 755 "third_party/pdfium/lib/libpdfium.so" "${STAGE_DIR}/usr/lib/libpdfium.so"
 fi
+
+install -m 755 "${BUILD_DIR}/bin/pdfinity-cli" "${STAGE_DIR}/usr/bin/pdfinity-cli"
 
 # 3. Desktop integration & AppStream metainfo
 install -m 644 packaging/linux/com.stacksyncsolutions.pdfinity.desktop "${STAGE_DIR}/usr/share/applications/com.stacksyncsolutions.pdfinity.desktop"
@@ -79,5 +80,6 @@ if command -v dpkg-deb >/dev/null 2>&1; then
     dpkg-deb --contents "${DIST_DIR}/${DEB_NAME}"
     echo "[+] Successfully verified Debian package: ${DIST_DIR}/${DEB_NAME}"
 else
-    echo "dpkg-deb not present on host. Verified staged Debian tree at ${STAGE_DIR}."
+    echo "ERROR: dpkg-deb is required" >&2
+    exit 1
 fi
