@@ -183,7 +183,7 @@ int HandleOcr(int argc, char* argv[]) {
     }
 
     pdf_api::OcrOptions opts;
-    opts.languageCode = lang;
+    opts.language = lang;
     auto ocrRes = pdfinity::services::OcrService::Instance().ProcessDocumentOcr(*docRes.value, output, opts);
     if (!ocrRes) {
         std::cerr << "OCR processing failed: " << pdf_api::GetEngineErrorMessage(ocrRes.error) << "\n";
@@ -254,7 +254,7 @@ int HandleRedact(int argc, char* argv[]) {
         return 1;
     }
 
-    std::cout << "[SUCCESS] Applied redactions: " << applyRes.value.redactionsCount << " regions sanitized in " << output.string() << "\n";
+    std::cout << "[SUCCESS] Applied redactions: " << applyRes.value.totalRedactionsApplied << " regions sanitized in " << output.string() << "\n";
     return 0;
 }
 
@@ -283,9 +283,9 @@ int HandleSign(int argc, char* argv[]) {
     }
 
     pdf_api::CryptographicSignOptions opts;
-    opts.pkcs12CertificatePath = certPath;
-    opts.signerName = "PDFinity CLI Automated Signer";
+    opts.certThumbprint = certPath.string();
     opts.reason = "Cryptographic Authorization";
+    opts.location = "PDFinity CLI Automated Signer";
 
     auto signRes = pdfinity::services::SignatureService::SignDocumentIncremental(
         input, output, opts, pdfinity::security::SecureString(password)
