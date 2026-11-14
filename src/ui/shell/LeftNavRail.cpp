@@ -12,6 +12,7 @@
 #include <QFileDialog>
 #include <QMessageBox>
 #include <QFileInfo>
+#include <QFile>
 
 namespace pdfinity::ui {
 
@@ -101,7 +102,10 @@ QWidget* LeftNavRail::CreateRailWidget() {
     for (size_t i = 0; i < buttonDefs.size(); ++i) {
         auto* btn = new QPushButton(rail);
         btn->setCheckable(true);
-        QIcon icon = QIcon(buttonDefs[i].fallbackSvg);
+        QIcon icon;
+        if (QFile::exists(buttonDefs[i].fallbackSvg)) {
+            icon = QIcon(buttonDefs[i].fallbackSvg);
+        }
         if (icon.isNull()) {
             icon = VectorIcons::GetIcon(buttonDefs[i].icon);
         }

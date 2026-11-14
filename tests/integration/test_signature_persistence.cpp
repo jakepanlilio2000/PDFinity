@@ -31,6 +31,9 @@ private:
 };
 
 void TestSignaturePersistence::initTestCase() {
+#if !defined(_WIN32)
+    QSKIP("SignaturePersistence requires Windows CryptoAPI.");
+#endif
     m_fixturesDir = std::filesystem::path(PDFINITY_SOURCE_DIR) / "tests" / "fixtures";
     QVERIFY(std::filesystem::exists(m_fixturesDir));
 

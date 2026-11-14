@@ -24,6 +24,9 @@ private:
 };
 
 void TestCryptoCertManager::initTestCase() {
+#if !defined(_WIN32)
+    QSKIP("CryptoCertificateManager requires Windows CryptoAPI and DPAPI vault.");
+#endif
     m_fixturesDir = std::filesystem::path(PDFINITY_SOURCE_DIR) / "tests" / "fixtures";
     QVERIFY(std::filesystem::exists(m_fixturesDir));
 }

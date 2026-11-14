@@ -26,6 +26,9 @@ private:
 };
 
 void TestSignatureService::initTestCase() {
+#if !defined(_WIN32)
+    QSKIP("SignatureService PKCS#12 signing requires Windows CryptoAPI.");
+#endif
     m_fixturesDir = std::filesystem::path(PDFINITY_SOURCE_DIR) / "tests" / "fixtures";
     QVERIFY(std::filesystem::exists(m_fixturesDir));
 

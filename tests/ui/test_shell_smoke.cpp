@@ -184,13 +184,13 @@ void TestShellSmoke::testShellSplitterPersistence() {
 
     auto* insp = viewer->GetInspector();
     QVERIFY(insp != nullptr);
-    QVERIFY(!insp->isVisible());
+    QVERIFY(insp->isHidden());
 
     config.leftRailDrawerExpanded = true;
     config.rightInspectorVisible = true;
     viewer->ApplySettingsState();
     QVERIFY(rail->IsDrawerExpanded());
-    QVERIFY(insp->isVisible());
+    QVERIFY(!insp->isHidden());
 
     window.close();
 }
@@ -348,8 +348,8 @@ void TestShellSmoke::testResponsiveLayoutAndMobileStudio() {
     if (auto* resp = window.findChild<ResponsiveLayoutManager*>()) {
         resp->UpdateWidth(500);
     }
-    QVERIFY(window.menuBar() == nullptr || !window.menuBar()->isVisible());
-    QVERIFY(window.statusBar() == nullptr || !window.statusBar()->isVisible());
+    QVERIFY(window.menuBar() == nullptr || window.menuBar()->isHidden());
+    QVERIFY(window.statusBar() == nullptr || window.statusBar()->isHidden());
     auto* studioTabs = window.findChild<StudioTabBar*>();
     if (studioTabs) {
         QVERIFY(!studioTabs->AreCornerControlsVisible());
@@ -359,8 +359,8 @@ void TestShellSmoke::testResponsiveLayoutAndMobileStudio() {
     if (auto* resp = window.findChild<ResponsiveLayoutManager*>()) {
         resp->UpdateWidth(1280);
     }
-    QVERIFY(window.menuBar()->isVisible());
-    QVERIFY(window.statusBar()->isVisible());
+    QVERIFY(window.menuBar() != nullptr && !window.menuBar()->isHidden());
+    QVERIFY(window.statusBar() != nullptr && !window.statusBar()->isHidden());
     if (studioTabs) {
         QVERIFY(studioTabs->AreCornerControlsVisible());
     }
