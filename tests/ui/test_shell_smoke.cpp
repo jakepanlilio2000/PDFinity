@@ -6,6 +6,8 @@
 #include <QLabel>
 #include <filesystem>
 #include "ui/MainWindow.hpp"
+#include "ui/PdfViewerWidget.hpp"
+#include "ui/shell/LeftNavRail.hpp"
 #include "ui/shell/WorkflowRibbon.hpp"
 #include "ui/ThemeManager.hpp"
 #include "ui/AboutDialog.hpp"
@@ -28,6 +30,7 @@ private slots:
     void testThemeSwitching();
     void testDialogs();
     void testWorkflowRibbonWiring();
+    void testLeftNavRailPageSync();
 };
 
 void TestShellSmoke::initTestCase() {
@@ -113,6 +116,30 @@ void TestShellSmoke::testWorkflowRibbonWiring() {
     emit ribbon->CommentNoteClicked();
     emit ribbon->ViewPanClicked();
     emit ribbon->ViewSelectClicked();
+
+    window.close();
+}
+
+void TestShellSmoke::testLeftNavRailPageSync() {
+    MainWindow window;
+    std::filesystem::path fixturePath = std::filesystem::path(PDFINITY_SOURCE_DIR) / "tests" / "fixtures" / "ordinary.pdf";
+    QVERIFY(std::filesystem::exists(fixturePath));
+    QVERIFY(window.OpenFileByPath(QString::fromStdString(fixturePath.string())));
+
+    auto* viewer = window.findChild<PdfViewerWidget*>();
+    QVERIFY(viewer != nullptr);
+
+    auto* rail = viewer->GetNavigationRail();
+    QVERIFY(rail != nullptr);
+    QVERIFY(rail->IsDrawerExpanded());
+
+    viewer->GoToPage(0);
+    rail->SetActivePage(0);
+
+    rail->SetDrawerExpanded(false);
+    QVERIFY(!rail->IsDrawerExpanded());
+    rail->SetDrawerExpanded(true);
+    QVERIFY(rail->IsDrawerExpanded());
 
     window.close();
 }

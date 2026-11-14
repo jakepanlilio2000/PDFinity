@@ -11,6 +11,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.0.6] - 2026-11-14
+
+### Fixed
+- **LeftNavRail Page Selection Sync on Canvas Page Change [BUG-U3-02]:** In `PdfViewerWidget::OnCanvasPageChanged`, replaced legacy dead sidebar call with `m_leftRail->SetActivePage(pageIndex)` and `m_inspector->UpdatePageContext(pageIndex, zoom)`, and scrubbed legacy sidebar calls in `Undo()` and `Redo()`. Added regression test in `tests/ui/test_shell_smoke.cpp`.
+
+---
+
 ## [1.0.5] - 2026-11-14
 
 ### Fixed

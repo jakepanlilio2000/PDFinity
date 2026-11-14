@@ -399,7 +399,9 @@ void PdfViewerWidget::Undo() {
             m_renderService->GetCache().Clear();
             m_renderService->RequestPageRender(m_doc, GetCurrentPage(), GetZoomScale(), devicePixelRatioF(), 10);
         }
-        m_sidebar->PopulateAnnotations();
+        if (m_leftRail) {
+            m_leftRail->RefreshAnnotations();
+        }
         m_canvas->update();
     }
 }
@@ -411,7 +413,9 @@ void PdfViewerWidget::Redo() {
             m_renderService->GetCache().Clear();
             m_renderService->RequestPageRender(m_doc, GetCurrentPage(), GetZoomScale(), devicePixelRatioF(), 10);
         }
-        m_sidebar->PopulateAnnotations();
+        if (m_leftRail) {
+            m_leftRail->RefreshAnnotations();
+        }
         m_canvas->update();
     }
 }
@@ -499,7 +503,12 @@ void PdfViewerWidget::OnCanvasPageChanged(int pageIndex) {
     m_pageSpinBox->setValue(pageIndex + 1);
     m_pageSpinBox->blockSignals(false);
 
-    m_sidebar->SetActivePage(pageIndex);
+    if (m_leftRail) {
+        m_leftRail->SetActivePage(pageIndex);
+    }
+    if (m_inspector) {
+        m_inspector->UpdatePageContext(pageIndex, m_canvas->GetZoomScale());
+    }
     if (m_contentToolbar) {
         m_contentToolbar->SetDocument(m_doc, pageIndex);
     }
@@ -509,6 +518,9 @@ void PdfViewerWidget::OnCanvasPageChanged(int pageIndex) {
 void PdfViewerWidget::OnCanvasZoomChanged(double zoomScale) {
     int pct = static_cast<int>(std::round(zoomScale * 100.0));
     m_zoomLabel->setText(QString("%1%").arg(pct));
+    if (m_inspector) {
+        m_inspector->UpdatePageContext(GetCurrentPage(), zoomScale);
+    }
 }
 
 void PdfViewerWidget::OnSearchRequested(const QString& query, bool matchCase, bool matchWholeWord) {
