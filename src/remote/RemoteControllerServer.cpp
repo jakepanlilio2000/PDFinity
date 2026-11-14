@@ -147,7 +147,10 @@ void RemoteControllerServer::onNewConnection() {
         QTcpSocket* socket = m_server->nextPendingConnection();
         if (!socket) continue;
 
-        m_socketBuffers.insert(socket, QByteArray{});
+        {
+            std::lock_guard<std::recursive_mutex> lock(m_mutex);
+            m_socketBuffers.insert(socket, QByteArray{});
+        }
         connect(socket, &QTcpSocket::readyRead, this, &RemoteControllerServer::onSocketReadyRead);
         connect(socket, &QTcpSocket::disconnected, this, &RemoteControllerServer::onSocketDisconnected);
 
@@ -160,29 +163,40 @@ void RemoteControllerServer::onSocketReadyRead() {
     auto* socket = qobject_cast<QTcpSocket*>(sender());
     if (!socket) return;
 
-    QByteArray& buffer = m_socketBuffers[socket];
-    buffer.append(socket->readAll());
+    QByteArray incomingData = socket->readAll();
+    std::vector<QByteArray> linesToProcess;
 
-    // Enforce max payload limit against DoS attacks
-    if (buffer.size() > static_cast<int>(MAX_REMOTE_FRAME_BYTES)) {
-        LOG_WARN("RemoteServer", "Closing socket: Payload exceeded maximum frame limit of 2MB.");
-        socket->disconnectFromHost();
-        return;
+    {
+        std::lock_guard<std::recursive_mutex> lock(m_mutex);
+        if (!m_socketBuffers.contains(socket)) {
+            return;
+        }
+        QByteArray& buffer = m_socketBuffers[socket];
+        buffer.append(incomingData);
+
+        // Enforce max payload limit against DoS attacks
+        if (buffer.size() > static_cast<int>(MAX_REMOTE_FRAME_BYTES)) {
+            LOG_WARN("RemoteServer", "Closing socket: Payload exceeded maximum frame limit of 2MB.");
+            socket->disconnectFromHost();
+            return;
+        }
+
+        int newlineIdx;
+        while ((newlineIdx = buffer.indexOf('\n')) != -1) {
+            QByteArray lineBytes = buffer.left(newlineIdx);
+            buffer.remove(0, newlineIdx + 1);
+
+            if (lineBytes.endsWith('\r')) {
+                lineBytes.chop(1);
+            }
+
+            if (!lineBytes.isEmpty()) {
+                linesToProcess.push_back(lineBytes);
+            }
+        }
     }
 
-    int newlineIdx;
-    while ((newlineIdx = buffer.indexOf('\n')) != -1) {
-        QByteArray lineBytes = buffer.left(newlineIdx);
-        buffer.remove(0, newlineIdx + 1);
-
-        if (lineBytes.endsWith('\r')) {
-            lineBytes.chop(1);
-        }
-
-        if (lineBytes.isEmpty()) {
-            continue;
-        }
-
+    for (const auto& lineBytes : linesToProcess) {
         std::string peerIp = socket->peerAddress().toString().toStdString();
         std::string response = ProcessMessage(lineBytes.toStdString(), peerIp, socket);
 
@@ -193,6 +207,7 @@ void RemoteControllerServer::onSocketReadyRead() {
 
         if (lineBytes.contains("\"disconnect\"")) {
             socket->disconnectFromHost();
+            break;
         }
     }
 }

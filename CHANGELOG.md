@@ -11,6 +11,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.1.8-beta] - 2026-11-14
+
+### Fixed
+- **Remote Server Socket Buffer Synchronization [BUG-003]:** In `RemoteControllerServer.cpp`, guarded all `m_socketBuffers` operations in `onNewConnection` and `onSocketReadyRead` with `m_mutex`, extracted complete lines under the lock, and processed network dispatches outside the critical section to prevent data races and deadlocks.
+
+---
+
 ## [0.1.7-beta] - 2026-11-14
 
 ### Fixed

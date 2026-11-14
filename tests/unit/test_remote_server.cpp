@@ -31,6 +31,7 @@ private slots:
     void testDisconnectCommand();
     void testAuditLogging();
     void testRemoteCliHandlerExecution();
+    void testSocketBufferThreadSafety();
 
 private:
     uint16_t m_testPort{18444};
@@ -287,6 +288,19 @@ void TestRemoteServer::testRemoteCliHandlerExecution() {
     };
     int ret = app::RemoteCliHandler::Execute(11, argvCli);
     QCOMPARE(ret, 0);
+}
+
+void TestRemoteServer::testSocketBufferThreadSafety() {
+    auto& server = remote::RemoteControllerServer::Instance();
+    QVERIFY(server.Start("127.0.0.1", m_testPort));
+
+    QTcpSocket client;
+    client.connectToHost("127.0.0.1", m_testPort);
+    QVERIFY(client.waitForConnected(3000));
+
+    server.DisconnectAll();
+    server.Stop();
+    QVERIFY(!server.IsListening());
 }
 
 QTEST_MAIN(TestRemoteServer)
