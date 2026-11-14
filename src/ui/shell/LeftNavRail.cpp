@@ -456,6 +456,10 @@ void LeftNavRail::SetActivePage(int pageIndex) {
     }
 }
 
+void LeftNavRail::RefreshThumbnails() {
+    PopulateThumbnails();
+}
+
 void LeftNavRail::PopulateThumbnails() {
     if (!m_doc || !m_doc->IsValid()) return;
 

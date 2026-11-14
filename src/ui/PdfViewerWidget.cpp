@@ -134,7 +134,7 @@ void PdfViewerWidget::SetupUi() {
                 info.height = data->rect.height;
                 info.strokeColor = QColor(data->color.r, data->color.g, data->color.b, data->color.a);
                 info.strokeWidth = data->strokeWidth > 0.0f ? data->strokeWidth : 2.0;
-                info.opacity = data->opacity > 0.0f ? data->opacity : 1.0;
+                info.opacity = (data->color.a > 0) ? (static_cast<double>(data->color.a) / 255.0) : 1.0;
                 info.author = QString::fromStdString(data->author);
                 info.contents = QString::fromStdString(data->contents);
             } else {
@@ -463,8 +463,7 @@ void PdfViewerWidget::SetLayout(pdf_api::PageLayoutMode mode) {
 void PdfViewerWidget::RotateClockwise() {
     if (m_doc) {
         int p = GetCurrentPage();
-        int rot = (m_doc->GetPageRotation(p) + 90) % 360;
-        m_doc->SetPageRotation(p, rot);
+        m_doc->RotatePages({p}, 90);
         if (m_renderService) {
             m_renderService->GetCache().Clear();
             m_renderService->RequestPageRender(m_doc, p, GetZoomScale(), devicePixelRatioF(), 10);

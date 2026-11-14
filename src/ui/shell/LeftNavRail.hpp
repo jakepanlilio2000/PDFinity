@@ -27,6 +27,7 @@ public:
     ~LeftNavRail() override = default;
 
     void SetActivePage(int pageIndex);
+    void RefreshThumbnails();
     void RefreshAnnotations();
     void RefreshDocumentInfo();
     void SetDrawerExpanded(bool expanded);
