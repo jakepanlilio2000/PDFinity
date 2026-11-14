@@ -18,6 +18,7 @@ private slots:
     void cleanupTestCase();
 
     void testMergeDocuments();
+    void testMergeBareRelativeOutputPath();
     void testMergeWithRanges();
     void testOriginalsUnchangedAfterMerge();
     void testSplitIndividualPages();
@@ -80,6 +81,22 @@ void TestDocumentAssembly::testMergeDocuments() {
     QVERIFY(!renderRes.value.pixels.empty());
 
     m_engine->CloseDocument(openRes.value);
+}
+
+void TestDocumentAssembly::testMergeBareRelativeOutputPath() {
+    auto doc1 = m_fixturesDir / "ordinary.pdf";
+    std::vector<services::MergeSource> sources = {
+        {doc1, "1", {}}
+    };
+    std::filesystem::path bareOutput = "test_bare_output_temp.pdf";
+    if (std::filesystem::exists(bareOutput)) {
+        std::filesystem::remove(bareOutput);
+    }
+
+    auto res = m_service->MergeDocuments(sources, bareOutput);
+    QVERIFY(res.has_value());
+    QVERIFY(std::filesystem::exists(bareOutput));
+    std::filesystem::remove(bareOutput);
 }
 
 void TestDocumentAssembly::testMergeWithRanges() {

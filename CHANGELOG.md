@@ -11,6 +11,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.1.6-beta] - 2026-11-14
+
+### Fixed
+- **Assembly Relative Output Path Normalization [BUG-001]:** In `DocumentAssemblyService.cpp`, added fallback to `current_path()` when `outputPath.parent_path()` is empty, enabling seamless merging and page extraction targeting bare relative filenames in the active working directory.
+
+---
+
 ## [0.1.5-beta] - 2026-11-14
 
 ### Fixed

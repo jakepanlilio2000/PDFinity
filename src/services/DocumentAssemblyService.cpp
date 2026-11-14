@@ -24,7 +24,11 @@ pdf_api::EngineResult<MergeResult> DocumentAssemblyService::MergeDocuments(
         return pdf_api::EngineResult<MergeResult>::Fail(pdf_api::EngineError::InvalidFormat, "No source documents provided for merge");
     }
 
-    auto outSanitized = security::PathSanitizer::Canonicalize(outputPath.parent_path());
+    std::filesystem::path parentDir = outputPath.parent_path();
+    if (parentDir.empty()) {
+        parentDir = std::filesystem::current_path();
+    }
+    auto outSanitized = security::PathSanitizer::Canonicalize(parentDir);
     if (!outSanitized) {
         return pdf_api::EngineResult<MergeResult>::Fail(pdf_api::EngineError::FileNotFound, "Invalid output directory");
     }
@@ -267,6 +271,16 @@ pdf_api::EngineResult<void> DocumentAssemblyService::ReorderDocument(
     if (!importRes.has_value()) {
         m_engine->CloseDocument(newDocId);
         return pdf_api::EngineResult<void>::Fail(importRes.error, importRes.errorMessage);
+    }
+
+    std::filesystem::path parentDir = outputPath.parent_path();
+    if (parentDir.empty()) {
+        parentDir = std::filesystem::current_path();
+    }
+    auto outSanitized = security::PathSanitizer::Canonicalize(parentDir);
+    if (!outSanitized) {
+        m_engine->CloseDocument(newDocId);
+        return pdf_api::EngineResult<void>::Fail(pdf_api::EngineError::FileNotFound, "Invalid output directory");
     }
 
     auto saveRes = m_engine->SaveCopy(newDocId, outputPath);
