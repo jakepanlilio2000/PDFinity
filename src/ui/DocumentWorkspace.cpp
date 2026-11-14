@@ -28,6 +28,7 @@
 #include <QMessageBox>
 #include <QFormLayout>
 #include <QGroupBox>
+#include <algorithm>
 
 namespace pdfinity::ui {
 

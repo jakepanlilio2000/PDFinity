@@ -204,3 +204,4 @@ void TestPdfEngine::testSaveCopyAtomic() {
 
 QTEST_MAIN(TestPdfEngine)
 #include "test_pdf_engine.moc"
+#include <algorithm>

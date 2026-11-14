@@ -10,6 +10,7 @@
 #include <vector>
 #include <filesystem>
 #include <memory>
+#include <algorithm>
 
 class QListWidget;
 class QListWidgetItem;

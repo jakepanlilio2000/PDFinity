@@ -3,6 +3,7 @@
 
 #include "AnnotationCommandManager.hpp"
 #include "application/Logger.hpp"
+#include <algorithm>
 
 namespace pdfinity::services {
 

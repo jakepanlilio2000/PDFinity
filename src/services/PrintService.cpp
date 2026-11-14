@@ -11,6 +11,7 @@
 #include <QProgressDialog>
 #include <QMessageBox>
 #include <QCoreApplication>
+#include <algorithm>
 
 namespace pdfinity::services {
 

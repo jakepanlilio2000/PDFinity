@@ -5,6 +5,7 @@
 
 #include "IPlatformAdapter.hpp"
 #include <memory>
+#include <algorithm>
 
 namespace pdfinity::platform {
 

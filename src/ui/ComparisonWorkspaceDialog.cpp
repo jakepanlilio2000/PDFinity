@@ -11,6 +11,7 @@
 #include <QMessageBox>
 #include <QHeaderView>
 #include <QScrollBar>
+#include <algorithm>
 
 namespace pdfinity::ui {
 

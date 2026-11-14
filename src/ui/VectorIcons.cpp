@@ -5,6 +5,7 @@
 #include <QPainter>
 #include <QPainterPath>
 #include <QPixmap>
+#include <algorithm>
 
 namespace pdfinity::ui {
 

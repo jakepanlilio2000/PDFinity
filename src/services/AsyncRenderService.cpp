@@ -6,6 +6,7 @@
 #include <QRunnable>
 #include <QPointer>
 #include <cmath>
+#include <algorithm>
 
 namespace pdfinity::services {
 

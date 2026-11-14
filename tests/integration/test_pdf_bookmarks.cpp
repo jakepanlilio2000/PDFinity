@@ -79,3 +79,4 @@ void TestPdfBookmarks::testDocumentWithoutBookmarks() {
 
 QTEST_MAIN(TestPdfBookmarks)
 #include "test_pdf_bookmarks.moc"
+#include <algorithm>

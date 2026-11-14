@@ -15,6 +15,7 @@
 #include <QFileDialog>
 #include <QMessageBox>
 #include <sstream>
+#include <algorithm>
 
 namespace pdfinity::ui {
 

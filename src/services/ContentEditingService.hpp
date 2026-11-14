@@ -10,6 +10,7 @@
 #include <vector>
 #include <deque>
 #include <string>
+#include <algorithm>
 
 namespace pdfinity::services {
 

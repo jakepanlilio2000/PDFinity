@@ -4,6 +4,7 @@
 #include "PreflightService.hpp"
 #include "DocumentIntelligenceService.hpp"
 #include "application/Logger.hpp"
+#include <algorithm>
 
 namespace pdfinity::services {
 

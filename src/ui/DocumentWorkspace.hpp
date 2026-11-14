@@ -11,6 +11,7 @@
 #include "domain/DocumentModel.hpp"
 #include "shell/StudioTabBar.hpp"
 #include "shell/ResponsiveLayoutManager.hpp"
+#include <algorithm>
 
 class QStackedWidget;
 class QListWidget;

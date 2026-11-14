@@ -8,6 +8,7 @@
 #include <memory>
 #include <vector>
 #include <string>
+#include <algorithm>
 
 namespace pdfinity::services {
 

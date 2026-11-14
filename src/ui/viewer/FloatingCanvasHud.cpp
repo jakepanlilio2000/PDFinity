@@ -9,6 +9,7 @@
 #include <QScrollArea>
 #include <QLineEdit>
 #include <cmath>
+#include <algorithm>
 
 namespace pdfinity::ui {
 

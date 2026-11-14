@@ -316,3 +316,4 @@ void TestDocumentAssembly::testInvalidOperationsFailSafely() {
 
 QTEST_MAIN(TestDocumentAssembly)
 #include "test_document_assembly.moc"
+#include <algorithm>

@@ -8,6 +8,7 @@
 #include <QPushButton>
 #include <QFrame>
 #include <QEvent>
+#include <algorithm>
 
 namespace pdfinity::ui {
 

@@ -132,3 +132,4 @@ void TestPdfSearch::testAsyncSearchService() {
 
 QTEST_MAIN(TestPdfSearch)
 #include "test_pdf_search.moc"
+#include <algorithm>

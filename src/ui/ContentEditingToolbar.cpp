@@ -6,6 +6,7 @@
 #include <QFileDialog>
 #include <QMessageBox>
 #include <QImage>
+#include <algorithm>
 
 namespace pdfinity::ui {
 

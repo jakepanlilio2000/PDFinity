@@ -7,6 +7,7 @@
 #include "WindowsPlatformAdapter.hpp"
 #elif defined(__ANDROID__)
 #include "AndroidPlatformAdapter.hpp"
+#include <algorithm>
 #endif
 
 namespace pdfinity::platform {

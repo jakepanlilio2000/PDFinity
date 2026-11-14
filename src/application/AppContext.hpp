@@ -11,6 +11,7 @@
 #include "pdf_adapters/PdfiumAdapter.hpp"
 #include <memory>
 #include <filesystem>
+#include <algorithm>
 
 namespace pdfinity::app {
 

@@ -22,6 +22,7 @@
 #include <QSwipeGesture>
 #include <QTapAndHoldGesture>
 #include <cmath>
+#include <algorithm>
 
 namespace pdfinity::ui {
 

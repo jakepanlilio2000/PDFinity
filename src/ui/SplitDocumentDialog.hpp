@@ -8,6 +8,7 @@
 #include <filesystem>
 #include <memory>
 #include <vector>
+#include <algorithm>
 
 class QRadioButton;
 class QSpinBox;

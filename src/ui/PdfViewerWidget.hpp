@@ -18,6 +18,7 @@
 #include "PdfSearchBar.hpp"
 #include "shell/ResponsiveLayoutManager.hpp"
 #include <memory>
+#include <algorithm>
 
 namespace pdfinity::services {
 class AnnotationCommandManager;

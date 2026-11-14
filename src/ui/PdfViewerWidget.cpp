@@ -22,6 +22,7 @@
 #include <QInputMethod>
 #include <QGuiApplication>
 #include <cmath>
+#include <algorithm>
 
 namespace pdfinity::ui {
 

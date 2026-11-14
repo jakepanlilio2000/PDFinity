@@ -7,6 +7,7 @@
 #include "security/PathSanitizer.hpp"
 #include <iomanip>
 #include <sstream>
+#include <algorithm>
 
 namespace pdfinity::services {
 

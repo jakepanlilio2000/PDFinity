@@ -7,6 +7,7 @@
 #include "domain/DocumentModel.hpp"
 #include <memory>
 #include <filesystem>
+#include <algorithm>
 
 namespace pdfinity::services {
 

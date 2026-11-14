@@ -4,6 +4,7 @@
 #include "DocumentLifecycleService.hpp"
 #include "security/PathSanitizer.hpp"
 #include "application/Logger.hpp"
+#include <algorithm>
 
 namespace pdfinity::services {
 

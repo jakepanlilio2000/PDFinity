@@ -8,6 +8,7 @@
 #include <QEvent>
 #include <QMouseEvent>
 #include <QKeyEvent>
+#include <algorithm>
 
 namespace pdfinity::ui {
 

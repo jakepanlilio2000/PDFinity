@@ -12,6 +12,7 @@
 #include <QComboBox>
 #include <QLabel>
 #include <QPushButton>
+#include <algorithm>
 
 namespace pdfinity::ui {
 

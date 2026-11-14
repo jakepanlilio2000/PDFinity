@@ -18,6 +18,7 @@
 #include <QStandardPaths>
 #include <QApplication>
 #include <QPointer>
+#include <algorithm>
 
 namespace pdfinity::ui {
 
