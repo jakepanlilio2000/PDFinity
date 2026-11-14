@@ -11,6 +11,7 @@
 #include <regex>
 #include <chrono>
 #include <ctime>
+#include <cstring>
 
 namespace pdfinity::services {
 

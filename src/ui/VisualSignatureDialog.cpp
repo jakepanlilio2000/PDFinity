@@ -10,6 +10,7 @@
 #include <QPainter>
 #include <QImage>
 #include <QMessageBox>
+#include <cstring>
 
 namespace pdfinity::ui {
 

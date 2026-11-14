@@ -3,6 +3,7 @@
 
 #include "LogRedactor.hpp"
 #include <cstdlib>
+#include <cstring>
 #include <regex>
 
 namespace pdfinity::security {

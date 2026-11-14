@@ -23,6 +23,7 @@
 #include <cmath>
 #include <algorithm>
 #include <unordered_map>
+#include <cstring>
 #include <QString>
 #include <QDebug>
 #include <QImage>
