@@ -1,0 +1,22 @@
+[Desktop Entry]
+Name=PDFinity
+GenericName=PDF Productivity Suite
+Comment=Professional, modular, offline-first PDF productivity suite
+Exec=pdfinity %U
+Icon=pdfinity
+Terminal=false
+Type=Application
+Categories=Office;Viewer;Graphics;Publishing;
+MimeType=application/pdf;application/oxps;application/vnd.ms-xpsdocument;
+Keywords=PDF;Viewer;Editor;Sign;Redact;OCR;Forms;
+StartupNotify=true
+StartupWMClass=PDFinity
+X-Developer=Jake Ashley Panlilio
+X-Developer-URL=https://github.com/jakepanlilio2000
+X-Organization=StackSync Solutions
+X-Organization-URL=https://www.stacksyncsolutions.com/
+Actions=NewWindow;
+
+[Desktop Action NewWindow]
+Name=Open New Window
+Exec=pdfinity

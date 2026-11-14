@@ -1,0 +1,40 @@
+# Maintainer: Jake Ashley Panlilio <jakepanlilio2000@users.noreply.github.com>
+# Contributor: StackSync Solutions <contact@stacksyncsolutions.com>
+pkgname=pdfinity
+pkgver=0.1.0
+pkgrel=1
+pkgdesc="Professional, modular, offline-first PDF productivity suite"
+arch=('x86_64')
+url="https://www.stacksyncsolutions.com/"
+license=('MPL-2.0')
+depends=('qt6-base' 'qt6-declarative' 'hicolor-icon-theme')
+makedepends=('cmake' 'ninja')
+optdepends=(
+    'tesseract: for offline Optical Character Recognition (OCR)'
+    'libreoffice: for Office document format conversion'
+)
+source=("https://github.com/jakepanlilio2000/PDFinity/archive/v${pkgver}-beta.tar.gz")
+sha256sums=('SKIP')
+
+build() {
+    cd "${srcdir}/PDFinity-${pkgver}-beta"
+    cmake -B build -G Ninja \
+        -DCMAKE_BUILD_TYPE=Release \
+        -DCMAKE_INSTALL_PREFIX=/usr
+    cmake --build build
+}
+
+check() {
+    cd "${srcdir}/PDFinity-${pkgver}-beta"
+    ctest --test-dir build --output-on-failure
+}
+
+package() {
+    cd "${srcdir}/PDFinity-${pkgver}-beta"
+    install -Dm755 build/bin/PDFinity "${pkgdir}/usr/bin/pdfinity"
+    install -Dm644 packaging/linux/pdfinity.desktop "${pkgdir}/usr/share/applications/pdfinity.desktop"
+    install -Dm644 packaging/resources/pdfinity.svg "${pkgdir}/usr/share/icons/hicolor/scalable/apps/pdfinity.svg"
+    install -Dm644 LICENSE "${pkgdir}/usr/share/licenses/${pkgname}/LICENSE"
+    install -Dm644 README.md "${pkgdir}/usr/share/doc/${pkgname}/README.md"
+    install -Dm644 THIRDPARTY_NOTICES.txt "${pkgdir}/usr/share/doc/${pkgname}/THIRDPARTY_NOTICES.txt"
+}

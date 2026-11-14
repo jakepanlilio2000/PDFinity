@@ -1,0 +1,49 @@
+name: PDFinity Release Automation
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  release-packages:
+    name: Build & Publish Release Assets
+    runs-on: windows-2022
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Qt 6
+        uses: jurplel/install-qt-action@v3
+        with:
+          version: '6.8.2'
+          arch: 'win64_msvc2022_64'
+
+      - name: Configure and Build PDFinity
+        run: |
+          cmake --preset windows-x64-release
+          cmake --build --preset windows-x64-release
+
+      - name: Package Windows Artifacts
+        run: |
+          python scripts/package_windows.py --skip-installer
+
+      - name: Generate Checksums
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path dist
+          Get-FileHash -Algorithm SHA256 dist/* | Format-Table -AutoSize | Out-File -FilePath dist/SHA256SUMS.txt
+          Get-Content dist/SHA256SUMS.txt
+
+      - name: Publish Release to GitHub
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            dist/*
+            docs/SBOM.md
+          draft: false
+          prerelease: ${{ contains(github.ref, 'beta') || contains(github.ref, 'rc') }}
+          generate_release_notes: true

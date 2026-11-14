@@ -1,0 +1,60 @@
+PDFinity Third-Party Software Notices and Attributions
+======================================================
+
+This application bundles or dynamically links to open-source software libraries.
+The PDFinity project gratefully acknowledges the authors and contributors of
+the following third-party components:
+
+--------------------------------------------------------------------------------
+1. Qt 6 Framework
+   License: GNU Lesser General Public License version 3 (LGPLv3)
+   Copyright (C) 2026 The Qt Company Ltd. and other contributors.
+   Upstream Source: https://code.qt.io
+   Notice: Qt libraries are linked dynamically. Users have the right to modify
+   or replace the dynamic link libraries in accordance with LGPLv3 terms.
+
+--------------------------------------------------------------------------------
+2. Google PDFium
+   License: Apache License, Version 2.0 / 3-Clause BSD License
+   Copyright 2014-2026 The PDFium Authors. All rights reserved.
+   Upstream Source: https://pdfium.googlesource.com/pdfium/
+   Notice: Bundled binary dynamic link library.
+
+--------------------------------------------------------------------------------
+3. QPDF
+   License: Apache License, Version 2.0
+   Copyright (c) 2005-2026 Jay Berkenbilt and contributors.
+   Upstream Source: https://github.com/qpdf/qpdf
+
+--------------------------------------------------------------------------------
+4. OpenSSL
+   License: Apache License, Version 2.0
+   Copyright 1998-2026 The OpenSSL Project Authors. All rights reserved.
+   Upstream Source: https://www.openssl.org
+
+--------------------------------------------------------------------------------
+5. SQLite
+   License: Public Domain (SQLite Blessing)
+   2001-2026 D. Richard Hipp.
+   Upstream Source: https://www.sqlite.org
+
+--------------------------------------------------------------------------------
+6. JSON for Modern C++ (nlohmann/json)
+   License: MIT License
+   Copyright (c) 2013-2026 Niels Lohmann.
+   Upstream Source: https://github.com/nlohmann/json
+
+--------------------------------------------------------------------------------
+7. zlib data compression library
+   License: zlib License
+   Copyright (C) 1995-2026 Jean-loup Gailly and Mark Adler.
+   Upstream Source: https://zlib.net
+
+--------------------------------------------------------------------------------
+8. Leptonica & Tesseract OCR
+   License: Apache License, Version 2.0 / BSD 2-Clause License
+   Copyright 2001-2026 Dan Bloomberg, Ray Smith and contributors.
+   Upstream Source: https://github.com/tesseract-ocr/tesseract
+
+--------------------------------------------------------------------------------
+End of Third-Party Notices.

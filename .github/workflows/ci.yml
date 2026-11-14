@@ -1,0 +1,121 @@
+name: PDFinity Continuous Integration
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build-windows:
+    name: Windows x64 (MSVC + Qt 6)
+    runs-on: windows-2022
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Qt 6
+        uses: jurplel/install-qt-action@v3
+        with:
+          version: '6.8.2'
+          arch: 'win64_msvc2022_64'
+
+      - name: Configure CMake
+        run: |
+          cmake --preset windows-x64-release
+
+      - name: Build
+        run: |
+          cmake --build --preset windows-x64-release
+
+      - name: Run Tests
+        run: |
+          ctest --preset windows-x64-release --output-on-failure
+
+      - name: Validate Windows Packaging
+        run: |
+          python scripts/package_windows.py --skip-installer
+
+  build-linux:
+    name: Linux x64 (GCC + Qt 6)
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install System Dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential ninja-build cmake qt6-base-dev \
+            libqt6widgets6t64 libqt6network6t64 libqt6printsupport6t64 \
+            desktop-file-utils appstream xvfb
+
+      - name: Validate Desktop and AppStream Metadata
+        run: |
+          desktop-file-validate packaging/linux/pdfinity.desktop
+          appstreamcli validate packaging/linux/flatpak/com.stacksyncsolutions.pdfinity.metainfo.xml || true
+
+      - name: Configure CMake
+        run: |
+          cmake --preset linux-x64-release
+
+      - name: Build
+        run: |
+          cmake --build --preset linux-x64-release
+
+      - name: Run Tests
+        run: |
+          xvfb-run ctest --preset linux-x64-release --output-on-failure
+
+      - name: Validate Linux Packaging Scripts
+        run: |
+          chmod +x packaging/linux/*.sh packaging/linux/rpm/*.sh
+          ./packaging/linux/tarball.sh build/linux-x64-release 0.1.0
+
+  build-macos:
+    name: macOS (Apple Clang + Qt 6)
+    runs-on: macos-14
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Qt 6
+        uses: jurplel/install-qt-action@v3
+        with:
+          version: '6.8.2'
+
+      - name: Configure CMake
+        run: |
+          cmake --preset macos-release
+
+      - name: Build
+        run: |
+          cmake --build --preset macos-release
+
+      - name: Run Tests
+        run: |
+          ctest --preset macos-release --output-on-failure
+
+      - name: Validate macOS Packaging
+        run: |
+          chmod +x packaging/macos/build_dmg.sh
+          ./packaging/macos/build_dmg.sh build/macos-release 0.1.0
+
+  build-android:
+    name: Android Verification (Gradle + C++20 NDK)
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Java JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Validate Android Project Structure
+        run: |
+          test -f android/AndroidManifest.xml
+          test -f android/build.gradle
+          test -f android/src/com/stacksyncsolutions/pdfinity/PDFinityActivity.java
+          chmod +x packaging/android/build_apk.sh

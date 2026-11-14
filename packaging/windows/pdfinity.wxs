@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs">
+  <Package Name="PDFinity"
+           Manufacturer="StackSync Solutions"
+           Version="0.1.0"
+           UpgradeCode="4E7395BC-2D38-4E86-90DC-F0A1F6E22C74"
+           Scope="perMachine">
+
+    <MajorUpgrade DowngradeErrorMessage="A newer version of PDFinity is already installed." />
+    <MediaTemplate EmbedCab="yes" />
+
+    <StandardDirectory Id="ProgramFiles64Folder">
+      <Directory Id="INSTALLFOLDER" Name="PDFinity">
+        <Component Id="MainExecutable" Bitness="always64" Guid="D4A08FF2-D1CE-4B1C-B756-3F8E454C626C">
+          <File Id="PDFinityEXE" Source="dist\staged-windows-x64\PDFinity.exe" KeyPath="yes" />
+          <ProgId Id="PDFinity.Document" Description="PDF Document">
+            <Extension Id="pdf" ContentType="application/pdf">
+              <Verb Id="open" Command="Open with PDFinity" TargetFile="PDFinityEXE" Argument="&quot;%1&quot;" />
+            </Extension>
+          </ProgId>
+        </Component>
+      </Directory>
+    </StandardDirectory>
+
+    <Feature Id="MainFeature" Title="PDFinity Application" Level="1">
+      <ComponentRef Id="MainExecutable" />
+    </Feature>
+  </Package>
+</Wix>

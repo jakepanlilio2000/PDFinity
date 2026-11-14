@@ -1,0 +1,101 @@
+# ==============================================================================
+# PDFinity - Git Ignore Specification
+# Publisher: StackSync Solutions (https://www.stacksyncsolutions.com/)
+# Lead Programmer: Jake Ashley Panlilio (https://github.com/jakepanlilio2000)
+# License: Mozilla Public License Version 2.0 (MPL-2.0)
+# ==============================================================================
+
+# 1. Build and Output Directories
+build/
+build-*/
+cmake-build-*/
+out/
+dist/
+release/
+bin/
+lib/
+
+# 2. CMake & Compiler Artifacts
+CMakeCache.txt
+CMakeFiles/
+cmake_install.cmake
+Makefile
+*.ninja
+.ninja_*
+compile_commands.json
+*.o
+*.obj
+*.a
+*.lib
+*.so
+*.dylib
+*.dll
+*.exe
+*.exp
+*.ilk
+*.pdb
+
+# 3. Qt Preprocessor & Resource Artifacts
+*.moc
+moc_*.cpp
+ui_*.h
+qrc_*.cpp
+*.qrc.depends
+
+# 4. Linux Packaging Outputs
+*.deb
+*.rpm
+*.pkg.tar.zst
+*.AppImage
+*.flatpak
+.flatpak-builder/
+packaging/**/pkg/
+packaging/**/src/
+
+# 5. Android & Gradle Outputs
+.gradle/
+android-build/
+android/.gradle/
+android/build/
+android/local.properties
+android/*.iml
+captures/
+*.apk
+*.aab
+*.ap_
+*.dex
+*.keystore
+*.jks
+
+# 6. IDEs & Operating System Clutter
+.vs/
+.vscode/
+.idea/
+*.user
+*.suo
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# 7. AI Tooling & Local Temporary Files
+.gemini/
+.antigravity/
+.cursor/
+.claude/
+*.tmp
+*.bak
+*.log
+*.swp
+*~
+.pdfinity/
+__pycache__/
+*.pyc
+
+# 8. Secrets, Environment & Sensitive Credentials
+.env
+*.p12
+*.pem
+*.key
+*.pfx
+!tests/fixtures/*.pfx
+!tests/fixtures/*.crt

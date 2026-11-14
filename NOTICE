@@ -1,0 +1,52 @@
+PDFinity
+Copyright (c) 2026 StackSync Solutions (https://www.stacksyncsolutions.com/)
+Lead Programmer: Jake Ashley Panlilio (https://github.com/jakepanlilio2000)
+
+This product is licensed under the Mozilla Public License Version 2.0 (MPL-2.0).
+A copy of the license is available in the LICENSE file.
+
+This software includes or dynamically links to open-source software libraries
+governed by their respective licenses:
+
+1. Qt 6 Framework
+   Licensed under GNU Lesser General Public License Version 3 (LGPLv3).
+   Copyright (C) 2026 The Qt Company Ltd. and other contributors.
+   Source code available at https://code.qt.io
+   Qt is linked dynamically as shared libraries.
+
+2. Google PDFium
+   Licensed under Apache License, Version 2.0 / BSD 3-Clause License.
+   Copyright 2014-2026 The PDFium Authors. All rights reserved.
+   https://pdfium.googlesource.com/pdfium/
+
+3. QPDF
+   Licensed under Apache License, Version 2.0.
+   Copyright (c) 2005-2026 Jay Berkenbilt and contributors.
+   https://github.com/qpdf/qpdf
+
+4. OpenSSL
+   Licensed under Apache License, Version 2.0.
+   Copyright 1998-2026 The OpenSSL Project Authors. All rights reserved.
+   https://www.openssl.org
+
+5. SQLite
+   Public Domain (SQLite Blessing).
+   2001-2026 D. Richard Hipp.
+   https://www.sqlite.org
+
+6. JSON for Modern C++ (nlohmann/json)
+   Licensed under MIT License.
+   Copyright (c) 2013-2026 Niels Lohmann.
+   https://github.com/nlohmann/json
+
+7. zlib Compression Library
+   Licensed under zlib License.
+   Copyright (C) 1995-2026 Jean-loup Gailly and Mark Adler.
+   https://www.zlib.net
+
+8. Tesseract OCR Engine / Leptonica
+   Licensed under Apache License, Version 2.0 / BSD 2-Clause License.
+   Copyright (C) 1985-2026 Google LLC and Tesseract contributors.
+   https://github.com/tesseract-ocr/tesseract
+
+For detailed licensing specifications and attribution notices, consult THIRD_PARTY_LICENSES.md.
