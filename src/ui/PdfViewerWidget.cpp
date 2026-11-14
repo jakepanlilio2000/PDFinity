@@ -7,6 +7,10 @@
 #include "FormInspectorDialog.hpp"
 #include "ContentEditingToolbar.hpp"
 #include "ObjectInspectorDialog.hpp"
+#include "LeftNavigationRail.hpp"
+#include "FloatingHudWidget.hpp"
+#include "ContextInspectorPanel.hpp"
+#include "VectorIcons.hpp"
 #include "services/AnnotationCommandManager.hpp"
 #include "services/PrintService.hpp"
 #include "application/Logger.hpp"
@@ -85,16 +89,24 @@ void PdfViewerWidget::SetupUi() {
     });
     mainLayout->addWidget(m_searchBar);
 
-    // Central Splitter
+    // Central Splitter (3-Pane Enterprise Workstation)
     m_splitter = new QSplitter(Qt::Horizontal, this);
     m_splitter->setChildrenCollapsible(true);
 
-    // Left Navigation Sidebar
-    m_sidebar = new NavigationSidebar(m_doc, m_renderService.get(), m_splitter);
-    connect(m_sidebar, &NavigationSidebar::PageSelected, this, &PdfViewerWidget::GoToPage);
-    m_splitter->addWidget(m_sidebar);
+    // Pane 1: Left Navigation Rail & Drawer
+    m_leftRail = new LeftNavigationRail(m_doc, m_renderService.get(), m_splitter);
+    connect(m_leftRail, &LeftNavigationRail::PageSelected, this, &PdfViewerWidget::GoToPage);
+    connect(m_leftRail, &LeftNavigationRail::AnnotationSelected, [this](int pageIndex, int annotIndex) {
+        GoToPage(pageIndex);
+        m_canvas->SelectAnnotation(pageIndex, annotIndex);
+        if (m_annotToolbar->isHidden()) {
+            m_annotToolbar->show();
+            m_toggleAnnotAction->setChecked(true);
+        }
+    });
+    m_splitter->addWidget(m_leftRail);
 
-    // Right Canvas Viewport
+    // Pane 2: Central Canvas Viewport & Floating HUD
     m_scrollArea = new QScrollArea(m_splitter);
     m_scrollArea->setWidgetResizable(false);
     m_scrollArea->setAlignment(Qt::AlignCenter);
@@ -108,7 +120,7 @@ void PdfViewerWidget::SetupUi() {
         m_annotToolbar->SetDeleteEnabled(annotIdx >= 0);
     });
     connect(m_canvas, &PdfCanvasWidget::AnnotationModified, [this]() {
-        m_sidebar->PopulateAnnotations();
+        if (m_leftRail) m_leftRail->RefreshAnnotations();
     });
 
     // Wire annotation toolbar to canvas
@@ -130,31 +142,58 @@ void PdfViewerWidget::SetupUi() {
         m_canvas->DeleteSelectedAnnotation();
     });
 
-    // Wire command manager to toolbar and sidebar
+    // Wire command manager to toolbar and rail
     connect(m_commandManager.get(), &services::AnnotationCommandManager::CanUndoChanged,
             m_annotToolbar, &AnnotationToolbar::SetUndoEnabled);
     connect(m_commandManager.get(), &services::AnnotationCommandManager::CanRedoChanged,
             m_annotToolbar, &AnnotationToolbar::SetRedoEnabled);
     connect(m_commandManager.get(), &services::AnnotationCommandManager::CommandExecuted, [this]() {
-        m_sidebar->PopulateAnnotations();
-    });
-
-    // Wire sidebar annotation selection
-    connect(m_sidebar, &NavigationSidebar::AnnotationSelected, [this](int pageIndex, int annotIndex) {
-        GoToPage(pageIndex);
-        m_canvas->SelectAnnotation(pageIndex, annotIndex);
-        if (m_annotToolbar->isHidden()) {
-            m_annotToolbar->show();
-            m_toggleAnnotAction->setChecked(true);
-        }
+        if (m_leftRail) m_leftRail->RefreshAnnotations();
     });
 
     m_scrollArea->setWidget(m_canvas);
+
+    // Floating Bottom Page / Zoom HUD
+    m_floatingHud = new FloatingHudWidget(m_scrollArea);
+    m_floatingHud->UpdatePageInfo(m_canvas->GetCurrentPage(), m_doc ? m_doc->GetPageCount() : 1);
+    m_floatingHud->UpdateZoom(m_canvas->GetZoomScale());
+    connect(m_floatingHud, &FloatingHudWidget::PreviousPageRequested, this, [this]() {
+        GoToPage(GetCurrentPage() - 1);
+    });
+    connect(m_floatingHud, &FloatingHudWidget::NextPageRequested, this, [this]() {
+        GoToPage(GetCurrentPage() + 1);
+    });
+    connect(m_floatingHud, &FloatingHudWidget::PageSelected, this, &PdfViewerWidget::GoToPage);
+    connect(m_floatingHud, &FloatingHudWidget::ZoomInRequested, this, &PdfViewerWidget::ZoomIn);
+    connect(m_floatingHud, &FloatingHudWidget::ZoomOutRequested, this, &PdfViewerWidget::ZoomOut);
+    connect(m_floatingHud, &FloatingHudWidget::ZoomResetRequested, this, [this]() { SetZoom(1.0); });
+    connect(m_floatingHud, &FloatingHudWidget::FitWidthRequested, this, &PdfViewerWidget::ZoomFitWidth);
+    connect(m_floatingHud, &FloatingHudWidget::FitPageRequested, this, &PdfViewerWidget::ZoomFitPage);
+    connect(m_floatingHud, &FloatingHudWidget::RotateRequested, this, [this]() {
+        if (m_doc) {
+            int p = GetCurrentPage();
+            int rot = (m_doc->GetPageRotation(p) + 90) % 360;
+            m_doc->SetPageRotation(p, rot);
+            if (m_renderService) {
+                m_renderService->GetCache().Clear();
+                m_renderService->RequestPageRender(m_doc, p, GetZoomScale(), devicePixelRatioF(), 10);
+            }
+            m_canvas->update();
+        }
+    });
+
     m_splitter->addWidget(m_scrollArea);
+
+    // Pane 3: Right Contextual Inspector & All Tools Panel
+    m_inspector = new ContextInspectorPanel(m_splitter);
+    m_inspector->SetDocument(m_doc);
+    connect(m_inspector, &ContextInspectorPanel::CloseRequested, this, &PdfViewerWidget::ToggleInspector);
+    m_splitter->addWidget(m_inspector);
 
     m_splitter->setStretchFactor(0, 0);
     m_splitter->setStretchFactor(1, 1);
-    m_splitter->setSizes({240, 800});
+    m_splitter->setStretchFactor(2, 0);
+    m_splitter->setSizes({48, 800, 280});
 
     mainLayout->addWidget(m_splitter);
 

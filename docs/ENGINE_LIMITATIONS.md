@@ -37,17 +37,17 @@ In strict accordance with the engineering principle of transparency ("Never clai
 
 ### 3.1 Dynamic XML Forms Architecture (XFA)
 - **Status:** **Unsupported by Design.**
-- **Rationale:** XFA is a proprietary Adobe XML-based form specification that was deprecated in ISO 32000-2 (PDF 2.0). XFA introduces massive security risks (remote XML external entity attacks, arbitrary JavaScript execution) and extreme memory overhead.
-- **Handling:** When an XFA document is encountered, PDFinity renders the static AcroForm compatibility layer if present. If the document contains only dynamic XFA, an informative warning dialog is presented to the user explaining that dynamic XFA forms require Adobe Acrobat.
+- **Rationale:** XFA is a legacy XML-based form specification that was deprecated in ISO 32000-2 (PDF 2.0). XFA introduces massive security risks (remote XML external entity attacks, arbitrary script execution) and extreme memory overhead.
+- **Handling:** When an XFA document is encountered, PDFinity renders the static AcroForm compatibility layer if present. If the document contains only dynamic XFA, an informative warning dialog is presented to the user explaining that dynamic XFA forms require legacy specialized form processors.
 
 ### 3.2 Embedded PDF JavaScript & Launch Actions
 - **Status:** **Disabled by Default (Hardened Security Invariant).**
-- **Rationale:** Embedded PDF JavaScript and `/Launch` actions are the single most prolific attack vector in PDF history (CVE-2009-0927, CVE-2010-0188, CVE-2013-0640, etc.).
+- **Rationale:** Embedded PDF JavaScript and `/Launch` actions are the single most prolific attack vector in PDF history.
 - **Handling:** PDFinity suppresses all automatic script execution. Action triggers (`/A`, `/AA`, `/JavaScript`, `/Launch`) are ignored during rendering and navigation.
 
 ### 3.3 Proprietary Digital Rights Management (DRM)
 - **Status:** **Unsupported.**
-- **Rationale:** Documents protected by proprietary vendor DRM schemes (such as Adobe LiveCycle Rights Management, FileOpen, LockLizard, or Azure Information Protection) require proprietary, closed-source client plugins.
+- **Rationale:** Documents protected by proprietary vendor DRM schemes require proprietary, closed-source client plugins.
 - **Handling:** Returns `EngineError::UnsupportedEncryption`. The user is informed that the document is locked by a proprietary vendor DRM system.
 
 ### 3.4 3D Models and Legacy Multimedia

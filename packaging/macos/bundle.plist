@@ -12,8 +12,10 @@
     <string>PDFinity</string>
     <key>CFBundlePackageType</key>
     <string>APPL</string>
+    <key>LSUIElement</key>
+    <false/>
     <key>CFBundleShortVersionString</key>
-    <string>1.0.0</string>
+    <string>1.0.1</string>
     <key>CFBundleVersion</key>
     <string>1</string>
     <key>NSHighResolutionCapable</key>

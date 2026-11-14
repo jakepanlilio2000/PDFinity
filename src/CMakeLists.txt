@@ -228,6 +228,18 @@ add_library(pdfinity_ui STATIC
     ui/RemoteConfigDialog.cpp
     ui/UpdateDialog.hpp
     ui/UpdateDialog.cpp
+    ui/VectorIcons.hpp
+    ui/VectorIcons.cpp
+    ui/FloatingHudWidget.hpp
+    ui/FloatingHudWidget.cpp
+    ui/HomeDashboardWidget.hpp
+    ui/HomeDashboardWidget.cpp
+    ui/LeftNavigationRail.hpp
+    ui/LeftNavigationRail.cpp
+    ui/ContextInspectorPanel.hpp
+    ui/ContextInspectorPanel.cpp
+    ui/WorkflowRibbon.hpp
+    ui/WorkflowRibbon.cpp
     ui/MainWindow.hpp
     ui/MainWindow.cpp
 )
@@ -243,7 +255,7 @@ target_link_libraries(pdfinity_ui PUBLIC
     Qt6::PrintSupport
 )
 
-# PDFinity main desktop executable
+# PDFinity main desktop executable (Silent GUI launch: zero terminal console)
 set(PDFINITY_MAIN_SOURCES app/main.cpp)
 if(WIN32)
     list(APPEND PDFINITY_MAIN_SOURCES ${PROJECT_SOURCE_DIR}/packaging/windows/version.rc)
@@ -259,15 +271,51 @@ target_link_libraries(PDFinity PRIVATE
     Qt6::Widgets
 )
 
-# Set Windows Subsystem for GUI in release builds, console in debug
-if(WIN32 AND CMAKE_BUILD_TYPE STREQUAL "Release")
+if(WIN32)
     set_target_properties(PDFinity PROPERTIES
-        WIN32_EXECUTABLE FALSE
+        WIN32_EXECUTABLE TRUE
+    )
+    if(MSVC)
+        target_link_options(PDFinity PRIVATE /SUBSYSTEM:WINDOWS /ENTRY:mainCRTStartup)
+    elseif(MINGW OR CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
+        target_link_options(PDFinity PRIVATE -mwindows)
+    endif()
+endif()
+
+if(APPLE)
+    set_target_properties(PDFinity PROPERTIES
+        MACOSX_BUNDLE TRUE
+        MACOSX_BUNDLE_INFO_PLIST "${PROJECT_SOURCE_DIR}/packaging/macos/bundle.plist"
     )
 endif()
 
+# PDFinity companion console executable
+set(PDFINITY_CLI_SOURCES app/cli_main.cpp)
+if(WIN32)
+    list(APPEND PDFINITY_CLI_SOURCES ${PROJECT_SOURCE_DIR}/packaging/windows/version.rc)
+endif()
+
+add_executable(pdfinity-cli
+    ${PDFINITY_CLI_SOURCES}
+)
+
+target_link_libraries(pdfinity-cli PRIVATE
+    pdfinity_ui
+    pdfinity_core
+    Qt6::Widgets
+)
+
+set_target_properties(pdfinity-cli PROPERTIES
+    WIN32_EXECUTABLE FALSE
+    OUTPUT_NAME "pdfinity-cli"
+)
+
+if(WIN32 AND MSVC)
+    target_link_options(pdfinity-cli PRIVATE /SUBSYSTEM:CONSOLE)
+endif()
+
 # Installation rules
-install(TARGETS PDFinity pdfinity_ui pdfinity_core
+install(TARGETS PDFinity pdfinity-cli pdfinity_ui pdfinity_core
     RUNTIME DESTINATION bin
     LIBRARY DESTINATION lib
     ARCHIVE DESTINATION lib

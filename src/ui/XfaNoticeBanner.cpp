@@ -61,7 +61,7 @@ void XfaNoticeBanner::SetFormTypeInfo(bool isFullXfa) {
     if (isFullXfa) {
         m_messageLabel->setText(
             tr("<b>Dynamic XFA Form Detected:</b> This document uses dynamic XML Forms Architecture. "
-               "XFA is a deprecated Adobe proprietary specification not supported by ISO 32000-1/2 or Google PDFium. "
+               "XFA is a deprecated legacy specification not supported by ISO 32000-1/2 or Google PDFium. "
                "Fields cannot be filled interactively in PDFinity.")
         );
     } else {
@@ -76,17 +76,17 @@ void XfaNoticeBanner::OnShowDetails() {
     QMessageBox::information(
         this,
         tr("XFA Architectural Scope & Limitations"),
-        tr("<h3>Adobe XML Forms Architecture (XFA) Disclosure</h3>"
-           "<p><b>Standard:</b> Proprietary Adobe LiveCycle / XFA specification.</p>"
+        tr("<h3>XML Forms Architecture (XFA) Technical Disclosure</h3>"
+           "<p><b>Standard:</b> Legacy XML Forms Architecture (XFA) specification.</p>"
            "<p><b>Status in PDF Standards:</b> Deprecated in PDF 2.0 (ISO 32000-2). Modern open-source PDF "
            "engines, including Chromium PDFium, Apple Quartz, and Mozilla PDF.js, do not support dynamic XFA form execution.</p>"
            "<p><b>PDFinity Scope:</b></p>"
            "<ul>"
            "<li><b>Standard AcroForms (ISO 32000-1):</b> 100% Fully Supported (Text, Checkbox, Radio, Dropdown, ListBox, Flattening).</li>"
            "<li><b>Static XFA:</b> Pre-rendered page content is displayed as static vector/raster visual layers.</li>"
-           "<li><b>Dynamic XFA:</b> XML DOM manipulation, dynamic page reflow, and Adobe LiveCycle JavaScript are unsupported.</li>"
+           "<li><b>Dynamic XFA:</b> XML DOM manipulation, dynamic page reflow, and proprietary script engines are unsupported.</li>"
            "</ul>"
-           "<p><b>Recommendation:</b> If interactive filling or calculation is required for this specific document, please open it in Adobe Acrobat Pro or request a standard AcroForm version from the document publisher.</p>")
+           "<p><b>Recommendation:</b> If interactive calculation is required for this specific document, please open it in a compatible legacy reader or request a standard ISO 32000 AcroForm version from the document publisher.</p>")
     );
 }
 

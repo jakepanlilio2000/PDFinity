@@ -50,7 +50,7 @@ PDFinity injects a searchable text layer onto scanned PDF documents without alte
 1. The page image is rendered at high resolution (default 300 DPI) for text recognition.
 2. Tesseract OCR analyzes the image to produce word-level bounding boxes (`OcrWordBox`) and confidence metrics via TSV or hOCR streams.
 3. For each recognized word, an invisible text object is inserted into the PDF page content stream:
-   - Font: Standard Adobe Type 1 Helvetica font.
+   - Font: Standard ISO Type 1 Helvetica font.
    - Position: `(rect.x, rect.y)` matching the word's bounding box on the page.
    - Font Size: Calibrated to word bounding box height (`fontSize = rect.height * 0.85`).
    - Color: Completely transparent (`PdfColor{0, 0, 0, 0}`).

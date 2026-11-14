@@ -3,6 +3,9 @@
 
 #include "DocumentWorkspace.hpp"
 #include "PdfViewerWidget.hpp"
+#include "HomeDashboardWidget.hpp"
+#include "ContextInspectorPanel.hpp"
+#include "VectorIcons.hpp"
 #include "application/AppContext.hpp"
 #include "application/Logger.hpp"
 #include "security/PathSanitizer.hpp"
@@ -11,6 +14,8 @@
 #include <QHBoxLayout>
 #include <QStackedWidget>
 #include <QTabWidget>
+#include <QTabBar>
+#include <QToolButton>
 #include <QListWidget>
 #include <QLabel>
 #include <QPushButton>
@@ -42,23 +47,53 @@ void DocumentWorkspace::SetupUi() {
     auto* mainLayout = new QVBoxLayout(this);
     mainLayout->setContentsMargins(0, 0, 0, 0);
 
-    m_stackedWidget = new QStackedWidget(this);
-
-    // Page 0: Welcome / Home Screen
-    m_welcomeView = CreateWelcomeView();
-    m_stackedWidget->addWidget(m_welcomeView);
-
-    // Page 1: Tabbed Document View
     m_tabWidget = new QTabWidget(this);
     m_tabWidget->setTabsClosable(true);
     m_tabWidget->setMovable(true);
+    m_tabWidget->setStyleSheet(
+        "QTabWidget::pane { border: none; background: #ffffff; }"
+        "QTabBar::tab {"
+        "  background: #f1f5f9; border: 1px solid #e2e8f0; border-bottom: none;"
+        "  border-top-left-radius: 6px; border-top-right-radius: 6px;"
+        "  padding: 6px 14px; margin-right: 2px; font-size: 11px; font-weight: 500; color: #475569;"
+        "}"
+        "QTabBar::tab:selected {"
+        "  background: #ffffff; border-bottom: 2px solid #2563eb; color: #1e293b; font-weight: 600;"
+        "}"
+    );
+
+    // Pinned Home Dashboard as Tab 0
+    m_homeDashboard = new HomeDashboardWidget(this);
+    connect(m_homeDashboard, &HomeDashboardWidget::OpenFileRequested, this, &DocumentWorkspace::OpenFileRequested);
+    connect(m_homeDashboard, &HomeDashboardWidget::FileSelected, this, &DocumentWorkspace::FileSelected);
+
+    int homeIndex = m_tabWidget->addTab(m_homeDashboard, VectorIcons::GetIcon(IconType::Home), tr("Home"));
+    if (m_tabWidget->tabBar()) {
+        m_tabWidget->tabBar()->setTabButton(homeIndex, QTabBar::RightSide, nullptr);
+        m_tabWidget->tabBar()->setTabButton(homeIndex, QTabBar::LeftSide, nullptr);
+    }
+
     connect(m_tabWidget, &QTabWidget::tabCloseRequested, this, &DocumentWorkspace::OnTabCloseRequested);
-    m_stackedWidget->addWidget(m_tabWidget);
 
-    mainLayout->addWidget(m_stackedWidget);
-    m_stackedWidget->setCurrentIndex(0);
+    // Corner widget '+' button for opening new tab
+    auto* newTabBtn = new QToolButton(m_tabWidget);
+    newTabBtn->setText("+");
+    newTabBtn->setToolTip(tr("Open Document in New Tab (Ctrl+O)"));
+    newTabBtn->setStyleSheet(
+        "QToolButton { font-weight: bold; font-size: 14px; border: none; padding: 4px 8px; color: #64748b; }"
+        "QToolButton:hover { background: #e2e8f0; border-radius: 4px; color: #1e293b; }"
+    );
+    connect(newTabBtn, &QToolButton::clicked, this, &DocumentWorkspace::OpenFileRequested);
+    m_tabWidget->setCornerWidget(newTabBtn, Qt::TopRightCorner);
 
-    RefreshRecentFilesList();
+    mainLayout->addWidget(m_tabWidget);
+    m_tabWidget->setCurrentIndex(0);
+}
+
+void DocumentWorkspace::ShowHomeTab() {
+    if (m_tabWidget) {
+        m_tabWidget->setCurrentIndex(0);
+    }
 }
 
 QWidget* DocumentWorkspace::CreateWelcomeView() {
@@ -277,8 +312,8 @@ bool DocumentWorkspace::OpenDocumentTab(const std::filesystem::path& filePath, c
     QString qPath = QString::fromStdString(filePath.string());
     QString fileName = QFileInfo(qPath).fileName();
 
-    // Check if already open
-    for (int i = 0; i < m_tabWidget->count(); ++i) {
+    // Check if already open (tabs 1..N)
+    for (int i = 1; i < m_tabWidget->count(); ++i) {
         if (m_tabWidget->tabToolTip(i) == qPath) {
             m_tabWidget->setCurrentIndex(i);
             return true;
@@ -286,49 +321,71 @@ bool DocumentWorkspace::OpenDocumentTab(const std::filesystem::path& filePath, c
     }
 
     auto* viewer = new PdfViewerWidget(std::move(doc), m_tabWidget);
+    if (auto* insp = viewer->GetInspector()) {
+        connect(insp, &ContextInspectorPanel::OrganizePagesTriggered, this, &DocumentWorkspace::OrganizePagesRequested);
+        connect(insp, &ContextInspectorPanel::MergeDocumentsTriggered, this, &DocumentWorkspace::MergeDocumentsRequested);
+        connect(insp, &ContextInspectorPanel::SplitDocumentTriggered, this, &DocumentWorkspace::SplitDocumentRequested);
+        connect(insp, &ContextInspectorPanel::ContentEditorTriggered, this, &DocumentWorkspace::ContentEditorRequested);
+        connect(insp, &ContextInspectorPanel::FormInspectorTriggered, this, &DocumentWorkspace::FormInspectorRequested);
+        connect(insp, &ContextInspectorPanel::ObjectInspectorTriggered, this, &DocumentWorkspace::ObjectInspectorRequested);
+        connect(insp, &ContextInspectorPanel::DigitalSignTriggered, this, &DocumentWorkspace::DigitalSignRequested);
+        connect(insp, &ContextInspectorPanel::VisualSignTriggered, this, &DocumentWorkspace::VisualSignRequested);
+        connect(insp, &ContextInspectorPanel::ValidateSignaturesTriggered, this, &DocumentWorkspace::ValidateSignaturesRequested);
+        connect(insp, &ContextInspectorPanel::RedactionStudioTriggered, this, &DocumentWorkspace::RedactionStudioRequested);
+        connect(insp, &ContextInspectorPanel::SanitizeTriggered, this, &DocumentWorkspace::SanitizeRequested);
+        connect(insp, &ContextInspectorPanel::CertificateManagerTriggered, this, &DocumentWorkspace::CertificateManagerRequested);
+        connect(insp, &ContextInspectorPanel::OcrStudioTriggered, this, &DocumentWorkspace::OcrStudioRequested);
+        connect(insp, &ContextInspectorPanel::ConversionCenterTriggered, this, &DocumentWorkspace::ConversionCenterRequested);
+        connect(insp, &ContextInspectorPanel::OptimizerTriggered, this, &DocumentWorkspace::OptimizerRequested);
+        connect(insp, &ContextInspectorPanel::DocumentIntelligenceTriggered, this, &DocumentWorkspace::DocumentIntelligenceRequested);
+        connect(insp, &ContextInspectorPanel::CompareDocumentsTriggered, this, &DocumentWorkspace::CompareDocumentsRequested);
+        connect(insp, &ContextInspectorPanel::BatchCenterTriggered, this, &DocumentWorkspace::BatchCenterRequested);
+    }
+
     int newIndex = m_tabWidget->addTab(viewer, fileName);
     m_tabWidget->setTabToolTip(newIndex, qPath);
     m_tabWidget->setCurrentIndex(newIndex);
-
-    m_stackedWidget->setCurrentIndex(1); // Show tabs
 
     // Add to recent files
     app::AppContext::Instance().GetRecentFiles().AddFile(filePath);
     RefreshRecentFilesList();
 
-    emit DocumentCountChanged(m_tabWidget->count());
+    emit DocumentCountChanged(GetOpenDocumentCount());
     LOG_INFO("Workspace", "Mounted document tab for: " + filePath.string());
     return true;
 }
 
 void DocumentWorkspace::CloseCurrentTab() {
     int current = m_tabWidget->currentIndex();
-    if (current >= 0) {
+    if (current > 0) {
         OnTabCloseRequested(current);
     }
 }
 
 void DocumentWorkspace::CloseAllTabs() {
-    while (m_tabWidget->count() > 0) {
-        OnTabCloseRequested(0);
+    while (m_tabWidget->count() > 1) {
+        OnTabCloseRequested(1);
     }
 }
 
 int DocumentWorkspace::GetOpenDocumentCount() const {
-    return m_tabWidget->count();
+    return std::max(0, m_tabWidget->count() - 1);
 }
 
 QString DocumentWorkspace::GetCurrentDocumentPath() const {
     int current = m_tabWidget->currentIndex();
-    if (current >= 0) {
+    if (current > 0) {
         return m_tabWidget->tabToolTip(current);
     }
     return {};
 }
 
 PdfViewerWidget* DocumentWorkspace::GetCurrentViewer() const {
-    if (m_tabWidget->count() == 0) return nullptr;
-    return qobject_cast<PdfViewerWidget*>(m_tabWidget->currentWidget());
+    int current = m_tabWidget->currentIndex();
+    if (current > 0) {
+        return qobject_cast<PdfViewerWidget*>(m_tabWidget->widget(current));
+    }
+    return nullptr;
 }
 
 domain::DocumentModel* DocumentWorkspace::GetCurrentDocument() const {
@@ -365,16 +422,16 @@ void DocumentWorkspace::RestoreSession() {
 }
 
 void DocumentWorkspace::OnTabCloseRequested(int index) {
-    if (index >= 0 && index < m_tabWidget->count()) {
+    if (index > 0 && index < m_tabWidget->count()) {
         QWidget* w = m_tabWidget->widget(index);
         m_tabWidget->removeTab(index);
         delete w;
 
-        if (m_tabWidget->count() == 0) {
-            m_stackedWidget->setCurrentIndex(0); // Switch to Welcome View
+        if (m_tabWidget->count() <= 1) {
+            m_tabWidget->setCurrentIndex(0); // Switch to Home Tab
             RefreshRecentFilesList();
         }
-        emit DocumentCountChanged(m_tabWidget->count());
+        emit DocumentCountChanged(GetOpenDocumentCount());
     }
 }
 
@@ -389,6 +446,12 @@ void DocumentWorkspace::OnRecentItemDoubleClicked(QListWidgetItem* item) {
 void DocumentWorkspace::OnClearRecentClicked() {
     app::AppContext::Instance().GetRecentFiles().Clear();
     RefreshRecentFilesList();
+}
+
+void DocumentWorkspace::RefreshRecentFilesList() {
+    if (m_homeDashboard) {
+        m_homeDashboard->RefreshRecentFiles();
+    }
 }
 
 void DocumentWorkspace::dragEnterEvent(QDragEnterEvent* event) {

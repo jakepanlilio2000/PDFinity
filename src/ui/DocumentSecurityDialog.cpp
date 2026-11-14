@@ -89,8 +89,8 @@ void DocumentSecurityDialog::SetupUi() {
     auto* algoGroup = new QGroupBox(tr("Encryption Strength"), this);
     auto* algoLayout = new QHBoxLayout(algoGroup);
     m_algoCombo = new QComboBox(this);
-    m_algoCombo->addItem(tr("AES-256 (High Security, Modern PDF 2.0 / Acrobat X+)"), "AES-256");
-    m_algoCombo->addItem(tr("AES-128 (Standard Compatibility, Acrobat 7+)"), "AES-128");
+    m_algoCombo->addItem(tr("AES-256 (High Security, Modern ISO 32000-2 / PDF 2.0)"), "AES-256");
+    m_algoCombo->addItem(tr("AES-128 (Standard Compatibility, ISO 32000-1 / PDF 1.6+)"), "AES-128");
     algoLayout->addWidget(new QLabel(tr("Algorithm:")));
     algoLayout->addWidget(m_algoCombo, 1);
     mainLayout->addWidget(algoGroup);

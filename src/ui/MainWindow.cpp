@@ -4,6 +4,8 @@
 #include "MainWindow.hpp"
 #include "DocumentWorkspace.hpp"
 #include "PdfViewerWidget.hpp"
+#include "HomeDashboardWidget.hpp"
+#include "WorkflowRibbon.hpp"
 #include "AboutDialog.hpp"
 #include "SettingsDialog.hpp"
 #include "ThemeManager.hpp"
@@ -62,12 +64,100 @@ MainWindow::MainWindow(QWidget* parent) : QMainWindow(parent) {
 void MainWindow::SetupUi() {
     setWindowTitle("PDFinity - Offline PDF Suite");
 
-    m_workspace = new DocumentWorkspace(this);
-    setCentralWidget(m_workspace);
+    auto* centralContainer = new QWidget(this);
+    auto* centralLayout = new QVBoxLayout(centralContainer);
+    centralLayout->setContentsMargins(0, 0, 0, 0);
+    centralLayout->setSpacing(0);
+
+    m_workflowRibbon = new WorkflowRibbon(centralContainer);
+    m_workspace = new DocumentWorkspace(centralContainer);
+
+    centralLayout->addWidget(m_workflowRibbon);
+    centralLayout->addWidget(m_workspace, 1);
+    setCentralWidget(centralContainer);
 
     connect(m_workspace, &DocumentWorkspace::OpenFileRequested, this, &MainWindow::OnOpenFile);
     connect(m_workspace, &DocumentWorkspace::FileSelected, this, &MainWindow::OpenFileByPath);
     connect(m_workspace, &DocumentWorkspace::DocumentCountChanged, this, &MainWindow::OnDocumentCountChanged);
+
+    // Wire Workspace Forwarded Tool Triggers (from right inspector)
+    connect(m_workspace, &DocumentWorkspace::OrganizePagesRequested, this, &MainWindow::OnOrganizePages);
+    connect(m_workspace, &DocumentWorkspace::MergeDocumentsRequested, this, &MainWindow::OnMergeDocuments);
+    connect(m_workspace, &DocumentWorkspace::SplitDocumentRequested, this, &MainWindow::OnSplitDocument);
+    connect(m_workspace, &DocumentWorkspace::ContentEditorRequested, this, &MainWindow::OnToggleContentEditor);
+    connect(m_workspace, &DocumentWorkspace::FormInspectorRequested, this, &MainWindow::OnOpenFormInspector);
+    connect(m_workspace, &DocumentWorkspace::ObjectInspectorRequested, this, &MainWindow::OnOpenObjectInspector);
+    connect(m_workspace, &DocumentWorkspace::DigitalSignRequested, this, &MainWindow::OnDigitalSignDocument);
+    connect(m_workspace, &DocumentWorkspace::VisualSignRequested, this, &MainWindow::OnVisualSignDocument);
+    connect(m_workspace, &DocumentWorkspace::ValidateSignaturesRequested, this, &MainWindow::OnValidateSignatures);
+    connect(m_workspace, &DocumentWorkspace::RedactionStudioRequested, this, &MainWindow::OnToggleRedactionStudio);
+    connect(m_workspace, &DocumentWorkspace::SanitizeRequested, this, &MainWindow::OnSanitizeDocument);
+    connect(m_workspace, &DocumentWorkspace::CertificateManagerRequested, this, &MainWindow::OnManageCertificates);
+    connect(m_workspace, &DocumentWorkspace::OcrStudioRequested, this, &MainWindow::OnOpenOcrStudio);
+    connect(m_workspace, &DocumentWorkspace::ConversionCenterRequested, this, &MainWindow::OnOpenConversionCenter);
+    connect(m_workspace, &DocumentWorkspace::OptimizerRequested, this, &MainWindow::OnOpenOptimizer);
+    connect(m_workspace, &DocumentWorkspace::DocumentIntelligenceRequested, this, &MainWindow::OnOpenDocumentIntelligence);
+    connect(m_workspace, &DocumentWorkspace::CompareDocumentsRequested, this, &MainWindow::OnOpenComparisonWorkspace);
+    connect(m_workspace, &DocumentWorkspace::BatchCenterRequested, this, &MainWindow::OnOpenBatchCenter);
+
+    // Wire Home Dashboard Quick Actions
+    if (auto* home = m_workspace->GetHomeDashboard()) {
+        connect(home, &HomeDashboardWidget::OrganizeRequested, this, &MainWindow::OnOrganizePages);
+        connect(home, &HomeDashboardWidget::AnnotateRequested, this, &MainWindow::OnToggleAnnotationStudio);
+        connect(home, &HomeDashboardWidget::FormsRequested, this, &MainWindow::OnOpenFormInspector);
+        connect(home, &HomeDashboardWidget::SignRequested, this, &MainWindow::OnDigitalSignDocument);
+        connect(home, &HomeDashboardWidget::RedactRequested, this, &MainWindow::OnToggleRedactionStudio);
+        connect(home, &HomeDashboardWidget::OcrRequested, this, &MainWindow::OnOpenOcrStudio);
+        connect(home, &HomeDashboardWidget::IntelligenceRequested, this, &MainWindow::OnOpenDocumentIntelligence);
+        connect(home, &HomeDashboardWidget::BatchRequested, this, &MainWindow::OnOpenBatchCenter);
+    }
+
+    // Wire Workflow Ribbon Actions
+    connect(m_workflowRibbon, &WorkflowRibbon::HomeClicked, this, [this]() {
+        if (m_workspace) m_workspace->ShowHomeTab();
+    });
+    connect(m_workflowRibbon, &WorkflowRibbon::OpenClicked, this, &MainWindow::OnOpenFile);
+    connect(m_workflowRibbon, &WorkflowRibbon::PrintClicked, this, &MainWindow::OnPrint);
+    connect(m_workflowRibbon, &WorkflowRibbon::ShareClicked, this, &MainWindow::OnShareDocument);
+    connect(m_workflowRibbon, &WorkflowRibbon::FindClicked, this, &MainWindow::OnFind);
+    connect(m_workflowRibbon, &WorkflowRibbon::UndoClicked, this, &MainWindow::OnUndo);
+    connect(m_workflowRibbon, &WorkflowRibbon::RedoClicked, this, &MainWindow::OnRedo);
+
+    connect(m_workflowRibbon, &WorkflowRibbon::OrganizePagesClicked, this, &MainWindow::OnOrganizePages);
+    connect(m_workflowRibbon, &WorkflowRibbon::MergeDocumentsClicked, this, &MainWindow::OnMergeDocuments);
+    connect(m_workflowRibbon, &WorkflowRibbon::SplitDocumentClicked, this, &MainWindow::OnSplitDocument);
+    connect(m_workflowRibbon, &WorkflowRibbon::RotateClicked, this, [this]() {
+        auto* viewer = m_workspace ? m_workspace->GetCurrentViewer() : nullptr;
+        if (viewer) {
+            int p = viewer->GetCurrentPage();
+            auto doc = viewer->GetDocument();
+            if (doc) {
+                int rot = (doc->GetPageRotation(p) + 90) % 360;
+                doc->SetPageRotation(p, rot);
+                viewer->update();
+            }
+        }
+    });
+
+    connect(m_workflowRibbon, &WorkflowRibbon::ToggleAnnotationStudioClicked, this, &MainWindow::OnToggleAnnotationStudio);
+    connect(m_workflowRibbon, &WorkflowRibbon::ToggleContentEditorClicked, this, &MainWindow::OnToggleContentEditor);
+    connect(m_workflowRibbon, &WorkflowRibbon::FormInspectorClicked, this, &MainWindow::OnOpenFormInspector);
+    connect(m_workflowRibbon, &WorkflowRibbon::ObjectInspectorClicked, this, &MainWindow::OnOpenObjectInspector);
+
+    connect(m_workflowRibbon, &WorkflowRibbon::DigitalSignClicked, this, &MainWindow::OnDigitalSignDocument);
+    connect(m_workflowRibbon, &WorkflowRibbon::VisualSignClicked, this, &MainWindow::OnVisualSignDocument);
+    connect(m_workflowRibbon, &WorkflowRibbon::ValidateSignaturesClicked, this, &MainWindow::OnValidateSignatures);
+    connect(m_workflowRibbon, &WorkflowRibbon::ToggleRedactionStudioClicked, this, &MainWindow::OnToggleRedactionStudio);
+    connect(m_workflowRibbon, &WorkflowRibbon::SanitizeClicked, this, &MainWindow::OnSanitizeDocument);
+    connect(m_workflowRibbon, &WorkflowRibbon::CertificateManagerClicked, this, &MainWindow::OnManageCertificates);
+
+    connect(m_workflowRibbon, &WorkflowRibbon::OcrStudioClicked, this, &MainWindow::OnOpenOcrStudio);
+    connect(m_workflowRibbon, &WorkflowRibbon::ConversionCenterClicked, this, &MainWindow::OnOpenConversionCenter);
+    connect(m_workflowRibbon, &WorkflowRibbon::OptimizerClicked, this, &MainWindow::OnOpenOptimizer);
+    connect(m_workflowRibbon, &WorkflowRibbon::DocumentIntelligenceClicked, this, &MainWindow::OnOpenDocumentIntelligence);
+    connect(m_workflowRibbon, &WorkflowRibbon::CompareDocumentsClicked, this, &MainWindow::OnOpenComparisonWorkspace);
+    connect(m_workflowRibbon, &WorkflowRibbon::BatchCenterClicked, this, &MainWindow::OnOpenBatchCenter);
+    connect(m_workflowRibbon, &WorkflowRibbon::SettingsClicked, this, &MainWindow::OnSettings);
 
     CreateMenus();
     CreateToolBar();
@@ -718,6 +808,10 @@ void MainWindow::OnToggleFullScreen() {
 void MainWindow::OnDocumentCountChanged(int count) {
     m_closeTabAction->setEnabled(count > 0);
     m_closeAllTabsAction->setEnabled(count > 0);
+
+    if (m_workflowRibbon) {
+        m_workflowRibbon->SetActiveDocumentAvailable(count > 0);
+    }
 
     if (count == 0) {
         m_statusDocLabel->setText(tr("Ready"));

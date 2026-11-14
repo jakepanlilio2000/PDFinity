@@ -14,6 +14,7 @@ namespace pdfinity::ui {
 
 class DocumentWorkspace;
 class RedactionToolbar;
+class WorkflowRibbon;
 
 class MainWindow : public QMainWindow {
     Q_OBJECT
@@ -82,6 +83,7 @@ private:
     bool OnRemoteSensitiveActionConfirmation(const std::string& clientName, const std::string& action, const std::string& details);
 
     DocumentWorkspace* m_workspace{nullptr};
+    WorkflowRibbon* m_workflowRibbon{nullptr};
     RedactionToolbar* m_redactionToolbar{nullptr};
 
     // Actions

@@ -11,6 +11,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.0.1] - 2026-11-14
+
+### Added
+- **Enterprise Document Studio Workstation:** Integrated modern 3-pane layout featuring:
+  - **Pinned Home Dashboard:** Always-available Tab 0 featuring quick workflow cards, searchable recent documents table, 100% offline security guarantee badge, and drag-and-drop landing area.
+  - **Grouped Contextual Workflow Ribbon:** Structured toolbars for Home & File, Assemble, Review & Annotate, Forms & Edit, Sign & Protect, and Tools & Automate.
+  - **Collapsible Navigation Rail:** 48px slim left rail with expand/collapse drawer for thumbnails, document outline, and annotations.
+  - **Contextual Document & All-Tools Inspector:** Right-hand dockable panel presenting document metadata, page dimensions, permissions, viewport zoom/rotation state, and 18-tool suite action palette.
+  - **Floating Bottom HUD:** Semi-transparent glassmorphism floating overlay with page counter, navigation, quick zoom controls, fit width/page, and clockwise rotation.
+  - **Vector SVG Suite Icons:** Custom crisp vector icon generator supporting 35 suite tools, ribbons, and actions.
+- **Dedicated Console Companion Binary (`pdfinity-cli`):** Independent console binary for batch processing, MCP stdio server, remote controller client, and headless automation.
+
+### Changed
+- **Silent Native GUI Launch:** Configured GUI launcher to start completely silently without terminal console windows across Windows (`WIN32_EXECUTABLE TRUE` with `/SUBSYSTEM:WINDOWS /ENTRY:mainCRTStartup`), macOS (`MACOSX_BUNDLE TRUE`), Linux (`Terminal=false`), and Windows subprocess creation (`CREATE_NO_WINDOW` / `0x08000000`).
+- **Strict Brand Nomenclature Scrubbing:** Scrubbed all references to proprietary third-party PDF suites across UI, dialogs, error messages, and documentation, ensuring 100% compliance with ISO 32000 open standard terminology.
+
+---
+
 ## [1.0.0] - 2026-11-14 (Official Stable Release)
 
 ### Added

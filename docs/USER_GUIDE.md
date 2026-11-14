@@ -177,7 +177,7 @@ PDFinity includes a full-featured, persistent PDF markup studio accessible via t
 > **Annotations vs. Page Content Edits:**
 > Under the ISO 32000-1 (PDF) specification, annotations exist as an interactive metadata overlay layer (`/Annots` array on each page dictionary) separate from the underlying page content stream (`/Contents`).
 > - Adding, editing, moving, or deleting annotations **never alters, re-encodes, or degrades** base document text, vector shapes, or embedded raster images.
-> - Annotations are saved as standard PDF annotation objects with complete appearance streams (`/AP`), ensuring full visual fidelity and interactive editability across all compliant PDF viewers (Adobe Acrobat, Google Chrome, Microsoft Edge, Apple Preview, and Evince).
+> - Annotations are saved as standard PDF annotation objects with complete appearance streams (`/AP`), ensuring full visual fidelity and interactive editability across all compliant PDF viewers (Google Chrome, Microsoft Edge, Apple Preview, and Evince).
 
 ### B. Annotation Studio Toolbar
 Activating Annotation Studio reveals the dedicated markup toolbar:
@@ -265,9 +265,9 @@ The Form Inspector modal provides a comprehensive split-pane workspace:
 - When archiving or finalizing signed/completed documents, click **Flatten Form** to permanently merge all form field appearance streams (`FPDFPage_Flatten` / `FLAT_NORMALDISPLAY`) into the static page content.
 - Flattening irreversibly eliminates interactive field widgets, safeguarding against tampering while ensuring identical visual rendering across every legacy and modern viewer.
 
-### F. Unsupported Format Disclosure: Adobe XFA Forms
+### F. Unsupported Format Disclosure: Legacy XFA Forms
 - **XFA Detection:** When opening a PDF containing dynamic or foreground XML Forms Architecture (XFA) streams, PDFinity displays a non-modal amber notification banner above the document canvas.
-- **Technical Disclosure:** Clicking **Why isn't this editable?** opens a detailed disclosure dialog explaining that Adobe XFA is a proprietary format deprecated by ISO 32000-2, and recommends saving as standard AcroForms or flattened static PDF.
+- **Technical Disclosure:** Clicking **Technical Details** opens a disclosure dialog explaining that legacy XFA is a proprietary format deprecated by ISO 32000-2, and recommends saving as standard AcroForms or flattened static PDF.
 
 ---
 
@@ -408,7 +408,7 @@ PDFinity provides an offline suite of deep inspection, visual/semantic compariso
 
 ### A. Document Intelligence & Structural Inspector
 Access via `Tools → Document Intelligence & Inspector...` (`Ctrl + Shift + I`):
-- **Metadata & XMP:** Inspect Dublin Core metadata and raw Adobe XMP XML packets. Edit Title, Author, Subject, Keywords, Creator, and Producer, writing updates atomically to a preserved destination copy.
+- **Metadata & XMP:** Inspect Dublin Core metadata and raw ISO standard XMP XML packets. Edit Title, Author, Subject, Keywords, Creator, and Producer, writing updates atomically to a preserved destination copy.
 - **Fonts & Encodings:** Audit all embedded and unembedded font programs, font types (Type1, TrueType, Type3, Composite CIDFont), subset prefixes (`ABCDEF+`), and encoding matrices.
 - **Images & Color Spaces:** Inspect pixel dimensions, color spaces (DeviceRGB, DeviceCMYK, DeviceGray, ICCBased), bits per component, compression filters (DCTDecode, FlateDecode), and effective rendering DPI.
 - **Page Dimensions & Boundaries:** View ISO 32000 page bounding boxes (MediaBox, CropBox, BleedBox, TrimBox, ArtBox) per page in points, millimeters, and inches.

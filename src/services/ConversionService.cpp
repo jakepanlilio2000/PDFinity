@@ -400,6 +400,11 @@ pdf_api::ExternalEngineStatus ConversionService::DetectOfficeEngine() {
     status.isAvailable = true;
 
     QProcess proc;
+#if defined(Q_OS_WIN)
+    proc.setCreateProcessArgumentsModifier([](QProcess::CreateProcessArguments* args) {
+        args->flags |= 0x08000000; // CREATE_NO_WINDOW
+    });
+#endif
     proc.start(QString::fromStdString(exePath.string()), {"--version"});
     if (proc.waitForFinished(3000)) {
         status.version = proc.readAllStandardOutput().trimmed().toStdString();
@@ -440,6 +445,11 @@ pdf_api::EngineResult<void> ConversionService::ConvertOfficeToPdf(
     }
 
     QProcess proc;
+#if defined(Q_OS_WIN)
+    proc.setCreateProcessArgumentsModifier([](QProcess::CreateProcessArguments* args) {
+        args->flags |= 0x08000000; // CREATE_NO_WINDOW
+    });
+#endif
     QStringList args;
     args << "--headless"
          << "--convert-to" << "pdf"

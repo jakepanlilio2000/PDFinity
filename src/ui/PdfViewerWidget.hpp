@@ -28,6 +28,9 @@ namespace pdfinity::ui {
 class AnnotationToolbar;
 class ContentEditingToolbar;
 class XfaNoticeBanner;
+class LeftNavigationRail;
+class FloatingHudWidget;
+class ContextInspectorPanel;
 
 class PdfViewerWidget : public QWidget {
     Q_OBJECT
@@ -43,6 +46,8 @@ public:
     [[nodiscard]] int GetCurrentPage() const { return m_canvas->GetCurrentPage(); }
     [[nodiscard]] double GetZoomScale() const { return m_canvas->GetZoomScale(); }
     [[nodiscard]] pdf_api::PageLayoutMode GetLayoutMode() const { return m_canvas->GetLayoutMode(); }
+    [[nodiscard]] ContextInspectorPanel* GetInspector() const { return m_inspector; }
+    [[nodiscard]] LeftNavigationRail* GetNavigationRail() const { return m_leftRail; }
 
     void SetZoom(double zoom);
     void SetLayout(pdf_api::PageLayoutMode mode);
@@ -53,6 +58,7 @@ public slots:
     void PrintPreview();
     void ToggleFind();
     void ToggleSidebar();
+    void ToggleInspector();
     void ToggleAnnotationStudio();
     void ZoomIn();
     void ZoomOut();
@@ -90,8 +96,11 @@ private:
 
     QSplitter* m_splitter{nullptr};
     NavigationSidebar* m_sidebar{nullptr};
+    LeftNavigationRail* m_leftRail{nullptr};
     QScrollArea* m_scrollArea{nullptr};
     PdfCanvasWidget* m_canvas{nullptr};
+    FloatingHudWidget* m_floatingHud{nullptr};
+    ContextInspectorPanel* m_inspector{nullptr};
     PdfSearchBar* m_searchBar{nullptr};
     AnnotationToolbar* m_annotToolbar{nullptr};
     ContentEditingToolbar* m_contentToolbar{nullptr};
@@ -102,6 +111,7 @@ private:
     // Toolbar controls
     QToolBar* m_toolBar{nullptr};
     QAction* m_toggleSidebarAction{nullptr};
+    QAction* m_toggleInspectorAction{nullptr};
     QAction* m_toggleAnnotAction{nullptr};
     QAction* m_formInspectorAction{nullptr};
     QAction* m_toggleContentEditAction{nullptr};

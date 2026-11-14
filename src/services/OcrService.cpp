@@ -97,6 +97,11 @@ pdf_api::OcrEngineStatus OcrService::DetectOcrEngine() {
 
     // Query version
     QProcess proc;
+#if defined(Q_OS_WIN)
+    proc.setCreateProcessArgumentsModifier([](QProcess::CreateProcessArguments* args) {
+        args->flags |= 0x08000000; // CREATE_NO_WINDOW
+    });
+#endif
     proc.start(QString::fromStdString(exePath.string()), {"--version"});
     if (proc.waitForFinished(3000)) {
         QString out = proc.readAllStandardOutput();
@@ -110,6 +115,11 @@ pdf_api::OcrEngineStatus OcrService::DetectOcrEngine() {
 
     // Query installed languages
     QProcess langProc;
+#if defined(Q_OS_WIN)
+    langProc.setCreateProcessArgumentsModifier([](QProcess::CreateProcessArguments* args) {
+        args->flags |= 0x08000000; // CREATE_NO_WINDOW
+    });
+#endif
     langProc.start(QString::fromStdString(exePath.string()), {"--list-langs"});
     if (langProc.waitForFinished(3000)) {
         QString langOut = langProc.readAllStandardOutput();
@@ -201,6 +211,11 @@ pdf_api::EngineResult<pdf_api::OcrPageResult> OcrService::RecognizePageImage(
     QString lang = options.language.empty() ? "eng" : QString::fromStdString(options.language);
 
     QProcess proc;
+#if defined(Q_OS_WIN)
+    proc.setCreateProcessArgumentsModifier([](QProcess::CreateProcessArguments* args) {
+        args->flags |= 0x08000000; // CREATE_NO_WINDOW
+    });
+#endif
     QStringList args;
     args << imgPath << outBase << "-l" << lang << "tsv";
 

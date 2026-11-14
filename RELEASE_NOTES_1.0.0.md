@@ -52,7 +52,7 @@ PDFinity provides an all-in-one, privacy-first PDF workstation for desktop (Wind
 
 ## Complete Beta-to-Stable Defect & Remediation Ledger
 
-During our pre-release audit loops (Audit A1 through A7), every identified defect was addressed under our atomic per-fix beta auto-increment protocol with dedicated regression tests:
+During our pre-release quality assurance and verification loops, every identified defect was addressed under our atomic per-fix beta auto-increment protocol with dedicated regression tests:
 
 | Defect ID | Severity | Domain | Resolution | Released In | Commit |
 | :--- | :--- | :--- | :--- | :--- | :--- |

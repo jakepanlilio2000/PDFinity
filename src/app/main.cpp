@@ -10,7 +10,20 @@
 #include <QApplication>
 #include <iostream>
 
+#if defined(_WIN32)
+#include <windows.h>
+#endif
+
 namespace {
+void AttachWindowsConsoleIfAvailable() {
+#if defined(_WIN32)
+    if (AttachConsole(ATTACH_PARENT_PROCESS)) {
+        FILE* dummy = nullptr;
+        freopen_s(&dummy, "CONOUT$", "w", stdout);
+        freopen_s(&dummy, "CONOUT$", "w", stderr);
+    }
+#endif
+}
 void PrintHelp() {
     std::cout << "PDFinity - Professional Offline-First PDF Productivity Suite\n"
               << "Published by StackSync Solutions (https://www.stacksyncsolutions.com/)\n"
@@ -32,7 +45,7 @@ void PrintHelp() {
 }
 
 void PrintVersion() {
-    std::cout << "PDFinity 1.0 Stable\n"
+    std::cout << "PDFinity 1.0.1 Stable\n"
               << "Published by StackSync Solutions (https://www.stacksyncsolutions.com/)\n"
               << "Lead Programmer: Jake Ashley Panlilio (https://github.com/jakepanlilio2000)\n"
               << "License: Mozilla Public License Version 2.0 (MPL-2.0)\n";
@@ -40,6 +53,11 @@ void PrintVersion() {
 } // namespace
 
 int main(int argc, char* argv[]) {
+    // If command line arguments were provided on Windows, attach to parent console if one exists
+    if (argc > 1) {
+        AttachWindowsConsoleIfAvailable();
+    }
+
     // Check for MCP Stdio Server Command (headless execution) first
     if (pdfinity::app::McpCliHandler::IsMcpCommand(argc, argv)) {
         if (!pdfinity::app::AppContext::Instance().Initialize()) {
@@ -82,7 +100,7 @@ int main(int argc, char* argv[]) {
 
     QApplication app(argc, argv);
     app.setApplicationName("PDFinity");
-    app.setApplicationVersion("1.0.0");
+    app.setApplicationVersion("1.0.1");
     app.setOrganizationName("StackSync Solutions");
     app.setOrganizationDomain("stacksyncsolutions.com");
 

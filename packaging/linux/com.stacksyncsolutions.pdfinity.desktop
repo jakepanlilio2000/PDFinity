@@ -2,7 +2,7 @@
 Name=PDFinity
 GenericName=PDF Productivity Suite
 Comment=Professional, modular, offline-first PDF productivity suite
-Exec=pdfinity %U
+Exec=pdfinity %F
 Icon=com.stacksyncsolutions.pdfinity
 Terminal=false
 Type=Application

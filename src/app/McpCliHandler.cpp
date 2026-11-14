@@ -16,7 +16,7 @@ namespace pdfinity::app {
 bool McpCliHandler::IsMcpCommand(int argc, char* argv[]) {
     if (argc < 2) return false;
     std::string cmd = argv[1];
-    return (cmd == "mcp-server" || cmd == "--mcp-server");
+    return (cmd == "mcp-server" || cmd == "--mcp-server" || cmd == "--mcp" || cmd == "mcp");
 }
 
 void McpCliHandler::PrintMcpHelp() {

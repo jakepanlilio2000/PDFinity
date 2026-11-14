@@ -18,6 +18,9 @@ class QLabel;
 
 namespace pdfinity::ui {
 
+class HomeDashboardWidget;
+class PdfViewerWidget;
+
 class DocumentWorkspace : public QWidget {
     Q_OBJECT
 public:
@@ -30,7 +33,9 @@ public:
     int GetOpenDocumentCount() const;
     QString GetCurrentDocumentPath() const;
     domain::DocumentModel* GetCurrentDocument() const;
-    class PdfViewerWidget* GetCurrentViewer() const;
+    PdfViewerWidget* GetCurrentViewer() const;
+    HomeDashboardWidget* GetHomeDashboard() const { return m_homeDashboard; }
+    void ShowHomeTab();
 
     void RefreshRecentFilesList();
     void SaveSession();
@@ -40,6 +45,26 @@ signals:
     void OpenFileRequested();
     void FileSelected(const QString& filePath);
     void DocumentCountChanged(int count);
+
+    // Forwarded Tool Requests (from Viewport Inspector & Tools)
+    void OrganizePagesRequested();
+    void MergeDocumentsRequested();
+    void SplitDocumentRequested();
+    void ContentEditorRequested();
+    void FormInspectorRequested();
+    void ObjectInspectorRequested();
+    void DigitalSignRequested();
+    void VisualSignRequested();
+    void ValidateSignaturesRequested();
+    void RedactionStudioRequested();
+    void SanitizeRequested();
+    void CertificateManagerRequested();
+    void OcrStudioRequested();
+    void ConversionCenterRequested();
+    void OptimizerRequested();
+    void DocumentIntelligenceRequested();
+    void CompareDocumentsRequested();
+    void BatchCenterRequested();
 
 protected:
     void dragEnterEvent(QDragEnterEvent* event) override;
@@ -55,9 +80,10 @@ private:
     QWidget* CreateWelcomeView();
     QWidget* CreateDocumentPane(std::unique_ptr<domain::DocumentModel> doc);
 
+    QTabWidget* m_tabWidget{nullptr};
+    HomeDashboardWidget* m_homeDashboard{nullptr};
     QStackedWidget* m_stackedWidget{nullptr};
     QWidget* m_welcomeView{nullptr};
-    QTabWidget* m_tabWidget{nullptr};
     QListWidget* m_recentListWidget{nullptr};
 
     std::unordered_map<int, std::unique_ptr<domain::DocumentModel>> m_openDocuments;
