@@ -93,12 +93,12 @@ jobs:
 
   build-macos:
     name: macOS (Apple Clang + Qt 6)
-    runs-on: macos-13
+    runs-on: macos-latest
     steps:
       - uses: actions/checkout@v4
 
       - name: Install Build Tools
-        run: brew install cmake ninja
+        run: brew install cmake ninja || true
 
       - name: Setup Qt 6
         uses: jurplel/install-qt-action@v3

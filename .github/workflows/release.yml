@@ -119,13 +119,13 @@ jobs:
 
   build-macos:
     name: macOS Universal DMG Bundle
-    runs-on: macos-13
+    runs-on: macos-latest
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
 
       - name: Install Build Tools
-        run: brew install cmake ninja
+        run: brew install cmake ninja || true
 
       - name: Setup Qt 6.8 LTS
         uses: jurplel/install-qt-action@v3
@@ -222,10 +222,12 @@ jobs:
           path: release-dist/
         continue-on-error: true
 
-      - name: Generate Cryptographic Checksums (SHA-256)
+      - name: Flatten and Generate Cryptographic Checksums (SHA-256)
         run: |
           cd release-dist
-          sha256sum * > SHA256SUMS.txt || true
+          find . -mindepth 2 -type f -exec mv -t . {} + || true
+          find . -mindepth 1 -type d -empty -delete || true
+          sha256sum * > SHA256SUMS.txt 2>/dev/null || true
           cat SHA256SUMS.txt || true
 
       - name: Publish Release to GitHub
