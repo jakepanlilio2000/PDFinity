@@ -11,6 +11,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.0.4] - 2026-11-14
+
+### Added
+- **Top Chrome & Multi-Tab Document Bar (`StudioTabBar`):**
+  - Integrated top bar combining pinned Home tab, closable document tabs with dirty-state indicator (`●`), page count and file size tooltips, middle-click close, drag-to-reorder, tab overflow menu, search trigger (`Ctrl+F`), and instant theme toggle.
+- **2-Tier Grouped Contextual Workflow Ribbon (`WorkflowRibbon`):**
+  - 8 primary workflow mode tabs: `All Tools`, `View`, `Comment`, `Edit`, `Organize`, `Fill & Sign`, `Protect & Redact`, `Convert & OCR`.
+  - Context-sensitive action strips with grouped icon+label controls and vertical dividers.
+  - Persistent right-aligned Quick-Access strip providing instant access to *Save*, *Print*, *Undo*, *Redo*, and *Share/Export*.
+- **Left Navigation Rail & Resizable Drawer (`LeftNavRail`):**
+  - 44px vertical icon rail on far left featuring crimson active indicator bar (`3px solid #DC2626`).
+  - 7 dedicated drawer panels: *Page Thumbnails* (multi-select grid with lazy rendering), *Bookmarks & Outline* (hierarchical tree), *Attachments* (embedded file list with export), *Layers (OCG)* (visibility checkboxes), *Comments List* (filterable annotation list), *Signatures & Certificates* (PKCS#7 verification tree), and *Document Info & Preflight* (live PDF standard, geometry, color space, and encryption specs).
+  - Resizable drawer container with header title, close button, and expand/collapse toggle.
+- **Right Contextual Tool & Property Inspector (`RightInspectorPanel`):**
+  - 260px–340px collapsible workstation panel adapting dynamically between *All Tools Palette* (10 fast-access suite operations) and *Selection Properties* (boundary coordinates X/Y/W/H, stroke/fill color pickers, stroke width, opacity slider, author metadata, and deletion triggers).
+  - Smooth collapse/expand toggle via header close button and `Ctrl+Shift+I` global shortcut.
+
+---
+
 ## [1.0.3] - 2026-11-14
 
 ### Fixed

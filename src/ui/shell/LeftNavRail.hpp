@@ -8,25 +8,27 @@
 #include <QPushButton>
 #include <QListWidget>
 #include <QTreeWidget>
+#include <QLabel>
+#include <memory>
 #include "domain/DocumentModel.hpp"
 #include "services/AsyncRenderService.hpp"
-#include <memory>
 
 namespace pdfinity::ui {
 
-class LeftNavigationRail : public QWidget {
+class LeftNavRail : public QWidget {
     Q_OBJECT
 
 public:
-    explicit LeftNavigationRail(
+    explicit LeftNavRail(
         std::shared_ptr<domain::DocumentModel> doc,
         services::AsyncRenderService* renderService,
         QWidget* parent = nullptr
     );
-    ~LeftNavigationRail() override = default;
+    ~LeftNavRail() override = default;
 
     void SetActivePage(int pageIndex);
     void RefreshAnnotations();
+    void RefreshDocumentInfo();
     void SetDrawerExpanded(bool expanded);
     bool IsDrawerExpanded() const;
 
@@ -46,9 +48,20 @@ private:
     void SetupUi();
     QWidget* CreateRailWidget();
     QWidget* CreateDrawerWidget();
+
+    // 7 Drawer Panels
+    QWidget* CreateThumbnailsPanel();
+    QWidget* CreateBookmarksPanel();
+    QWidget* CreateAttachmentsPanel();
+    QWidget* CreateLayersPanel();
+    QWidget* CreateCommentsPanel();
+    QWidget* CreateSignaturesPanel();
+    QWidget* CreateDocumentInfoPanel();
+
     void PopulateThumbnails();
     void PopulateBookmarks();
     void AddBookmarkNodes(QTreeWidgetItem* parentItem, const std::vector<pdf_api::BookmarkItem>& bookmarks);
+    void UpdateRailButtonStyles();
 
     std::shared_ptr<domain::DocumentModel> m_doc;
     services::AsyncRenderService* m_renderService{nullptr};
@@ -56,18 +69,21 @@ private:
     QWidget* m_railWidget{nullptr};
     QWidget* m_drawerWidget{nullptr};
     QStackedWidget* m_drawerStack{nullptr};
+    QLabel* m_drawerTitle{nullptr};
 
-    QPushButton* m_thumbBtn{nullptr};
-    QPushButton* m_bookmarkBtn{nullptr};
-    QPushButton* m_annotBtn{nullptr};
-    QPushButton* m_toggleCollapseBtn{nullptr};
+    std::vector<QPushButton*> m_railButtons;
+    QPushButton* m_collapseToggleBtn{nullptr};
 
     QListWidget* m_thumbnailList{nullptr};
     QTreeWidget* m_bookmarkTree{nullptr};
+    QListWidget* m_attachmentsList{nullptr};
+    QTreeWidget* m_layersTree{nullptr};
     QTreeWidget* m_annotationTree{nullptr};
+    QTreeWidget* m_signaturesTree{nullptr};
+    QWidget* m_docInfoWidget{nullptr};
 
-    int m_activePanel{-1};
-    bool m_isExpanded{false};
+    int m_activePanel{0};
+    bool m_isExpanded{true};
 };
 
 } // namespace pdfinity::ui

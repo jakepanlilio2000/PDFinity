@@ -4,8 +4,9 @@
 #include "DocumentWorkspace.hpp"
 #include "PdfViewerWidget.hpp"
 #include "HomeDashboardWidget.hpp"
-#include "ContextInspectorPanel.hpp"
+#include "shell/RightInspectorPanel.hpp"
 #include "VectorIcons.hpp"
+#include "shell/StudioTabBar.hpp"
 #include "application/AppContext.hpp"
 #include "application/Logger.hpp"
 #include "security/PathSanitizer.hpp"
@@ -47,9 +48,14 @@ void DocumentWorkspace::SetupUi() {
     auto* mainLayout = new QVBoxLayout(this);
     mainLayout->setContentsMargins(0, 0, 0, 0);
 
-    m_tabWidget = new QTabWidget(this);
-    m_tabWidget->setTabsClosable(true);
-    m_tabWidget->setMovable(true);
+    m_tabWidget = new StudioTabBar(this);
+    connect(m_tabWidget, &StudioTabBar::OpenFileRequested, this, &DocumentWorkspace::OpenFileRequested);
+    connect(m_tabWidget, &StudioTabBar::FindRequested, this, [this]() {
+        if (auto* viewer = GetCurrentViewer()) {
+            viewer->ToggleFind();
+        }
+    });
+    connect(m_tabWidget, &StudioTabBar::ToggleThemeRequested, this, &DocumentWorkspace::ToggleThemeRequested);
 
     // Pinned Home Dashboard as Tab 0
     m_homeDashboard = new HomeDashboardWidget(this);
@@ -63,17 +69,6 @@ void DocumentWorkspace::SetupUi() {
     }
 
     connect(m_tabWidget, &QTabWidget::tabCloseRequested, this, &DocumentWorkspace::OnTabCloseRequested);
-
-    // Corner widget '+' button for opening new tab
-    auto* newTabBtn = new QToolButton(m_tabWidget);
-    newTabBtn->setText("+");
-    newTabBtn->setToolTip(tr("Open Document in New Tab (Ctrl+O)"));
-    newTabBtn->setStyleSheet(
-        "QToolButton { font-weight: bold; font-size: 14px; border: none; padding: 4px 8px; color: #64748b; }"
-        "QToolButton:hover { background: #e2e8f0; border-radius: 4px; color: #1e293b; }"
-    );
-    connect(newTabBtn, &QToolButton::clicked, this, &DocumentWorkspace::OpenFileRequested);
-    m_tabWidget->setCornerWidget(newTabBtn, Qt::TopRightCorner);
 
     mainLayout->addWidget(m_tabWidget);
     m_tabWidget->setCurrentIndex(0);
@@ -311,28 +306,36 @@ bool DocumentWorkspace::OpenDocumentTab(const std::filesystem::path& filePath, c
 
     auto* viewer = new PdfViewerWidget(std::move(doc), m_tabWidget);
     if (auto* insp = viewer->GetInspector()) {
-        connect(insp, &ContextInspectorPanel::OrganizePagesTriggered, this, &DocumentWorkspace::OrganizePagesRequested);
-        connect(insp, &ContextInspectorPanel::MergeDocumentsTriggered, this, &DocumentWorkspace::MergeDocumentsRequested);
-        connect(insp, &ContextInspectorPanel::SplitDocumentTriggered, this, &DocumentWorkspace::SplitDocumentRequested);
-        connect(insp, &ContextInspectorPanel::ContentEditorTriggered, this, &DocumentWorkspace::ContentEditorRequested);
-        connect(insp, &ContextInspectorPanel::FormInspectorTriggered, this, &DocumentWorkspace::FormInspectorRequested);
-        connect(insp, &ContextInspectorPanel::ObjectInspectorTriggered, this, &DocumentWorkspace::ObjectInspectorRequested);
-        connect(insp, &ContextInspectorPanel::DigitalSignTriggered, this, &DocumentWorkspace::DigitalSignRequested);
-        connect(insp, &ContextInspectorPanel::VisualSignTriggered, this, &DocumentWorkspace::VisualSignRequested);
-        connect(insp, &ContextInspectorPanel::ValidateSignaturesTriggered, this, &DocumentWorkspace::ValidateSignaturesRequested);
-        connect(insp, &ContextInspectorPanel::RedactionStudioTriggered, this, &DocumentWorkspace::RedactionStudioRequested);
-        connect(insp, &ContextInspectorPanel::SanitizeTriggered, this, &DocumentWorkspace::SanitizeRequested);
-        connect(insp, &ContextInspectorPanel::CertificateManagerTriggered, this, &DocumentWorkspace::CertificateManagerRequested);
-        connect(insp, &ContextInspectorPanel::OcrStudioTriggered, this, &DocumentWorkspace::OcrStudioRequested);
-        connect(insp, &ContextInspectorPanel::ConversionCenterTriggered, this, &DocumentWorkspace::ConversionCenterRequested);
-        connect(insp, &ContextInspectorPanel::OptimizerTriggered, this, &DocumentWorkspace::OptimizerRequested);
-        connect(insp, &ContextInspectorPanel::DocumentIntelligenceTriggered, this, &DocumentWorkspace::DocumentIntelligenceRequested);
-        connect(insp, &ContextInspectorPanel::CompareDocumentsTriggered, this, &DocumentWorkspace::CompareDocumentsRequested);
-        connect(insp, &ContextInspectorPanel::BatchCenterTriggered, this, &DocumentWorkspace::BatchCenterRequested);
+        connect(insp, &RightInspectorPanel::OrganizePagesTriggered, this, &DocumentWorkspace::OrganizePagesRequested);
+        connect(insp, &RightInspectorPanel::MergeDocumentsTriggered, this, &DocumentWorkspace::MergeDocumentsRequested);
+        connect(insp, &RightInspectorPanel::SplitDocumentTriggered, this, &DocumentWorkspace::SplitDocumentRequested);
+        connect(insp, &RightInspectorPanel::ContentEditorTriggered, this, &DocumentWorkspace::ContentEditorRequested);
+        connect(insp, &RightInspectorPanel::FormInspectorTriggered, this, &DocumentWorkspace::FormInspectorRequested);
+        connect(insp, &RightInspectorPanel::ObjectInspectorTriggered, this, &DocumentWorkspace::ObjectInspectorRequested);
+        connect(insp, &RightInspectorPanel::DigitalSignTriggered, this, &DocumentWorkspace::DigitalSignRequested);
+        connect(insp, &RightInspectorPanel::VisualSignTriggered, this, &DocumentWorkspace::VisualSignRequested);
+        connect(insp, &RightInspectorPanel::ValidateSignaturesTriggered, this, &DocumentWorkspace::ValidateSignaturesRequested);
+        connect(insp, &RightInspectorPanel::RedactionStudioTriggered, this, &DocumentWorkspace::RedactionStudioRequested);
+        connect(insp, &RightInspectorPanel::SanitizeTriggered, this, &DocumentWorkspace::SanitizeRequested);
+        connect(insp, &RightInspectorPanel::CertificateManagerTriggered, this, &DocumentWorkspace::CertificateManagerRequested);
+        connect(insp, &RightInspectorPanel::OcrStudioTriggered, this, &DocumentWorkspace::OcrStudioRequested);
+        connect(insp, &RightInspectorPanel::ConversionCenterTriggered, this, &DocumentWorkspace::ConversionCenterRequested);
+        connect(insp, &RightInspectorPanel::OptimizerTriggered, this, &DocumentWorkspace::OptimizerRequested);
+        connect(insp, &RightInspectorPanel::DocumentIntelligenceTriggered, this, &DocumentWorkspace::DocumentIntelligenceRequested);
+        connect(insp, &RightInspectorPanel::CompareDocumentsTriggered, this, &DocumentWorkspace::CompareDocumentsRequested);
+        connect(insp, &RightInspectorPanel::BatchCenterTriggered, this, &DocumentWorkspace::BatchCenterRequested);
     }
 
     int newIndex = m_tabWidget->addTab(viewer, fileName);
     m_tabWidget->setTabToolTip(newIndex, qPath);
+    if (viewer->GetDocument()) {
+        m_tabWidget->SetTabPageInfo(
+            newIndex,
+            viewer->GetDocument()->GetPageCount(),
+            FormatFileSize(std::filesystem::exists(filePath) ? std::filesystem::file_size(filePath) : 0),
+            qPath
+        );
+    }
     m_tabWidget->setCurrentIndex(newIndex);
 
     // Add to recent files

@@ -236,12 +236,14 @@ add_library(pdfinity_ui STATIC
     ui/FloatingHudWidget.cpp
     ui/HomeDashboardWidget.hpp
     ui/HomeDashboardWidget.cpp
-    ui/LeftNavigationRail.hpp
-    ui/LeftNavigationRail.cpp
-    ui/ContextInspectorPanel.hpp
-    ui/ContextInspectorPanel.cpp
-    ui/WorkflowRibbon.hpp
-    ui/WorkflowRibbon.cpp
+    ui/shell/StudioTabBar.hpp
+    ui/shell/StudioTabBar.cpp
+    ui/shell/WorkflowRibbon.hpp
+    ui/shell/WorkflowRibbon.cpp
+    ui/shell/LeftNavRail.hpp
+    ui/shell/LeftNavRail.cpp
+    ui/shell/RightInspectorPanel.hpp
+    ui/shell/RightInspectorPanel.cpp
     ui/MainWindow.hpp
     ui/MainWindow.cpp
 )

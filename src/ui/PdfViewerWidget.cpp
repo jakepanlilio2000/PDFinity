@@ -7,9 +7,9 @@
 #include "FormInspectorDialog.hpp"
 #include "ContentEditingToolbar.hpp"
 #include "ObjectInspectorDialog.hpp"
-#include "LeftNavigationRail.hpp"
+#include "shell/LeftNavRail.hpp"
 #include "FloatingHudWidget.hpp"
-#include "ContextInspectorPanel.hpp"
+#include "shell/RightInspectorPanel.hpp"
 #include "VectorIcons.hpp"
 #include "services/AnnotationCommandManager.hpp"
 #include "services/PrintService.hpp"
@@ -93,10 +93,10 @@ void PdfViewerWidget::SetupUi() {
     m_splitter = new QSplitter(Qt::Horizontal, this);
     m_splitter->setChildrenCollapsible(true);
 
-    // Pane 1: Left Navigation Rail & Drawer
-    m_leftRail = new LeftNavigationRail(m_doc, m_renderService.get(), m_splitter);
-    connect(m_leftRail, &LeftNavigationRail::PageSelected, this, &PdfViewerWidget::GoToPage);
-    connect(m_leftRail, &LeftNavigationRail::AnnotationSelected, [this](int pageIndex, int annotIndex) {
+    // Pane 1: Left Navigation Rail & Drawer (44px vertical rail with 7 drawer panels)
+    m_leftRail = new LeftNavRail(m_doc, m_renderService.get(), m_splitter);
+    connect(m_leftRail, &LeftNavRail::PageSelected, this, &PdfViewerWidget::GoToPage);
+    connect(m_leftRail, &LeftNavRail::AnnotationSelected, [this](int pageIndex, int annotIndex) {
         GoToPage(pageIndex);
         m_canvas->SelectAnnotation(pageIndex, annotIndex);
         if (m_annotToolbar->isHidden()) {
@@ -118,6 +118,13 @@ void PdfViewerWidget::SetupUi() {
     connect(m_canvas, &PdfCanvasWidget::ZoomChanged, this, &PdfViewerWidget::OnCanvasZoomChanged);
     connect(m_canvas, &PdfCanvasWidget::AnnotationSelected, [this](int /*page*/, int annotIdx) {
         m_annotToolbar->SetDeleteEnabled(annotIdx >= 0);
+        if (annotIdx >= 0 && m_inspector) {
+            SelectionPropertiesInfo info;
+            info.objectType = tr("Markup Annotation #%1").arg(annotIdx + 1);
+            m_inspector->SetSelectionProperties(info);
+        } else if (m_inspector) {
+            m_inspector->ClearSelection();
+        }
     });
     connect(m_canvas, &PdfCanvasWidget::AnnotationModified, [this]() {
         if (m_leftRail) m_leftRail->RefreshAnnotations();
@@ -184,16 +191,25 @@ void PdfViewerWidget::SetupUi() {
 
     m_splitter->addWidget(m_scrollArea);
 
-    // Pane 3: Right Contextual Inspector & All Tools Panel
-    m_inspector = new ContextInspectorPanel(m_splitter);
+    // Pane 3: Right Contextual Inspector & All Tools Panel (260-340px)
+    m_inspector = new RightInspectorPanel(m_splitter);
     m_inspector->SetDocument(m_doc);
-    connect(m_inspector, &ContextInspectorPanel::CloseRequested, this, &PdfViewerWidget::ToggleInspector);
+    connect(m_inspector, &RightInspectorPanel::CloseRequested, this, &PdfViewerWidget::ToggleInspector);
+    connect(m_inspector, &RightInspectorPanel::StrokeColorChanged, [this](const QColor& c) {
+        m_canvas->SetAnnotationColor(c);
+    });
+    connect(m_inspector, &RightInspectorPanel::StrokeWidthChanged, [this](double w) {
+        m_canvas->SetAnnotationStrokeWidth(static_cast<float>(w));
+    });
+    connect(m_inspector, &RightInspectorPanel::DeleteSelectionTriggered, [this]() {
+        m_canvas->DeleteSelectedAnnotation();
+    });
     m_splitter->addWidget(m_inspector);
 
     m_splitter->setStretchFactor(0, 0);
     m_splitter->setStretchFactor(1, 1);
     m_splitter->setStretchFactor(2, 0);
-    m_splitter->setSizes({48, 800, 280});
+    m_splitter->setSizes({44, 850, 280});
 
     mainLayout->addWidget(m_splitter);
 
@@ -433,7 +449,17 @@ void PdfViewerWidget::ToggleFind() {
 }
 
 void PdfViewerWidget::ToggleSidebar() {
-    m_sidebar->setVisible(!m_sidebar->isVisible());
+    if (m_leftRail) {
+        m_leftRail->SetDrawerExpanded(!m_leftRail->IsDrawerExpanded());
+    } else if (m_sidebar) {
+        m_sidebar->setVisible(!m_sidebar->isVisible());
+    }
+}
+
+void PdfViewerWidget::ToggleInspector() {
+    if (m_inspector) {
+        m_inspector->setVisible(!m_inspector->isVisible());
+    }
 }
 
 void PdfViewerWidget::ZoomIn() {
@@ -518,6 +544,9 @@ void PdfViewerWidget::keyPressEvent(QKeyEvent* event) {
         event->accept();
     } else if (event->matches(QKeySequence::Print)) {
         Print();
+        event->accept();
+    } else if (event->modifiers() == (Qt::ControlModifier | Qt::ShiftModifier) && event->key() == Qt::Key_I) {
+        ToggleInspector();
         event->accept();
     } else if (event->key() == Qt::Key_PageDown) {
         GoToPage(GetCurrentPage() + 1);

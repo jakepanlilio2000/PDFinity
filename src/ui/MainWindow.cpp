@@ -5,7 +5,7 @@
 #include "DocumentWorkspace.hpp"
 #include "PdfViewerWidget.hpp"
 #include "HomeDashboardWidget.hpp"
-#include "WorkflowRibbon.hpp"
+#include "shell/WorkflowRibbon.hpp"
 #include "AboutDialog.hpp"
 #include "SettingsDialog.hpp"
 #include "ThemeManager.hpp"
@@ -79,6 +79,7 @@ void MainWindow::SetupUi() {
     connect(m_workspace, &DocumentWorkspace::OpenFileRequested, this, &MainWindow::OnOpenFile);
     connect(m_workspace, &DocumentWorkspace::FileSelected, this, &MainWindow::OpenFileByPath);
     connect(m_workspace, &DocumentWorkspace::DocumentCountChanged, this, &MainWindow::OnDocumentCountChanged);
+    connect(m_workspace, &DocumentWorkspace::ToggleThemeRequested, this, &MainWindow::OnToggleTheme);
 
     // Wire Workspace Forwarded Tool Triggers (from right inspector)
     connect(m_workspace, &DocumentWorkspace::OrganizePagesRequested, this, &MainWindow::OnOrganizePages);
@@ -161,6 +162,20 @@ void MainWindow::SetupUi() {
     connect(m_workflowRibbon, &WorkflowRibbon::CompareDocumentsClicked, this, &MainWindow::OnOpenComparisonWorkspace);
     connect(m_workflowRibbon, &WorkflowRibbon::BatchCenterClicked, this, &MainWindow::OnOpenBatchCenter);
     connect(m_workflowRibbon, &WorkflowRibbon::SettingsClicked, this, &MainWindow::OnSettings);
+
+    connect(m_workflowRibbon, &WorkflowRibbon::ViewZoomInClicked, this, &MainWindow::OnZoomIn);
+    connect(m_workflowRibbon, &WorkflowRibbon::ViewZoomOutClicked, this, &MainWindow::OnZoomOut);
+    connect(m_workflowRibbon, &WorkflowRibbon::ViewZoom100Clicked, this, &MainWindow::OnZoomReset);
+    connect(m_workflowRibbon, &WorkflowRibbon::ViewFitWidthClicked, this, [this]() {
+        if (auto* v = m_workspace ? m_workspace->GetCurrentViewer() : nullptr) v->ZoomFitWidth();
+    });
+    connect(m_workflowRibbon, &WorkflowRibbon::ViewFitPageClicked, this, [this]() {
+        if (auto* v = m_workspace ? m_workspace->GetCurrentViewer() : nullptr) v->ZoomFitPage();
+    });
+    connect(m_workflowRibbon, &WorkflowRibbon::ViewFullscreenClicked, this, &MainWindow::OnToggleFullScreen);
+    connect(m_workflowRibbon, &WorkflowRibbon::PreflightClicked, this, &MainWindow::OnOpenPreflightCompliance);
+    connect(m_workflowRibbon, &WorkflowRibbon::ApplyRedactionsClicked, this, &MainWindow::OnApplyRedactions);
+    connect(m_workflowRibbon, &WorkflowRibbon::EncryptClicked, this, &MainWindow::OnEncryptDocument);
 
     CreateMenus();
     CreateToolBar();

@@ -9,9 +9,9 @@
 #include <memory>
 #include <unordered_map>
 #include "domain/DocumentModel.hpp"
+#include "shell/StudioTabBar.hpp"
 
 class QStackedWidget;
-class QTabWidget;
 class QListWidget;
 class QListWidgetItem;
 class QLabel;
@@ -45,6 +45,7 @@ signals:
     void OpenFileRequested();
     void FileSelected(const QString& filePath);
     void DocumentCountChanged(int count);
+    void ToggleThemeRequested();
 
     // Forwarded Tool Requests (from Viewport Inspector & Tools)
     void OrganizePagesRequested();
@@ -80,7 +81,7 @@ private:
     QWidget* CreateWelcomeView();
     QWidget* CreateDocumentPane(std::unique_ptr<domain::DocumentModel> doc);
 
-    QTabWidget* m_tabWidget{nullptr};
+    StudioTabBar* m_tabWidget{nullptr};
     HomeDashboardWidget* m_homeDashboard{nullptr};
     QStackedWidget* m_stackedWidget{nullptr};
     QWidget* m_welcomeView{nullptr};

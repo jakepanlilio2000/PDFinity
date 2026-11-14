@@ -28,9 +28,9 @@ namespace pdfinity::ui {
 class AnnotationToolbar;
 class ContentEditingToolbar;
 class XfaNoticeBanner;
-class LeftNavigationRail;
+class LeftNavRail;
 class FloatingHudWidget;
-class ContextInspectorPanel;
+class RightInspectorPanel;
 
 class PdfViewerWidget : public QWidget {
     Q_OBJECT
@@ -46,8 +46,8 @@ public:
     [[nodiscard]] int GetCurrentPage() const { return m_canvas->GetCurrentPage(); }
     [[nodiscard]] double GetZoomScale() const { return m_canvas->GetZoomScale(); }
     [[nodiscard]] pdf_api::PageLayoutMode GetLayoutMode() const { return m_canvas->GetLayoutMode(); }
-    [[nodiscard]] ContextInspectorPanel* GetInspector() const { return m_inspector; }
-    [[nodiscard]] LeftNavigationRail* GetNavigationRail() const { return m_leftRail; }
+    [[nodiscard]] RightInspectorPanel* GetInspector() const { return m_inspector; }
+    [[nodiscard]] LeftNavRail* GetNavigationRail() const { return m_leftRail; }
 
     void SetZoom(double zoom);
     void SetLayout(pdf_api::PageLayoutMode mode);
@@ -96,11 +96,11 @@ private:
 
     QSplitter* m_splitter{nullptr};
     NavigationSidebar* m_sidebar{nullptr};
-    LeftNavigationRail* m_leftRail{nullptr};
+    LeftNavRail* m_leftRail{nullptr};
     QScrollArea* m_scrollArea{nullptr};
     PdfCanvasWidget* m_canvas{nullptr};
     FloatingHudWidget* m_floatingHud{nullptr};
-    ContextInspectorPanel* m_inspector{nullptr};
+    RightInspectorPanel* m_inspector{nullptr};
     PdfSearchBar* m_searchBar{nullptr};
     AnnotationToolbar* m_annotToolbar{nullptr};
     ContentEditingToolbar* m_contentToolbar{nullptr};
