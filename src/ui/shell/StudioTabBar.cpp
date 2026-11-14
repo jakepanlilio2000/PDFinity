@@ -133,7 +133,7 @@ void StudioTabBar::SetCornerControlsVisible(bool visible) {
 }
 
 bool StudioTabBar::AreCornerControlsVisible() const {
-    return m_cornerContainer && m_cornerContainer->isVisible();
+    return m_cornerContainer && !m_cornerContainer->isHidden();
 }
 
 } // namespace pdfinity::ui
