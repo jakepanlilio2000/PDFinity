@@ -11,6 +11,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.1.7-beta] - 2026-11-14
+
+### Fixed
+- **MCP Client Name Synchronization & Thread Safety [BUG-002]:** In `McpServer.cpp`, encapsulated all `m_state.clientName` reads and audit logging under `m_mutex` synchronization, eliminating potential data race conditions during concurrent JSON-RPC requests.
+
+---
+
 ## [0.1.6-beta] - 2026-11-14
 
 ### Fixed

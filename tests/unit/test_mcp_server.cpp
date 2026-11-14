@@ -11,6 +11,8 @@
 #include <QJsonDocument>
 #include <QJsonObject>
 #include <QJsonArray>
+#include <thread>
+#include <atomic>
 
 using namespace pdfinity;
 
@@ -34,6 +36,7 @@ private slots:
     void testPdfRedactAndSanitizeTool();
     void testResourcesListAndRead();
     void testJsonRpcErrorHandling();
+    void testConcurrentClientAccessSafety();
 
 private:
     std::filesystem::path m_fixturesDir;
@@ -364,6 +367,30 @@ void TestMcpServer::testJsonRpcErrorHandling() {
     std::string r4 = mcp::McpServer::Instance().ProcessMessage(noToolName);
     auto d4 = QJsonDocument::fromJson(QByteArray::fromStdString(r4));
     QCOMPARE(d4.object()["error"].toObject()["code"].toInt(), -32602);
+}
+
+void TestMcpServer::testConcurrentClientAccessSafety() {
+    std::vector<std::thread> workers;
+    std::atomic<bool> failed{false};
+
+    for (int t = 0; t < 4; ++t) {
+        workers.emplace_back([t, &failed]() {
+            for (int i = 0; i < 25; ++i) {
+                std::string req = R"({"jsonrpc":"2.0","id":)" + std::to_string(t * 100 + i) + R"(,"method":"ping"})";
+                std::string resp = mcp::McpServer::Instance().ProcessMessage(req);
+                if (resp.empty()) {
+                    failed.store(true);
+                }
+                auto st = mcp::McpServer::Instance().GetSessionState();
+                (void)st;
+            }
+        });
+    }
+
+    for (auto& w : workers) {
+        if (w.joinable()) w.join();
+    }
+    QVERIFY(!failed.load());
 }
 
 QTEST_MAIN(TestMcpServer)

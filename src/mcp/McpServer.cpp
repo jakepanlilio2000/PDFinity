@@ -97,16 +97,20 @@ std::string McpServer::ProcessMessage(const std::string& jsonRpcRequest) {
 
     QJsonObject params = root.value("params").toObject();
 
+    std::string currentClientName;
     {
         std::lock_guard<std::mutex> lock(m_mutex);
         m_state.requestsHandled++;
+        currentClientName = m_state.clientName;
     }
 
     // Handle notifications (no response required if id is null or undefined)
     if (method == "notifications/initialized") {
-        std::lock_guard<std::mutex> lock(m_mutex);
-        m_state.isInitialized = true;
-        policy.RecordAuditLog(m_state.clientName, method.toStdString(), "-", "SUCCESS", "Client confirmed initialization");
+        {
+            std::lock_guard<std::mutex> lock(m_mutex);
+            m_state.isInitialized = true;
+        }
+        policy.RecordAuditLog(currentClientName, method.toStdString(), "-", "SUCCESS", "Client confirmed initialization");
         return "";
     }
 
@@ -124,7 +128,7 @@ std::string McpServer::ProcessMessage(const std::string& jsonRpcRequest) {
             std::lock_guard<std::mutex> lock(m_mutex);
             m_state.securityViolations++;
         }
-        policy.RecordAuditLog(m_state.clientName, method.toStdString(), "-", "DENIED", "MCP server is disabled by operator");
+        policy.RecordAuditLog(currentClientName, method.toStdString(), "-", "DENIED", "MCP server is disabled by operator");
         return FormatError(id, -32001, "MCP server is disabled by operator policy. Enable it in PDFinity Settings or pass --mcp-server.");
     }
 
@@ -146,15 +150,17 @@ std::string McpServer::HandleInitialize(const QJsonValue& id, const QJsonObject&
     std::string clientProto = params.value("protocolVersion").toString().toStdString();
     QJsonObject clientInfo = params.value("clientInfo").toObject();
 
+    std::string clientName;
     {
         std::lock_guard<std::mutex> lock(m_mutex);
         m_state.isConnected = true;
         m_state.clientName = clientInfo.value("name").toString("UnknownClient").toStdString();
         m_state.clientVersion = clientInfo.value("version").toString("1.0").toStdString();
         m_state.negotiatedProtocolVersion = MCP_PROTOCOL_VERSION;
+        clientName = m_state.clientName;
     }
 
-    policy.RecordAuditLog(m_state.clientName, "initialize", "-", "SUCCESS",
+    policy.RecordAuditLog(clientName, "initialize", "-", "SUCCESS",
                           "Client connected with protocol: " + clientProto);
 
     QJsonObject result;
@@ -188,7 +194,12 @@ std::string McpServer::HandleToolsList(const QJsonValue& id, const QJsonObject& 
     QJsonObject result;
     result["tools"] = toolsArray;
 
-    McpSecurityPolicy::Instance().RecordAuditLog(m_state.clientName, "tools/list", "-", "SUCCESS",
+    std::string clientName;
+    {
+        std::lock_guard<std::mutex> lock(m_mutex);
+        clientName = m_state.clientName;
+    }
+    McpSecurityPolicy::Instance().RecordAuditLog(clientName, "tools/list", "-", "SUCCESS",
                                                 "Returned " + std::to_string(tools.size()) + " tools");
     return FormatResponse(id, result);
 }
