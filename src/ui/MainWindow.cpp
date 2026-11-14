@@ -50,6 +50,7 @@
 #include <QMessageBox>
 #include <QCloseEvent>
 #include <QKeySequence>
+#include <QOperatingSystemVersion>
 
 namespace pdfinity::ui {
 
@@ -189,6 +190,10 @@ void MainWindow::CreateMenus() {
 
     m_printPreviewAction = fileMenu->addAction(tr("Print Pre&view..."));
     connect(m_printPreviewAction, &QAction::triggered, this, &MainWindow::OnPrintPreview);
+
+    m_shareAction = fileMenu->addAction(tr("&Share Document..."));
+    m_shareAction->setShortcut(QKeySequence(Qt::CTRL | Qt::SHIFT | Qt::Key_S));
+    connect(m_shareAction, &QAction::triggered, this, &MainWindow::OnShareDocument);
 
     fileMenu->addSeparator();
 
@@ -409,12 +414,28 @@ void MainWindow::CreateToolBar() {
     auto* toolBar = addToolBar(tr("Main Toolbar"));
     toolBar->setMovable(false);
 
+#if defined(__ANDROID__)
+    const bool isMobile = true;
+#else
+    const bool isMobile = (QOperatingSystemVersion::currentType() == QOperatingSystemVersion::Android);
+#endif
+
+    if (isMobile) {
+        toolBar->setIconSize(QSize(36, 36));
+        toolBar->setStyleSheet("QToolButton { min-width: 48px; min-height: 48px; padding: 6px; }");
+    }
+
     toolBar->addAction(m_openAction);
     toolBar->addSeparator();
     toolBar->addAction(m_zoomInAction);
     toolBar->addAction(m_zoomResetAction);
     toolBar->addAction(m_zoomOutAction);
     toolBar->addSeparator();
+
+    if (m_shareAction) {
+        toolBar->addAction(m_shareAction);
+        toolBar->addSeparator();
+    }
 
     auto* themeAction = toolBar->addAction(tr("🌓 Toggle Theme"));
     themeAction->setToolTip(tr("Toggle Dark / Light Mode"));
@@ -646,6 +667,19 @@ void MainWindow::OnPrintPreview() {
     auto* viewer = m_workspace->GetCurrentViewer();
     if (viewer) {
         viewer->PrintPreview();
+    }
+}
+
+void MainWindow::OnShareDocument() {
+    if (!m_workspace) return;
+    auto* doc = m_workspace->GetCurrentDocument();
+    if (!doc || !doc->IsValid()) {
+        QMessageBox::information(this, tr("Share Document"), tr("No document is currently open."));
+        return;
+    }
+    const auto& platform = app::AppContext::Instance().GetPlatform();
+    if (!platform.ShareDocument(doc->GetPath())) {
+        QMessageBox::warning(this, tr("Share Document"), tr("Unable to open system share sheet for the current document."));
     }
 }
 

@@ -47,16 +47,16 @@ fi
 echo "[+] Building Android APK via Gradle..."
 if [ "${BUILD_TYPE}" = "Debug" ]; then
     ${GRADLE_CMD} assembleDebug
-    APK_SOURCE="${ANDROID_DIR}/build/outputs/apk/debug/android-debug.apk"
+    APK_CANDIDATE=$(find "${ANDROID_DIR}/build/outputs/apk" -name "*debug*.apk" 2>/dev/null | head -n 1)
     TARGET_APK="${DIST_DIR}/PDFinity-debug.apk"
 else
     ${GRADLE_CMD} assembleRelease
-    APK_SOURCE="${ANDROID_DIR}/build/outputs/apk/release/android-release-unsigned.apk"
-    TARGET_APK="${DIST_DIR}/PDFinity-release-unsigned.apk"
+    APK_CANDIDATE=$(find "${ANDROID_DIR}/build/outputs/apk" -name "*release*.apk" 2>/dev/null | head -n 1)
+    TARGET_APK="${DIST_DIR}/PDFinity-release.apk"
 fi
 
-if [ -f "${APK_SOURCE}" ]; then
-    cp -v "${APK_SOURCE}" "${TARGET_APK}"
+if [ -n "${APK_CANDIDATE:-}" ] && [ -f "${APK_CANDIDATE}" ]; then
+    cp -v "${APK_CANDIDATE}" "${TARGET_APK}"
     echo "[+] Successfully packaged APK: ${TARGET_APK}"
     ls -lh "${TARGET_APK}"
 else

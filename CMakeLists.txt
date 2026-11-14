@@ -27,6 +27,15 @@ set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTOUIC ON)
 set(CMAKE_AUTORCC ON)
 
+# Qt for Android Platform Configuration
+if(ANDROID)
+    set(QT_ANDROID_PACKAGE_SOURCE_DIR "${PROJECT_SOURCE_DIR}/android")
+    set(QT_ANDROID_ABIS "arm64-v8a;armeabi-v7a;x86_64" CACHE STRING "Target Android ABIs")
+    set(QT_ANDROID_MIN_SDK_VERSION 28)
+    set(QT_ANDROID_TARGET_SDK_VERSION 35)
+    set(ANDROID_NATIVE_API_LEVEL 28)
+endif()
+
 # Default to Release if no configuration specified
 if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
     set(CMAKE_BUILD_TYPE "Release" CACHE STRING "Build type" FORCE)

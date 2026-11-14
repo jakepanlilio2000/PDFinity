@@ -16,7 +16,7 @@ PDFinity enforces an evidence-based platform classification model. Support is ve
 | **Windows 10/11** | x86_64 (`x64`) | **Primary Modern** | MSVC 19.4x/19.5x (VS 2022/2026), Windows SDK 10.0+ | Qt 6.8+ LTS | Windows 10 Version 1809 (Build 17763) | Inno Setup / WiX MSI / Portable ZIP |
 | **Linux Desktop** | x86_64 (`x64`) | **Primary / Targeted** | GCC 11+ / Clang 14+, glibc 2.31+ | Qt 6.8+ LTS | Ubuntu 22.04+, Debian 12+, Fedora 39+, Arch | AppImage / Flatpak / `.deb` / Arch PKGBUILD / `.rpm` |
 | **macOS** | Apple Silicon (`arm64`) & Intel (`x64`) | **Targeted** | Apple Clang (Xcode 15+), macOS SDK 14+ | Qt 6.8+ LTS | macOS 12.0 (Monterey) | DMG / App Bundle |
-| **Android** | `arm64-v8a`, `armeabi-v7a`, `x86_64` | **Mobile Port** | Android NDK r25+, Gradle 8+, JDK 17/21 | Qt 6.8+ for Android | Android 8.0 (Oreo, API level 26) | Release APK / Android App Bundle (AAB) |
+| **Android** | `arm64-v8a`, `armeabi-v7a`, `x86_64` | **Mobile Port** | Android NDK r25+, Gradle 8+, JDK 17/21 | Qt 6.8+ for Android | Android 9.0 (Pie, API level 28) | Release APK / Android App Bundle (AAB) |
 | **Windows 10/11** | i686 (`x86`) | **Conditional Modern** | MSVC x86, Windows SDK 10.0+ | Qt 6.8+ LTS (x86 build) | Windows 10 Version 1809 (32-bit) | Inno Setup / Portable ZIP |
 | **Windows 7 SP1** | i686 (`x86`) & x86_64 (`x64`) | **Legacy / Conditional** | MSVC `v141_xp` (VS 2017) or MinGW-w64 GCC | Qt 5.15 LTS (Legacy Profile) | Windows 7 SP1 + KB4474419 (SHA-2) + KB2999226 (UCRT) | Inno Setup Legacy / ZIP |
 

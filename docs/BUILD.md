@@ -3,7 +3,7 @@
 **Organization / Publisher:** [StackSync Solutions](https://www.stacksyncsolutions.com/)  
 **Lead Programmer:** [Jake Ashley Panlilio](https://github.com/jakepanlilio2000)  
 **Primary License:** Mozilla Public License Version 2.0 (MPL-2.0)  
-**Supported Platforms:** Windows 10/11 x64, Linux x64, macOS Universal, Android 8.0+ (API 26+)  
+**Supported Platforms:** Windows 10/11 x64, Linux x64, macOS Universal, Android 9.0+ (API 28+)  
 
 ---
 
@@ -74,6 +74,24 @@ cmake --preset macos-release
 cmake --build --preset macos-release
 ctest --preset macos-release
 ./build/macos-release/bin/PDFinity.app/Contents/MacOS/PDFinity
+```
+
+### 2.4 Android Build Instructions
+
+```bash
+# Set Android SDK/NDK environment
+export ANDROID_SDK_ROOT=/path/to/android-sdk
+export ANDROID_NDK_ROOT=${ANDROID_SDK_ROOT}/ndk/25.2.9519653
+
+# Build release APK via Gradle
+cd android
+./gradlew assembleRelease
+
+# Alternatively, run the packaging automation script
+bash packaging/android/build_apk.sh Release
+
+# Sideload to connected device or emulator via ADB
+adb install -r dist/PDFinity-release.apk
 ```
 
 ---

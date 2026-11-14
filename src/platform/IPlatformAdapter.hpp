@@ -47,8 +47,10 @@ public:
     virtual std::filesystem::path GetCacheDirectory() const = 0;
     virtual std::filesystem::path GetDocumentsDirectory() const = 0;
 
-    // Shell Operations
+    // Shell & System Operations
     virtual bool OpenFolderAndSelectFile(const std::filesystem::path& filePath) const = 0;
+    virtual bool PrintDocument(const std::filesystem::path& /*filePath*/) const { return false; }
+    virtual bool ShareDocument(const std::filesystem::path& /*filePath*/, const std::string& /*mimeType*/ = "application/pdf") const { return false; }
 };
 
 } // namespace pdfinity::platform

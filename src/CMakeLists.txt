@@ -111,6 +111,13 @@ add_library(pdfinity_core STATIC
     app/RemoteCliHandler.cpp
 )
 
+if(ANDROID)
+    target_sources(pdfinity_core PRIVATE
+        platform/AndroidPlatformAdapter.hpp
+        platform/AndroidPlatformAdapter.cpp
+    )
+endif()
+
 target_include_directories(pdfinity_core PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}
     ${PROJECT_SOURCE_DIR}/include

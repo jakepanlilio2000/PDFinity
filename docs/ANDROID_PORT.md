@@ -8,7 +8,7 @@
 
 ## 1. Executive Summary
 
-PDFinity provides native cross-platform support for Android devices running Android 8.0 (API level 26) through Android 14+ (API level 34). The Android port utilizes Qt 6 for Android combined with native C++20 PDFium and QPDF engines. By integrating directly with the Android Storage Access Framework (SAF) and Android Activity lifecycle via JNI, PDFinity provides a secure, offline-first, touch-optimized PDF reading and manipulation suite on mobile and tablet form factors.
+PDFinity provides native cross-platform support for Android devices running Android 9.0 (API level 28) through Android 15 (API level 35). The Android port utilizes Qt 6 for Android combined with native C++20 PDFium and QPDF engines. By integrating directly with the Android Storage Access Framework (SAF) and Android Activity lifecycle via JNI, PDFinity provides a secure, offline-first, touch-optimized PDF reading and manipulation suite on mobile and tablet form factors.
 
 ---
 
@@ -16,24 +16,24 @@ PDFinity provides native cross-platform support for Android devices running Andr
 
 ```mermaid
 flowchart TD
-    AndroidOS["Android OS / Framework (API 26-34)"]
+    AndroidOS["Android OS / Framework (API 28-35)"]
     SAF["Storage Access Framework / DocumentsProvider"]
     JavaActivity["PDFinityActivity (Java / QtActivity)"]
-    JNIBridge["JNI Native Interop Bridge (C++)"]
+    PlatformAdapter["AndroidPlatformAdapter (C++ / JNI)"]
     CoreEngine["PDFinity Core C++ Engine (PDFium / QPDF)"]
     TouchUI["Qt Touch & Gesture Workspace UI"]
 
     AndroidOS --> SAF
     SAF -->|content:// URI| JavaActivity
-    JavaActivity -->|JNI onNativeDocumentReceived| JNIBridge
-    JNIBridge --> CoreEngine
+    JavaActivity -->|JNI onNativeDocumentReceived| PlatformAdapter
+    PlatformAdapter --> CoreEngine
     CoreEngine --> TouchUI
 ```
 
 ### 2.1 Native Components
-- **Native Activity (`com.stacksyncsolutions.pdfinity.PDFinityActivity`)**: Extends `org.qtproject.qt.android.bindings.QtActivity` to intercept standard Android Intents (`ACTION_VIEW`, `ACTION_EDIT`, `ACTION_SEND`), process file-provider content URIs, and delegate to the core C++ engine.
-- **JNI Bridge (`src/app/AndroidJniBridge.cpp`)**: Connects Java runtime intent callbacks with the C++ document workspace and session manager.
-- **Rendering Pipeline**: Powered by Google PDFium compiled for target Android ABIs (`arm64-v8a`, `armeabi-v7a`, `x86_64`), rendering into hardware-accelerated OpenGL / Vulkan surfaces via Qt's RHI (Rendering Hardware Interface).
+- **Native Activity (`com.stacksyncsolutions.pdfinity.PDFinityActivity`)**: Extends `org.qtproject.qt.android.bindings.QtActivity` to intercept standard Android Intents (`ACTION_VIEW`, `ACTION_EDIT`, `ACTION_SEND`), process file-provider content URIs, manage Storage Access Framework (SAF) writeback, system printing via `PrintManager`, and sharing via `FileProvider`.
+- **Platform Adapter (`src/platform/AndroidPlatformAdapter.cpp`)**: Integrates Android lifecycle events (`Qt::ApplicationSuspended`, `Qt::ApplicationActive`), JNI bridges for printing and sharing, and directory resolution via `QStandardPaths`.
+- **Rendering Pipeline**: Powered by Google PDFium compiled for target Android ABIs (`arm64-v8a`, `armeabi-v7a`, `x86_64`), rendering into hardware-accelerated surfaces via Qt's RHI (Rendering Hardware Interface).
 
 ---
 
@@ -96,6 +96,22 @@ The output APK is generated at:
 Alternatively, run the packaging script:
 ```bash
 bash packaging/android/build_apk.sh Release
+```
+
+### 5.5 Sideloading & Verification via ADB
+To install and test PDFinity on a connected Android device or emulator:
+```bash
+# Sideload the APK onto the device
+adb install -r dist/PDFinity-release.apk
+
+# Launch the application directly
+adb shell am start -n com.stacksyncsolutions.pdfinity/.PDFinityActivity
+
+# Verify PDF intent handling via SAF
+adb shell am start -a android.intent.action.VIEW \
+    -d "file:///sdcard/Download/sample.pdf" \
+    -t "application/pdf" \
+    com.stacksyncsolutions.pdfinity
 ```
 
 ---

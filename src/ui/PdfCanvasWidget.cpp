@@ -15,6 +15,10 @@
 #include <QGuiApplication>
 #include <QClipboard>
 #include <QScrollBar>
+#include <QGestureEvent>
+#include <QPinchGesture>
+#include <QSwipeGesture>
+#include <QTapAndHoldGesture>
 #include <cmath>
 
 namespace pdfinity::ui {
@@ -29,6 +33,11 @@ PdfCanvasWidget::PdfCanvasWidget(
 
     setFocusPolicy(Qt::StrongFocus);
     setAttribute(Qt::WA_OpaquePaintEvent, false);
+    setAttribute(Qt::WA_AcceptTouchEvents, true);
+
+    grabGesture(Qt::PinchGesture);
+    grabGesture(Qt::SwipeGesture);
+    grabGesture(Qt::TapAndHoldGesture);
 
     if (m_doc && m_doc->IsValid()) {
         int pageCount = m_doc->GetPageCount();
@@ -195,6 +204,48 @@ void PdfCanvasWidget::RecalculateLayout() {
 
     setMinimumSize(static_cast<int>(std::ceil(totalWidth)), static_cast<int>(std::ceil(totalHeight)));
     update();
+}
+
+bool PdfCanvasWidget::event(QEvent* event) {
+    if (event->type() == QEvent::Gesture) {
+        auto* gestureEvent = static_cast<QGestureEvent*>(event);
+        if (QGesture* pinch = gestureEvent->gesture(Qt::PinchGesture)) {
+            auto* pinchGesture = static_cast<QPinchGesture*>(pinch);
+            if (pinchGesture->changeFlags() & QPinchGesture::ScaleFactorChanged) {
+                double factor = pinchGesture->scaleFactor();
+                if (factor > 0.0) {
+                    SetZoomScale(m_zoomScale * factor);
+                }
+            }
+            gestureEvent->accept(Qt::PinchGesture);
+            return true;
+        }
+        if (QGesture* swipe = gestureEvent->gesture(Qt::SwipeGesture)) {
+            auto* swipeGesture = static_cast<QSwipeGesture*>(swipe);
+            if (swipeGesture->state() == Qt::GestureFinished) {
+                if (swipeGesture->horizontalDirection() == QSwipeGesture::Left ||
+                    swipeGesture->verticalDirection() == QSwipeGesture::Up) {
+                    GoToPage(m_currentPage + 1);
+                } else if (swipeGesture->horizontalDirection() == QSwipeGesture::Right ||
+                           swipeGesture->verticalDirection() == QSwipeGesture::Down) {
+                    GoToPage(m_currentPage - 1);
+                }
+                gestureEvent->accept(Qt::SwipeGesture);
+                return true;
+            }
+        }
+        if (QGesture* tapAndHold = gestureEvent->gesture(Qt::TapAndHoldGesture)) {
+            auto* tapGesture = static_cast<QTapAndHoldGesture*>(tapAndHold);
+            if (tapGesture->state() == Qt::GestureFinished) {
+                QPoint pos = tapGesture->position().toPoint();
+                QContextMenuEvent contextEv(QContextMenuEvent::Other, pos, mapToGlobal(pos));
+                contextMenuEvent(&contextEv);
+                gestureEvent->accept(Qt::TapAndHoldGesture);
+                return true;
+            }
+        }
+    }
+    return QWidget::event(event);
 }
 
 void PdfCanvasWidget::paintEvent(QPaintEvent* event) {

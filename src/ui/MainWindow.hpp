@@ -68,6 +68,7 @@ private slots:
     void OnOpenBatchProfileEditor();
     void OnOpenMcpManager();
     void OnOpenRemoteManager();
+    void OnShareDocument();
 
 private:
     void SetupUi();
@@ -85,6 +86,7 @@ private:
 
     // Actions
     QAction* m_openAction{nullptr};
+    QAction* m_shareAction{nullptr};
     QAction* m_printAction{nullptr};
     QAction* m_printPreviewAction{nullptr};
     QAction* m_findAction{nullptr};

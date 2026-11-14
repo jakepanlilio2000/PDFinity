@@ -5,11 +5,13 @@
 
 #if defined(_WIN32)
 #include "WindowsPlatformAdapter.hpp"
+#elif defined(__ANDROID__)
+#include "AndroidPlatformAdapter.hpp"
 #endif
 
 namespace pdfinity::platform {
 
-#if !defined(_WIN32)
+#if !defined(_WIN32) && !defined(__ANDROID__)
 class GenericPlatformAdapter : public IPlatformAdapter {
 public:
     GenericPlatformAdapter() {
@@ -126,6 +128,8 @@ private:
 std::unique_ptr<IPlatformAdapter> PlatformFactory::CreateAdapter() {
 #if defined(_WIN32)
     return std::make_unique<WindowsPlatformAdapter>();
+#elif defined(__ANDROID__)
+    return std::make_unique<AndroidPlatformAdapter>();
 #else
     return std::make_unique<GenericPlatformAdapter>();
 #endif
