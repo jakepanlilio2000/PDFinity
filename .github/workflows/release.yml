@@ -8,8 +8,8 @@ on:
   workflow_dispatch:
     inputs:
       release_tag:
-        description: Existing merged stable tag (vMAJOR.MINOR.PATCH)
-        required: true
+        description: Existing merged stable tag for release/rehearsal; unused for verify-deb
+        required: false
         type: string
       source_sha:
         description: Full immutable commit SHA (must match workflow source and tag)
@@ -25,7 +25,7 @@ on:
         required: true
         default: rehearsal
         type: choice
-        options: [rehearsal, release]
+        options: [rehearsal, verify-deb, release]
 
 permissions:
   contents: read
@@ -57,9 +57,13 @@ jobs:
           SOURCE_SHA: ${{ inputs.source_sha || github.sha }}
           MODE: ${{ inputs.mode || 'release' }}
         run: |
-          args=()
-          if [ "$MODE" = rehearsal ]; then args+=(--rehearsal); fi
-          python3 scripts/release_gate.py preflight --tag "$RELEASE_TAG" --sha "$SOURCE_SHA" "${args[@]}"
+          if [ "$MODE" = verify-deb ]; then
+            python3 scripts/release_gate.py qualify --sha "$SOURCE_SHA"
+          else
+            args=()
+            if [ "$MODE" = rehearsal ]; then args+=(--rehearsal); fi
+            python3 scripts/release_gate.py preflight --tag "$RELEASE_TAG" --sha "$SOURCE_SHA" "${args[@]}"
+          fi
       - name: Run deterministic gate and version regression checks
         run: python3 -m unittest discover -s tests/pipeline -v
       - name: Prove missing packages reject without publication
@@ -76,7 +80,7 @@ jobs:
 
   build-windows:
     needs: preflight
-    if: inputs.mode != 'rehearsal'
+    if: github.event_name == 'push' || inputs.mode == 'release'
     timeout-minutes: 60
     env:
       RELEASE_VERSION: ${{ needs.preflight.outputs.version }}
@@ -200,27 +204,32 @@ jobs:
           bash packaging/linux/build_deb.sh build/linux-x64-release "${TAG_VER:-1.1.0}" amd64
 
       - name: Package Red Hat / Fedora (.rpm)
+        if: inputs.mode != 'verify-deb'
         run: |
           TAG_VER="$RELEASE_VERSION"
           bash packaging/linux/rpm/build_rpm.sh "${TAG_VER:-1.1.0}"
 
       - name: Package Portable AppImage
+        if: inputs.mode != 'verify-deb'
         run: |
           TAG_VER="$RELEASE_VERSION"
           bash packaging/linux/appimage/build-appimage.sh build/linux-x64-release "${TAG_VER:-1.1.0}"
 
       - name: Verify Arch Linux PKGBUILD & .SRCINFO
+        if: inputs.mode != 'verify-deb'
         run: |
           cd packaging/linux/arch
           test -f PKGBUILD && test -f .SRCINFO
           echo "[+] Arch Linux PKGBUILD and .SRCINFO verified."
 
       - name: Verify native install, runtime, version and removal
+        if: inputs.mode != 'verify-deb'
         shell: bash
         run: >-
           python3 scripts/verify_native_packages.py --lane linux
           --version "$RELEASE_VERSION" --sha "$RELEASE_SHA"
       - name: Validate native package evidence and export only contracted assets
+        if: inputs.mode != 'verify-deb'
         shell: bash
         run: >-
           python3 scripts/release_assets.py --stage-from dist --directory release-export
@@ -228,6 +237,7 @@ jobs:
           --version "$RELEASE_VERSION" --sha "$RELEASE_SHA"
           --run-id "$GITHUB_RUN_ID" --attempt "$GITHUB_RUN_ATTEMPT"
       - name: Upload linux deb
+        if: inputs.mode != 'verify-deb'
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: pdfinity-${{ needs.preflight.outputs.version }}-linux-x86_64-deb
@@ -235,6 +245,7 @@ jobs:
           if-no-files-found: error
           retention-days: 14
       - name: Upload linux rpm
+        if: inputs.mode != 'verify-deb'
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: pdfinity-${{ needs.preflight.outputs.version }}-linux-x86_64-rpm
@@ -242,6 +253,7 @@ jobs:
           if-no-files-found: error
           retention-days: 14
       - name: Upload linux appimage
+        if: inputs.mode != 'verify-deb'
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: pdfinity-${{ needs.preflight.outputs.version }}-linux-x86_64-appimage
@@ -249,6 +261,7 @@ jobs:
           if-no-files-found: error
           retention-days: 14
       - name: Upload linux verification receipt
+        if: inputs.mode != 'verify-deb'
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: pdfinity-${{ needs.preflight.outputs.version }}-linux-x86_64-receipt
@@ -256,9 +269,25 @@ jobs:
           if-no-files-found: error
           retention-days: 14
 
+      - name: Qualify only the unreleased DEB with native install and removal
+        if: inputs.mode == 'verify-deb'
+        run: >-
+          python3 scripts/verify_native_packages.py --lane linux --package-type deb
+          --version "$RELEASE_VERSION" --sha "$RELEASE_SHA"
+      - name: Retain qualified development DEB and scoped evidence
+        if: inputs.mode == 'verify-deb'
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: qualified-deb-${{ needs.preflight.outputs.sha }}-linux-x86_64
+          path: |
+            dist/pdfinity_${{ needs.preflight.outputs.version }}_amd64.deb
+            verification/receipts/linux-deb.json
+          if-no-files-found: error
+          retention-days: 14
+
   build-macos:
     needs: preflight
-    if: inputs.mode != 'rehearsal'
+    if: github.event_name == 'push' || inputs.mode == 'release'
     timeout-minutes: 60
     env:
       RELEASE_VERSION: ${{ needs.preflight.outputs.version }}
@@ -334,7 +363,7 @@ jobs:
 
   build-android:
     needs: preflight
-    if: inputs.mode != 'rehearsal'
+    if: github.event_name == 'push' || inputs.mode == 'release'
     timeout-minutes: 60
     env:
       RELEASE_VERSION: ${{ needs.preflight.outputs.version }}
@@ -404,7 +433,8 @@ jobs:
     if: >-
       always() && needs.preflight.result == 'success' &&
       (inputs.mode == 'rehearsal' ||
-      (needs.build-windows.result == 'success' && needs.build-linux.result == 'success' &&
+      ((github.event_name == 'push' || inputs.mode == 'release') &&
+      needs.build-windows.result == 'success' && needs.build-linux.result == 'success' &&
       needs.build-macos.result == 'success' && needs.build-android.result == 'success'))
     runs-on: ubuntu-latest
     timeout-minutes: 30

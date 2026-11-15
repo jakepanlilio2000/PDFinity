@@ -89,6 +89,20 @@ def identity(api, tag, sha, rehearsal=False):
     return validate_versions(expected=tag[1:])
 
 
+def qualification_identity(api, sha):
+    """Current-source development artifacts; no historical tag or release claim."""
+    require(re.fullmatch('[0-9a-f]{40}', sha), 'Full qualification source SHA required')
+    require(git('rev-parse', 'HEAD') == sha, 'Qualification checkout differs from source SHA')
+    remote = git('remote', 'get-url', 'origin').removesuffix('.git')
+    require(remote in ('https://github.com/' + REPO, 'git@github.com:' + REPO), 'Wrong origin repository')
+    repo = api.request('')
+    require(repo['full_name'] == REPO and repo['default_branch'] == 'main', 'Wrong repository/default branch')
+    require(api.request('/commits/' + sha)['sha'] == sha, 'Qualification source is not recorded remotely')
+    v = validate_versions()
+    print(f'UNRELEASED QUALIFICATION: source_sha={sha}; version={v}; no tag/release writes')
+    return v
+
+
 def ci_gate(api, sha):
     result = api.request('/actions/workflows/ci.yml/runs?head_sha=' + sha + '&per_page=100')
     require(result is not None, 'Cannot read required CI runs')
@@ -184,8 +198,8 @@ def transaction(api, tag, sha, directory, run_id, attempt, rehearsal):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('operation', choices=('preflight', 'transaction'))
-    parser.add_argument('--tag', required=True)
+    parser.add_argument('operation', choices=('preflight', 'transaction', 'qualify'))
+    parser.add_argument('--tag', default='')
     parser.add_argument('--sha', required=True)
     parser.add_argument('--rehearsal', action='store_true')
     parser.add_argument('--directory', type=pathlib.Path)
@@ -194,7 +208,14 @@ def main():
     args = parser.parse_args()
     try:
         api = API()
-        if args.operation == 'preflight':
+        if args.operation == 'qualify':
+            require(not args.tag, 'Qualification must not claim a historical release tag')
+            v = qualification_identity(api, args.sha)
+            output = os.environ.get('GITHUB_OUTPUT')
+            if output:
+                with open(output, 'a', encoding='utf-8') as stream:
+                    stream.write(f'version={v}\ntag=\nsha={args.sha}\n')
+        elif args.operation == 'preflight':
             v = identity(api, args.tag, args.sha, rehearsal=args.rehearsal)
             if not args.rehearsal:
                 print('Required CI: ' + ci_gate(api, args.sha))
