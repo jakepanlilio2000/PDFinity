@@ -168,8 +168,10 @@ executables receive deployment RPATHs. The Qt deployer bundles transitive librar
 plugins, Qt configuration and distribution copyright files; PDFium's locked
 notices, application and metadata licenses, and runtime notice are included.
 
-The native verifier uses the same immutable Ubuntu24.04 amd64 image declared in
-`packaging/linux/deb-runtime.json`. Only Python, Xvfb/Xauth, GL/EGL/OpenGL and fonts are
+The AppImage native verifier now requires the immutable Ubuntu22.04 amd64
+baseline in `packaging/linux/appimage/runtime.json`; DEB keeps its separate
+Ubuntu24.04 runtime. Earlier Ubuntu24-only AppImage proof remains scoped to its
+exact old candidate and cannot satisfy the new baseline gate. Only Python, Xvfb/Xauth, GL/EGL/OpenGL and fonts are
 acquired as host prerequisites; no host Qt/PDFium or build SDK is mounted. After
 network disconnection it requires only loopback, extracts the actual AppImage,
 checks library/plugin discovery, CLI version, QApplication/context XCB startup,
@@ -191,3 +193,15 @@ exclusion assumed a host copy), with its copyright required in native inspection
 The AppImage receipt records the complete build distribution package/source-version
 inventory in addition to the clean runtime inventory. No host Qt is installed to
 satisfy these checks; absent libraries still fail ldd before startup.
+
+
+D07-A3-06 is a release-blocking ABI prerequisite. The d030610 AppImage was genuinely
+qualified on Ubuntu24.04 in [run43769200140](https://github.com/jakepanlilio2000/PDFinity/actions/runs/43769200140),
+including downloaded-payload checks, but its GUI/CLI ELF version requirements include
+GLIBC_2.38 and GLIBCXX_3.4.32. The documented Ubuntu22.04/Debian12/glibc2.31 baseline
+is not established by that run. The aggregate previously accepted proof from any
+image; a regression now rejects an Ubuntu24-only receipt for the declared Ubuntu22
+baseline. Required native execution will expose the original loader failure before
+repairing the build toolchain. Do not lower support claims, disable ldd checks, or
+attribute the earlier successful package to this later candidate. General glibc2.31,
+Debian12 and other distribution support still need their own evidence.

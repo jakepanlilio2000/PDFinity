@@ -130,7 +130,7 @@ class Verifier:
                     raise ValueError('RPM runtime container cleanup failed: ' + cleanup.stderr)
 
         else:
-            runtime = json.loads((ROOT / 'packaging/linux/deb-runtime.json').read_text())
+            runtime = json.loads((ROOT / 'packaging/linux/appimage/runtime.json').read_text())
             require('@sha256:' in runtime['image'], 'AppImage runtime image must be immutable')
             name = 'pdfinity-appimage-' + uuid.uuid4().hex
             failed = True
