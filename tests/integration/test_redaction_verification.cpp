@@ -3,6 +3,7 @@
 
 #include <QTest>
 #include <QTemporaryDir>
+#include <QByteArray>
 #include <QCryptographicHash>
 #include <filesystem>
 #include <fstream>
@@ -23,7 +24,8 @@ std::string ComputeFileSha256(const std::filesystem::path& p) {
     in.close();
 
     QCryptographicHash hash(QCryptographicHash::Sha256);
-    hash.addData(QByteArrayView(reinterpret_cast<const char*>(bytes.data()), bytes.size()));
+    hash.addData(QByteArray::fromRawData(reinterpret_cast<const char*>(bytes.data()),
+                                       static_cast<qsizetype>(bytes.size())));
     return hash.result().toHex().toStdString();
 }
 
