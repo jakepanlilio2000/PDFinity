@@ -75,11 +75,13 @@ install -m 644 packaging/linux/METADATA_LICENSE "${STAGE_DIR}/usr/share/doc/pdfi
 
 # 6. Build and validate package
 if command -v dpkg-deb >/dev/null 2>&1; then
-    dpkg-deb --build --root-owner-group "${STAGE_DIR}" "${DIST_DIR}/${DEB_NAME}"
+    # Qt's worker uses Python 3.11: its stdlib tar reader supports XZ, not Zstd.
+    # Do not depend on the host distribution's default archive compression.
+    dpkg-deb -Zxz --build --root-owner-group "${STAGE_DIR}" "${DIST_DIR}/${DEB_NAME}"
     echo "=== Validating Debian Package ==="
     dpkg-deb --info "${DIST_DIR}/${DEB_NAME}"
     dpkg-deb --contents "${DIST_DIR}/${DEB_NAME}"
-    echo "[+] Successfully verified Debian package: ${DIST_DIR}/${DEB_NAME}"
+    echo "[+] DEB built and parsed by dpkg-deb; native install/runtime checks remain required: ${DIST_DIR}/${DEB_NAME}"
 else
     echo "ERROR: dpkg-deb is required" >&2
     exit 1
