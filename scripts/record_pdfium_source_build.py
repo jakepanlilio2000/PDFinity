@@ -59,6 +59,8 @@ with archive.open('wb') as raw, gzip.GzipFile(filename='', mode='wb', fileobj=ra
 result = {'schema': 1, 'release_eligible': False, 'kind': 'source-built dependency rehearsal',
     'pdfinity_recipe_sha': os.environ['PDFINITY_RECIPE_SHA'],
     'run_id': os.environ['PDFINITY_RUN_ID'], 'run_attempt': os.environ['PDFINITY_RUN_ATTEMPT'],
+    'source_recipe_patch': (output / 'source-recipe.patch').read_text(),
+    'effective_link_flags': (output / 'link-flags.txt').read_text(),
     'inputs': lock, 'gn_args': (stage / 'args.gn').read_text(), 'files': files,
     'library_sha256': files['lib/libpdfium.so'], 'gnu_build_id': ids[0].hex(),
     'archive': archive.name, 'archive_sha256': hashlib.sha256(archive.read_bytes()).hexdigest(),

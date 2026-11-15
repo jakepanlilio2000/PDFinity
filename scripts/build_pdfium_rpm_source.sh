@@ -43,14 +43,24 @@ gclient sync --revision "pdfium@$PDFIUM_SHA" --no-history --shallow
 [ "$(git -C pdfium rev-parse HEAD)" = "$PDFIUM_SHA" ]
 export SOURCE_DATE_EPOCH="$(git -C pdfium show -s --format=%ct HEAD)"
 bash steps/03-patch.sh
+# Keep upstream standalone compiler/security settings; adjust only the final
+# shared library's GNU build ID, with a recorded source recipe patch.
+python3 - <<'PY'
+from pathlib import Path
+p=Path('pdfium/BUILD.gn')
+s=p.read_text()
+marker='shared_library("pdfium") {'
+assert s.count(marker)==1, 'Upstream shared-library target changed'
+s=s.replace(marker, marker+'\n  configs += [ ":pdfinity_rpm_sha1_build_id" ]', 1)
+s+='\nconfig("pdfinity_rpm_sha1_build_id") {\n  ldflags = [ "-Wl,--build-id=sha1" ]\n}\n'
+p.write_text(s)
+PY
 bash steps/04-install-extras.sh
 bash steps/05-configure.sh
-# Chromium's supported official-build setting uses SHA-1 instead of the
-# eight-byte LLD fast ID. Keep all normal RPM and runtime checks enabled.
-# Standalone PDFium has no Chromium PGO profile updater. Retain the
-# upstream non-profiled optimization mode while selecting the SHA-1 ID.
-printf 'is_official_build = true\nchrome_pgo_phase = 0\n' >> "$PDFium_BUILD_DIR/args.gn"
 (cd pdfium && gn gen "$PDFium_BUILD_DIR" --fail-on-unused-args)
+mkdir -p /work/output
+(cd pdfium && gn desc "$PDFium_BUILD_DIR" //:pdfium ldflags) > /work/output/link-flags.txt
+git -C pdfium diff --binary > /work/output/source-recipe.patch
 ninja -C "$PDFium_BUILD_DIR" -j2 pdfium
 mkdir -p /work/output
 gclient revinfo -a > /work/output/dependency-revisions.txt
