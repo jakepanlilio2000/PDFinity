@@ -25,12 +25,19 @@ def get_vcvars_env(arch="x64"):
         if "=" in line:
             k, v = line.split("=", 1)
             env[k] = v
-    # Ensure Qt bin is in PATH for runtime DLL resolution
+    # Windows environment names are case-insensitive, unlike Python dict keys.
+    # Preserve the developer PATH even when cmd spells it "Path".
+    path_keys = [key for key in env if key.casefold() == 'path']
+    if not path_keys or not env[path_keys[0]]:
+        raise RuntimeError("MSVC developer environment did not provide PATH")
+    native_path = env[path_keys[0]]
+    for key in path_keys:
+        del env[key]
+    env['PATH'] = native_path
+    # Add the declared local Qt runtime only when it is actually installed.
     qt_bin = r"C:\Qt\6.8.2\msvc2022_64\bin"
-    if "PATH" in env:
-        env["PATH"] = qt_bin + ";" + env["PATH"]
-    else:
-        env["PATH"] = qt_bin
+    if os.path.isdir(qt_bin):
+        env['PATH'] = qt_bin + ';' + native_path
     return env
 
 def run_command(cmd_str, env, cwd=None):
