@@ -295,6 +295,22 @@ jobs:
           if-no-files-found: error
           retention-days: 14
 
+      - name: Qualify only the unreleased RPM with offline PDF workflows
+        if: inputs.mode == 'verify-rpm'
+        run: >-
+          python3 scripts/verify_native_packages.py --lane linux --package-type rpm
+          --version "$RELEASE_VERSION" --sha "$RELEASE_SHA"
+      - name: Retain qualified development RPM and scoped evidence
+        if: inputs.mode == 'verify-rpm'
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: qualified-rpm-${{ needs.preflight.outputs.sha }}-linux-x86_64
+          path: |
+            dist/pdfinity-${{ needs.preflight.outputs.version }}-1.x86_64.rpm
+            verification/receipts/linux-rpm.json
+          if-no-files-found: error
+          retention-days: 14
+
   build-macos:
     needs: preflight
     if: github.event_name == 'push' || inputs.mode == 'release'
