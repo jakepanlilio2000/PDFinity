@@ -129,17 +129,39 @@ class Verifier:
                     raise ValueError('RPM runtime container cleanup failed: ' + cleanup.stderr)
 
         else:
-            local = root / path.name
-            shutil.copyfile(path, local)
-            local.chmod(0o755)
-            # --appimage-extract works on hosts without FUSE and validates the squashfs payload.
-            self.commands.append(['AppImage extraction', str(local)])
-            result = subprocess.run([str(local), '--appimage-extract'], cwd=root, capture_output=True, timeout=180)
-            require(result.returncode == 0, 'AppImage extraction failed')
-            app = root / 'squashfs-root'
-            env = dict(os.environ)
-            env['LD_LIBRARY_PATH'] = str(app / 'usr/lib')
-            self.smoke(app / 'AppRun', app / 'usr/bin/pdfinity-cli', env)
+            runtime = json.loads((ROOT / 'packaging/linux/deb-runtime.json').read_text())
+            require('@sha256:' in runtime['image'], 'AppImage runtime image must be immutable')
+            name = 'pdfinity-appimage-' + uuid.uuid4().hex
+            failed = True
+            try:
+                self.run('docker', 'run', '--detach', '--name', name, '--platform', runtime['platform'],
+                    '--mount', f'type=bind,src={path},dst=/incoming/{path.name},readonly',
+                    '--mount', f'type=bind,src={ROOT / "scripts"},dst=/checks,readonly',
+                    '--mount', f'type=bind,src={root},dst=/evidence', runtime['image'], 'sleep', 'infinity')
+                # Only platform/display/font prerequisites; no host Qt or PDFium.
+                self.run('docker', 'exec', name, 'bash', '-euc',
+                    'apt-get update\napt-get install -y --no-install-recommends python3 xvfb xauth '
+                    'libgl1 libegl1 libfontconfig1 fonts-dejavu-core', timeout=600)
+                networks = json.loads(self.run('docker', 'inspect', '--format', '{{json .NetworkSettings.Networks}}', name))
+                for network in networks:
+                    self.run('docker', 'network', 'disconnect', network, name)
+                require(json.loads(self.run('docker', 'inspect', '--format', '{{json .NetworkSettings.Networks}}', name)) == {},
+                        'AppImage runtime is still connected to a network')
+                self.run('docker', 'exec', name, 'python3', '/checks/verify_appimage_runtime.py',
+                    '--package', '/incoming/' + path.name, '--version', self.version,
+                    '--expected-sha256', digest(path), '--output', '/evidence/appimage-runtime.json', timeout=600)
+                proof = json.loads((root / 'appimage-runtime.json').read_text())
+                require(proof['package_sha256'] == digest(path) and proof['network_interfaces'] == ['lo'] and
+                        proof['host_qt_packages'] == [] and all(proof.get(c) == 'passed'
+                        for c in ('install', 'runtime', 'uninstall', 'offline_pdf_roundtrip')), 'Incomplete AppImage runtime proof')
+                require(proof['packaged_toolchain'] == json.loads((ROOT / 'packaging/linux/appimage/toolchain.json').read_text()),
+                        'AppImage packaged toolchain differs from reviewed source')
+                self.runtime_proofs[path.name] = {**proof, 'image': runtime['image'], 'docker_networks': {}}
+                failed = False
+            finally:
+                cleanup = subprocess.run(['docker', 'rm', '--force', name], capture_output=True, text=True)
+                if cleanup.returncode and not failed:
+                    raise ValueError('AppImage runtime container cleanup failed: ' + cleanup.stderr)
         return 'unsigned'  # Explicitly no distro signing claim.
 
     def macos(self, path, root):
