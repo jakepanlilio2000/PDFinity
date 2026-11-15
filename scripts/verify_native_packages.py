@@ -17,12 +17,14 @@ import zipfile
 
 from release_assets import contract, digest, inspect, require
 from release_versions import validate as validate_versions
+ROOT = pathlib.Path(__file__).resolve().parents[1]
 
 
 class Verifier:
     def __init__(self, version):
         self.version = version
         self.commands = []
+        self.runtime_proofs = {}
 
     def run(self, *command, env=None, timeout=180, sensitive=False):
         safe = '[signing command with environment-backed credentials]' if sensitive else list(map(str, command))
@@ -72,13 +74,24 @@ class Verifier:
         require(sys.platform.startswith('linux'), 'Linux verification requires Linux')
         if kind == 'deb':
             self.run('dpkg-deb', '--info', path)
-            # A dependency-resolving native install is required; extracting is not installation proof.
-            self.run('sudo', 'apt-get', 'install', '-y', str(path), timeout=600)
-            try:
-                self.smoke('/usr/bin/pdfinity', '/usr/bin/pdfinity-cli')
-            finally:
-                self.run('sudo', 'apt-get', 'remove', '-y', 'pdfinity', timeout=180)
-            require(not pathlib.Path('/usr/bin/pdfinity').exists(), 'DEB uninstall incomplete')
+            runtime = json.loads((ROOT / 'packaging/linux/deb-runtime.json').read_text())
+            require('@sha256:' in runtime['image'], 'Clean runtime image must be immutable')
+            # No SDK/build directory is mounted at its original path. Missing payloads
+            # cannot be masked by Qt/PDFium from the compiler's working directory.
+            self.run('docker', 'run', '--rm', '--platform', runtime['platform'],
+                '--mount', f'type=bind,src={path.parent},dst=/incoming,readonly',
+                '--mount', f'type=bind,src={ROOT / "scripts"},dst=/checks,readonly',
+                '--mount', f'type=bind,src={root},dst=/evidence', runtime['image'],
+                'bash', '-euc',
+                'apt-get update\napt-get install -y --no-install-recommends python3 xvfb xauth\n'
+                'python3 /checks/verify_deb_runtime.py "$@"', 'verify-deb',
+                '--package', '/incoming/' + path.name, '--version', self.version,
+                '--expected-sha256', digest(path), '--output', '/evidence/deb-runtime.json', timeout=1200)
+            proof = json.loads((root / 'deb-runtime.json').read_text())
+            require(proof['package_sha256'] == digest(path), 'Clean runtime evidence checksum mismatch')
+            require(all(proof.get(c) == 'passed' for c in ('install', 'runtime', 'uninstall')),
+                    'Incomplete clean runtime proof')
+            self.runtime_proofs[path.name] = {**proof, 'image': runtime['image']}
         elif kind == 'rpm':
             self.run('rpm', '--checksig', '--nosignature', path)
             metadata = self.run('rpm', '-qp', '--queryformat', '%{VERSION} %{ARCH}', path)
@@ -203,6 +216,11 @@ def main():
                     'runner_image': os.environ.get('ImageVersion', 'unrecorded')},
                 'commands': verifier.commands[start:],
                 'checks': {k: 'passed' for k in ('native_format', 'version', 'architecture', 'runtime', 'install', 'uninstall')}})
+            if path.name in verifier.runtime_proofs:
+                records[-1]['clean_runtime'] = verifier.runtime_proofs[path.name]
+                records[-1]['toolchain']['build_packages'] = verifier.run('dpkg-query', '-W',
+                    '-f=${binary:Package}\t${Version}\t${Architecture}\n',
+                    'qt6-base-dev', 'g++', 'libc6', 'libstdc++6', 'dpkg-dev')
         result = {'schema': 1, 'repository': 'jakepanlilio2000/PDFinity', 'lane': args.lane,
             'version': args.version, 'source_sha': args.sha, 'run_id': os.environ['GITHUB_RUN_ID'],
             'run_attempt': os.environ['GITHUB_RUN_ATTEMPT'], 'assets': records}

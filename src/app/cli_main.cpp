@@ -21,11 +21,15 @@
 
 namespace {
 namespace pdf_api = pdfinity::pdf_api;
-void PrintCliHelp() {
+void PrintCliHeader() {
     std::cout << "PDFinity CLI 1.1.0 Stable\n"
               << "Published by StackSync Solutions (https://www.stacksyncsolutions.com/)\n"
-              << "Lead Programmer: Jake Ashley Panlilio (https://github.com/jakepanlilio2000)\n\n"
-              << "Usage: pdfinity-cli <command> [options] [arguments]\n\n"
+              << "Lead Programmer: Jake Ashley Panlilio (https://github.com/jakepanlilio2000)\n";
+}
+
+void PrintCliHelp() {
+    PrintCliHeader();
+    std::cout << "\nUsage: pdfinity-cli <command> [options] [arguments]\n\n"
               << "General Options:\n"
               << "  -h, --help            Show this help message and exit\n"
               << "  -v, --version         Show application version and exit\n"
@@ -47,10 +51,8 @@ void PrintCliHelp() {
 }
 
 void PrintCliVersion() {
-    std::cout << "PDFinity CLI 1.0.9\n"
-              << "Published by StackSync Solutions (https://www.stacksyncsolutions.com/)\n"
-              << "Lead Programmer: Jake Ashley Panlilio (https://github.com/jakepanlilio2000)\n"
-              << "License: Mozilla Public License Version 2.0 (MPL-2.0)\n";
+    PrintCliHeader();
+    std::cout << "License: Mozilla Public License Version 2.0 (MPL-2.0)\n";
 }
 
 int HandleMerge(int argc, char* argv[]) {
