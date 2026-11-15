@@ -13,6 +13,7 @@ import tempfile
 
 from verify_deb_runtime import run
 from verify_rpm_runtime import pdf_fixture
+from download_appimage_tools import verify_notices
 
 
 def verify(package, version, expected_hash):
@@ -54,9 +55,13 @@ def verify(package, version, expected_hash):
                          'usr/plugins/imageformats/libqsvg.so', 'usr/share/licenses/pdfinity/LICENSE',
                          'usr/share/licenses/pdfinity/pdfium/pdfium.txt',
                          'usr/share/licenses/pdfinity/TYPE2_RUNTIME_LICENSE',
+                         'usr/share/common-licenses/LGPL-2.1', 'usr/share/common-licenses/LGPL-3',
+                         'usr/share/common-licenses/GPL-2', 'usr/share/common-licenses/GPL-3',
                          'usr/share/doc/pdfinity/appimage-toolchain.json'):
-            if not (app / relative).is_file():
+            if not (app / relative).is_file() or (app / relative).stat().st_size == 0:
                 raise RuntimeError('AppImage required plugin/notice/config missing: ' + relative)
+        toolchain = json.loads((app / 'usr/share/doc/pdfinity/appimage-toolchain.json').read_text())
+        verify_notices(app / 'usr/share/licenses/pdfinity/runtime-notices', toolchain.get('static_dependencies', []))
         resolved = {}
         # Resolve every shipped dynamic library, including plugins, without developer
         # environment paths; host Qt cannot mask an incomplete bundle.
@@ -88,7 +93,6 @@ def verify(package, version, expected_hash):
         installed_hashes = {str(path.relative_to(app)): hashlib.sha256(path.read_bytes()).hexdigest()
                             for path in sorted(app.rglob('*')) if path.is_file()}
         pdf_hash = hashlib.sha256(reopened.read_bytes()).hexdigest()
-        toolchain = json.loads((app / 'usr/share/doc/pdfinity/appimage-toolchain.json').read_text())
     if work.exists():
         raise RuntimeError('AppImage removal left its extraction directory')
     return {'package_sha256': expected_hash, 'version': version, 'architecture': 'x86_64',

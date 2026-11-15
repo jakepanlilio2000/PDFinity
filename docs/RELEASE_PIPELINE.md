@@ -221,3 +221,23 @@ in `dist/appimage-build.json` and bound into the native receipt. Source/toolchai
 mismatch or a missing/failed C++ test result prevents qualification. Newer-host
 runtime, full glibc2.31 coverage and complete static dependency provenance still
 require separate evidence; no support claims are silently removed.
+
+
+## A3 static runtime notices (D07-A3-07)
+
+The original AppImage runtime producer [39320578745](https://github.com/AppImage/type2-runtime/actions/runs/39320578745)
+and artifact12218723981 were recovered. ZIP digest/CRC and the runtime SHA256 match
+the locked input byte for byte. Its logs establish musl1.2.5-r11, libfuse3.15.0,
+squashfuse0.5.2, zstd1.5.6-r2, zlib1.3.2-r1, mimalloc2.1.7-r0 and Clang19.1.4-r0.
+These are original producer observations, not guesses from current Alpine packages.
+The input's MIT project license is recorded separately from its linked libraries.
+
+The downloaded63c8a25 AppImage lacked these six full runtime notices. Its Qt
+copyright file also referenced `usr/share/common-licenses/LGPL-3`, which was absent.
+The recipe now copies the exact-version, checksum-reviewed notices and the native
+distribution common-license texts. Both source acquisition and clean native runtime
+validation reject missing, altered or duplicate static notice entries. A narrow
+.gitattributes rule preserves the upstream bytes across Windows/Linux checkouts.
+The project remains MPL-2.0 and metadata remains user-approved MIT. Complete
+corresponding source/relink-material verification remains open; these package
+notice checks are not a claim of completed legal review or full A3 readiness.

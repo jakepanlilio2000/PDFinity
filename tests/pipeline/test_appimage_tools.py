@@ -44,3 +44,19 @@ class AppImageToolTests(unittest.TestCase):
         data[18:20] = b'\xb7\x00'  # AArch64, rather than the promised x86_64.
         with self.assertRaisesRegex(ValueError, 'x86_64'):
             tools.verify(data, self.record(data))
+
+    def test_all_six_static_runtime_notices_are_required_and_hash_checked(self):
+        names = ['musl', 'libfuse', 'squashfuse', 'zstd', 'zlib', 'mimalloc']
+        with tempfile.TemporaryDirectory() as work:
+            root, dependencies = pathlib.Path(work), []
+            for name in names:
+                data = ('reviewed notice ' + name).encode()
+                (root / (name + '.txt')).write_bytes(data)
+                dependencies.append({'name': name, 'notice_sha256': hashlib.sha256(data).hexdigest()})
+            tools.verify_notices(root, dependencies)
+            (root / 'mimalloc.txt').write_bytes(b'wrong notice')
+            with self.assertRaisesRegex(ValueError, 'Missing/changed.*mimalloc'):
+                tools.verify_notices(root, dependencies)
+            for invalid in (dependencies[:-1], dependencies[:-1] + dependencies[:1]):
+                with self.assertRaisesRegex(ValueError, 'Incomplete/duplicate'):
+                    tools.verify_notices(root, invalid)

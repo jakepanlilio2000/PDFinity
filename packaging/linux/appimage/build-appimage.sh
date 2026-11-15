@@ -28,6 +28,7 @@ install -m 755 third_party/pdfium/lib/libpdfium.so "${APP_DIR}/usr/lib/libpdfium
 mkdir -p "${APP_DIR}/usr/share/licenses/pdfinity/pdfium"
 cp -a third_party/pdfium/licenses/. "${APP_DIR}/usr/share/licenses/pdfinity/pdfium/"
 install -m 644 packaging/linux/appimage/TYPE2_RUNTIME_LICENSE "${APP_DIR}/usr/share/licenses/pdfinity/TYPE2_RUNTIME_LICENSE"
+cp -a packaging/linux/appimage/runtime-notices "${APP_DIR}/usr/share/licenses/pdfinity/"
 install -m 644 packaging/linux/appimage/toolchain.json "${APP_DIR}/usr/share/doc/pdfinity/appimage-toolchain.json"
 
 export APPIMAGE_EXTRACT_AND_RUN=1
@@ -48,6 +49,7 @@ unset DISABLE_COPYRIGHT_FILES_DEPLOYMENT
     --desktop-file "${APP_DIR}/usr/share/applications/com.stacksyncsolutions.pdfinity.desktop" \
     --icon-file "${APP_DIR}/usr/share/icons/hicolor/scalable/apps/com.stacksyncsolutions.pdfinity.svg" \
     --plugin qt
+cp -a /usr/share/common-licenses "${APP_DIR}/usr/share/"
 # An explicit locked runtime prevents appimagetool's automatic latest download.
 ARCH=x86_64 "${TOOLS}/appimagetool-x86_64.AppImage" \
     --runtime-file "${TOOLS}/runtime-x86_64" "${APP_DIR}" "${OUTPUT}"
