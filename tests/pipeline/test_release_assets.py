@@ -155,6 +155,40 @@ class ReleaseGateTests(unittest.TestCase):
                     with self.assertRaisesRegex(ValueError, 'RPM.*proof'):
                         check()
 
+    def test_appimage_requires_checksum_bound_clean_offline_runtime(self):
+        # Receipt attack fixture only; native extraction would reject these bytes.
+        with tempfile.TemporaryDirectory() as work:
+            root = pathlib.Path(work)
+            name = 'PDFinity-1.1.0-x86_64.AppImage'
+            data = bytearray(5000)
+            data[:6], data[8:11] = b'\x7fELF\x02\x01', b'AI\x02'
+            struct.pack_into('<HH', data, 16, 2, 62)
+            data[100:104] = b'hsqs'
+            path = root / name
+            path.write_bytes(data)
+            record = copy.deepcopy(self.receipt['assets'][0])
+            record.update(name=name, size=len(data), sha256=gate.digest(path))
+            receipt = {**self.receipt, 'lane': 'linux', 'assets': [record]}
+            spec = {'lane': 'linux', 'arch': 'x86_64', 'type': 'appimage', 'name': name}
+            def check():
+                (root / 'linux.json').write_text(json.dumps(receipt))
+                with mock.patch.object(gate, 'contract', return_value=[spec]):
+                    return gate.validate(root, self.version, self.sha, '123', '1', 'linux')
+            with self.assertRaisesRegex(ValueError, 'AppImage.*proof'):
+                check()
+            proof = {'package_sha256': record['sha256'], 'network_interfaces': ['lo'], 'docker_networks': {},
+                     'offline_pdf_roundtrip': 'passed', 'host_qt_packages': [],
+                     'install': 'passed', 'runtime': 'passed', 'uninstall': 'passed'}
+            record['clean_runtime'] = proof
+            self.assertEqual(len(check()), 1)
+            for field, value in [('package_sha256', 'stale'), ('network_interfaces', ['lo', 'eth0']),
+                                 ('docker_networks', {'bridge': {}}), ('host_qt_packages', ['libqt6core6']),
+                                 ('offline_pdf_roundtrip', 'not tested')]:
+                with self.subTest(field=field):
+                    record['clean_runtime'] = {**proof, field: value}
+                    with self.assertRaisesRegex(ValueError, 'AppImage.*proof'):
+                        check()
+
     def test_host_runtime_cannot_hide_missing_packaged_crt(self):
         p = self.root / self.assets[0]['name']
         with zipfile.ZipFile(p) as z:

@@ -25,7 +25,7 @@ on:
         required: true
         default: rehearsal
         type: choice
-        options: [rehearsal, verify-deb, verify-rpm, verify-pdfium-rpm, release]
+        options: [rehearsal, verify-deb, verify-rpm, verify-appimage, verify-pdfium-rpm, release]
 
 permissions:
   contents: read
@@ -61,7 +61,7 @@ jobs:
           SOURCE_SHA: ${{ inputs.source_sha || github.sha }}
           MODE: ${{ inputs.mode || 'release' }}
         run: |
-          if [ "$MODE" = verify-deb ] || [ "$MODE" = verify-rpm ] || [ "$MODE" = verify-pdfium-rpm ]; then
+          if [ "$MODE" = verify-deb ] || [ "$MODE" = verify-rpm ] || [ "$MODE" = verify-appimage ] || [ "$MODE" = verify-pdfium-rpm ]; then
             python3 scripts/release_gate.py qualify --sha "$SOURCE_SHA"
           else
             args=()
@@ -222,7 +222,7 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y build-essential cmake ninja-build xvfb xauth rpm dpkg-dev qt6-base-dev qt6-base-dev-tools qt6-qpa-plugins libgl1-mesa-dev libxkbcommon-dev libcups2-dev \
-            libxcb-cursor0 libxcb-icccm4 libxcb-image0 libxcb-keysyms1 libxcb-randr0 libxcb-render-util0 libxcb-shape0 libxcb-xfixes0 libxkbcommon-x11-0
+            libqt6svg6 qt6-image-formats-plugins libxcb-cursor0 libxcb-icccm4 libxcb-image0 libxcb-keysyms1 libxcb-randr0 libxcb-render-util0 libxcb-shape0 libxcb-xfixes0 libxkbcommon-x11-0
 
       - name: Use Python 3.11 with native distribution Qt
         if: inputs.mode != 'verify-rpm'
@@ -249,13 +249,13 @@ jobs:
           xvfb-run -a ctest --preset linux-x64-release --output-on-failure
 
       - name: Package Debian (.deb)
-        if: inputs.mode != 'verify-rpm'
+        if: inputs.mode != 'verify-rpm' && inputs.mode != 'verify-appimage'
         run: |
           TAG_VER="$RELEASE_VERSION"
           bash packaging/linux/build_deb.sh build/linux-x64-release "${TAG_VER:-1.1.0}" amd64
 
       - name: Package Red Hat / Fedora (.rpm)
-        if: inputs.mode != 'verify-deb'
+        if: inputs.mode != 'verify-deb' && inputs.mode != 'verify-appimage'
         run: |
           if [ "${{ inputs.mode }}" = verify-rpm ]; then
             export PDFINITY_RPM_PDFIUM_ARCHIVE="$PWD/rehearsal-rpm-dependency/pdfium-linux-x64-rpm-source.tgz"
@@ -264,26 +264,27 @@ jobs:
           bash packaging/linux/rpm/build_rpm.sh "${TAG_VER:-1.1.0}"
 
       - name: Package Portable AppImage
+        id: appimage-package
         if: inputs.mode != 'verify-deb' && inputs.mode != 'verify-rpm'
         run: |
           TAG_VER="$RELEASE_VERSION"
           bash packaging/linux/appimage/build-appimage.sh build/linux-x64-release "${TAG_VER:-1.1.0}"
 
       - name: Verify Arch Linux PKGBUILD & .SRCINFO
-        if: inputs.mode != 'verify-deb' && inputs.mode != 'verify-rpm'
+        if: inputs.mode != 'verify-deb' && inputs.mode != 'verify-rpm' && inputs.mode != 'verify-appimage'
         run: |
           cd packaging/linux/arch
           test -f PKGBUILD && test -f .SRCINFO
           echo "[+] Arch Linux PKGBUILD and .SRCINFO verified."
 
       - name: Verify native install, runtime, version and removal
-        if: inputs.mode != 'verify-deb' && inputs.mode != 'verify-rpm'
+        if: inputs.mode != 'verify-deb' && inputs.mode != 'verify-rpm' && inputs.mode != 'verify-appimage'
         shell: bash
         run: >-
           python3 scripts/verify_native_packages.py --lane linux
           --version "$RELEASE_VERSION" --sha "$RELEASE_SHA"
       - name: Validate native package evidence and export only contracted assets
-        if: inputs.mode != 'verify-deb' && inputs.mode != 'verify-rpm'
+        if: inputs.mode != 'verify-deb' && inputs.mode != 'verify-rpm' && inputs.mode != 'verify-appimage'
         shell: bash
         run: >-
           python3 scripts/release_assets.py --stage-from dist --directory release-export
@@ -291,7 +292,7 @@ jobs:
           --version "$RELEASE_VERSION" --sha "$RELEASE_SHA"
           --run-id "$GITHUB_RUN_ID" --attempt "$GITHUB_RUN_ATTEMPT"
       - name: Upload linux deb
-        if: inputs.mode != 'verify-deb' && inputs.mode != 'verify-rpm'
+        if: inputs.mode != 'verify-deb' && inputs.mode != 'verify-rpm' && inputs.mode != 'verify-appimage'
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: pdfinity-${{ needs.preflight.outputs.version }}-linux-x86_64-deb
@@ -299,7 +300,7 @@ jobs:
           if-no-files-found: error
           retention-days: 14
       - name: Upload linux rpm
-        if: inputs.mode != 'verify-deb' && inputs.mode != 'verify-rpm'
+        if: inputs.mode != 'verify-deb' && inputs.mode != 'verify-rpm' && inputs.mode != 'verify-appimage'
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: pdfinity-${{ needs.preflight.outputs.version }}-linux-x86_64-rpm
@@ -307,7 +308,7 @@ jobs:
           if-no-files-found: error
           retention-days: 14
       - name: Upload linux appimage
-        if: inputs.mode != 'verify-deb' && inputs.mode != 'verify-rpm'
+        if: inputs.mode != 'verify-deb' && inputs.mode != 'verify-rpm' && inputs.mode != 'verify-appimage'
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: pdfinity-${{ needs.preflight.outputs.version }}-linux-x86_64-appimage
@@ -315,7 +316,7 @@ jobs:
           if-no-files-found: error
           retention-days: 14
       - name: Upload linux verification receipt
-        if: inputs.mode != 'verify-deb' && inputs.mode != 'verify-rpm'
+        if: inputs.mode != 'verify-deb' && inputs.mode != 'verify-rpm' && inputs.mode != 'verify-appimage'
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: pdfinity-${{ needs.preflight.outputs.version }}-linux-x86_64-receipt
@@ -352,6 +353,31 @@ jobs:
           path: |
             dist/pdfinity-${{ needs.preflight.outputs.version }}-1.x86_64.rpm
             verification/receipts/linux-rpm.json
+          if-no-files-found: error
+          retention-days: 14
+
+      - name: Qualify only the unreleased AppImage
+        if: inputs.mode == 'verify-appimage'
+        run: >-
+          python3 scripts/verify_native_packages.py --lane linux --package-type appimage
+          --version "$RELEASE_VERSION" --sha "$RELEASE_SHA"
+      - name: Retain qualified development AppImage and scoped evidence
+        if: inputs.mode == 'verify-appimage'
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: qualified-appimage-${{ needs.preflight.outputs.sha }}-linux-x86_64
+          path: |
+            dist/PDFinity-${{ needs.preflight.outputs.version }}-x86_64.AppImage
+            verification/receipts/linux-appimage.json
+          if-no-files-found: error
+          retention-days: 14
+
+      - name: Retain failed AppImage only for dependency inspection
+        if: failure() && inputs.mode == 'verify-appimage' && steps.appimage-package.outcome == 'success'
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: failed-appimage-inspection-${{ needs.preflight.outputs.version }}-${{ needs.preflight.outputs.sha }}-linux-x86_64
+          path: dist/PDFinity-${{ needs.preflight.outputs.version }}-x86_64.AppImage
           if-no-files-found: error
           retention-days: 14
 

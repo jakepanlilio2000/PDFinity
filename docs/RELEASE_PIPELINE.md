@@ -149,3 +149,45 @@ GitHub reports PR #2 merged by jakepanlilio2000 at 2026-11-14T23:59:20Z, merge c
 The same refresh reports **zero** attached assets on v1.1.0, versus 36 in the initial snapshot. A2 did not delete or replace those assets. Recorded download hashes/results describe the files actually retrieved earlier, not currently available downloads. Historical recovery is not attempted and the old tag is not moved. All bootstrap patch releases remain queued; external merge is not release sign-off.
 
 At metadata-repair source `cf443246f15938799677b686036f91ab2495b1a5`, safe parent [43656042967](https://github.com/jakepanlilio2000/PDFinity/actions/runs/43656042967) and repository-token child [43656071488](https://github.com/jakepanlilio2000/PDFinity/actions/runs/43656071488) succeeded, with all native builds/releases skipped. A focused follow-up PR is needed for actual native AppStream/CI checks because PR #2 is already merged/closed. Exact new PR/run identities are stored in the external continuation and local A2 evidence; do not attribute the earlier main/PR results to untested source.
+
+
+## A3 AppImage qualification
+
+`verify-appimage` uses the existing release workflow at an explicit source SHA. It
+builds/tests the real application and only the AppImage; all publishers and other
+platforms are skipped. Its `linux-appimage.json` receipt is development evidence
+(`release_eligible=false`), never a complete Linux release receipt. Parent
+50f6597773760589dbac915c9c1899e4eee7db96 failed with `native AppImage packager missing`
+in [run43766635244](https://github.com/jakepanlilio2000/PDFinity/actions/runs/43766635244).
+
+The recipe uses `packaging/linux/appimage/toolchain.json` for SHA256/size/source
+pins for linuxdeploy, its Qt plugin, appimagetool and the embedded x86_64 runtime.
+Changed continuous-release downloads fail the hash check; no globally installed
+fallback or automatic latest-runtime fetch is permitted. CMake-installed GUI/CLI
+executables receive deployment RPATHs. The Qt deployer bundles transitive libraries,
+plugins, Qt configuration and distribution copyright files; PDFium's locked
+notices, application and metadata licenses, and runtime notice are included.
+
+The native verifier uses the same immutable Ubuntu24.04 amd64 image declared in
+`packaging/linux/deb-runtime.json`. Only Python, Xvfb/Xauth, GL/EGL/OpenGL and fonts are
+acquired as host prerequisites; no host Qt/PDFium or build SDK is mounted. After
+network disconnection it requires only loopback, extracts the actual AppImage,
+checks library/plugin discovery, CLI version, QApplication/context XCB startup,
+PDF merge/save/reopen and removal. This does not prove full Studio window behavior,
+all optional OCR/Office tools, print/TLS flows, older Linux hosts, FUSE mounting or
+upgrade behavior. The aggregate gate requires its checksum-bound clean offline
+proof; a build-host smoke check cannot replace it.
+
+For extraction without FUSE, run the versioned AppImage with `--appimage-extract`.
+The extracted `squashfs-root/AppRun` launches the GUI and
+`squashfs-root/usr/bin/pdfinity-cli --version` invokes the companion CLI.
+
+
+AppImage clean run79ed627 [43768247770](https://github.com/jakepanlilio2000/PDFinity/actions/runs/43768247770)
+exposed `libOpenGL.so.0` and `libharfbuzz.so.0` missing from the minimal runtime.
+The host contract now explicitly includes libopengl0 alongside GL/EGL drivers.
+HarfBuzz is explicitly bundled through linuxdeploy's `--library` (its default
+exclusion assumed a host copy), with its copyright required in native inspection.
+The AppImage receipt records the complete build distribution package/source-version
+inventory in addition to the clean runtime inventory. No host Qt is installed to
+satisfy these checks; absent libraries still fail ldd before startup.

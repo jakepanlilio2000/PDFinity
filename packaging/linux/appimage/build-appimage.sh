@@ -1,99 +1,55 @@
 #!/usr/bin/env bash
-# PDFinity Linux AppImage Packaging Script using linuxdeploy & linuxdeploy-plugin-qt
-# Publisher: StackSync Solutions (https://www.stacksyncsolutions.com/)
-# Lead Programmer: Jake Ashley Panlilio (https://github.com/jakepanlilio2000)
+# Build the existing AppImage contract with the reviewed, hash-locked Qt deployer.
 set -euo pipefail
 
-BUILD_DIR="${1:-build/linux-x64-release}"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "${SCRIPT_DIR}/../../.." && pwd)"
+cd "${REPO_ROOT}"
+BUILD_DIR="$(realpath "${1:-build/linux-x64-release}")"
+SOURCE_VERSION="$(python3 scripts/release_versions.py --print)"
+VERSION="${2:-${SOURCE_VERSION}}"
+APP_DIR="${REPO_ROOT}/dist/AppDir"
+OUTPUT="${REPO_ROOT}/dist/PDFinity-${VERSION}-x86_64.AppImage"
+TOOLS="${REPO_ROOT}/build/appimage-tools"
 
-if [ -n "${2:-}" ]; then
-    VERSION="$2"
-elif [ -f "${REPO_ROOT}/CMakeLists.txt" ]; then
-    VERSION=$(grep -E '^\s*VERSION\s+[0-9\.]+' "${REPO_ROOT}/CMakeLists.txt" | head -n 1 | awk '{print $2}')
-    if [ -z "${VERSION}" ]; then
-        VERSION="1.1.0"
-    fi
-else
-    VERSION="1.1.0"
-fi
+[ "${VERSION}" = "${SOURCE_VERSION}" ] || { echo "ERROR: AppImage/source version mismatch" >&2; exit 1; }
+[ "$(uname -m)" = x86_64 ] || { echo "ERROR: AppImage requires the native x86_64 toolchain" >&2; exit 1; }
+[ ! -e "${APP_DIR}" ] && [ ! -e "${OUTPUT}" ] || { echo "ERROR: stale AppImage output; use a clean build" >&2; exit 1; }
+python3 scripts/download_pdfium.py --platform linux --verify-only
+python3 scripts/download_appimage_tools.py --directory "${TOOLS}"
 
-APP_DIR="dist/AppDir"
-OUTPUT_DIR="dist"
-APPIMAGE_NAME="PDFinity-${VERSION}-x86_64.AppImage"
+# Install RPATHs rather than ship executables pointing into the build tree.
+mkdir -p "${APP_DIR}"
+cmake --install "${BUILD_DIR}" --prefix "${APP_DIR}/usr" --strip
+mv "${APP_DIR}/usr/bin/PDFinity" "${APP_DIR}/usr/bin/pdfinity"
+test -s "${APP_DIR}/usr/bin/pdfinity-cli"
+rm "${APP_DIR}/usr/lib/libpdfinity_core.a" "${APP_DIR}/usr/lib/libpdfinity_ui.a"
+install -m 755 third_party/pdfium/lib/libpdfium.so "${APP_DIR}/usr/lib/libpdfium.so"
+mkdir -p "${APP_DIR}/usr/share/licenses/pdfinity/pdfium"
+cp -a third_party/pdfium/licenses/. "${APP_DIR}/usr/share/licenses/pdfinity/pdfium/"
+install -m 644 packaging/linux/appimage/TYPE2_RUNTIME_LICENSE "${APP_DIR}/usr/share/licenses/pdfinity/TYPE2_RUNTIME_LICENSE"
+install -m 644 packaging/linux/appimage/toolchain.json "${APP_DIR}/usr/share/doc/pdfinity/appimage-toolchain.json"
 
-echo "=== Preparing PDFinity AppImage with linuxdeploy (${APPIMAGE_NAME}) ==="
-rm -rf "${APP_DIR}"
-mkdir -p "${APP_DIR}/usr/bin"
-mkdir -p "${APP_DIR}/usr/share/applications"
-mkdir -p "${APP_DIR}/usr/share/metainfo"
-mkdir -p "${APP_DIR}/usr/share/icons/hicolor/scalable/apps"
-mkdir -p "${OUTPUT_DIR}"
-
-# 1. Binary placement
-if [ -f "${BUILD_DIR}/bin/PDFinity" ]; then
-    install -m 755 "${BUILD_DIR}/bin/PDFinity" "${APP_DIR}/usr/bin/pdfinity"
-else
-    echo "ERROR: native PDFinity executable missing; no placeholder will be generated" >&2
-    exit 1
-fi
-
-test -s "third_party/pdfium/lib/libpdfium.so"
-test -s "${BUILD_DIR}/bin/pdfinity-cli"
-if [ -f "third_party/pdfium/lib/libpdfium.so" ]; then
-    mkdir -p "${APP_DIR}/usr/lib"
-    install -m 755 "third_party/pdfium/lib/libpdfium.so" "${APP_DIR}/usr/lib/libpdfium.so"
-fi
-
-install -m 755 "${BUILD_DIR}/bin/pdfinity-cli" "${APP_DIR}/usr/bin/pdfinity-cli"
-
-# 2. Desktop and icon integration
-install -m 644 packaging/linux/com.stacksyncsolutions.pdfinity.desktop "${APP_DIR}/usr/share/applications/com.stacksyncsolutions.pdfinity.desktop"
-install -m 644 packaging/linux/com.stacksyncsolutions.pdfinity.metainfo.xml "${APP_DIR}/usr/share/metainfo/com.stacksyncsolutions.pdfinity.metainfo.xml"
-mkdir -p "${APP_DIR}/usr/share/licenses/pdfinity"
-install -m 644 packaging/linux/METADATA_LICENSE "${APP_DIR}/usr/share/licenses/pdfinity/METADATA_LICENSE"
-install -m 644 packaging/resources/pdfinity.svg "${APP_DIR}/usr/share/icons/hicolor/scalable/apps/pdfinity.svg"
-install -m 644 packaging/resources/pdfinity.svg "${APP_DIR}/usr/share/icons/hicolor/scalable/apps/com.stacksyncsolutions.pdfinity.svg"
-
-# Root-level AppDir symlinks for desktop entry & icon
-ln -sf usr/share/applications/com.stacksyncsolutions.pdfinity.desktop "${APP_DIR}/com.stacksyncsolutions.pdfinity.desktop"
-ln -sf usr/share/applications/com.stacksyncsolutions.pdfinity.desktop "${APP_DIR}/pdfinity.desktop"
-ln -sf usr/share/icons/hicolor/scalable/apps/pdfinity.svg "${APP_DIR}/pdfinity.svg"
-ln -sf usr/share/icons/hicolor/scalable/apps/com.stacksyncsolutions.pdfinity.svg "${APP_DIR}/com.stacksyncsolutions.pdfinity.svg"
-
-# 3. Fallback standard AppRun launcher
-cat << 'EOF' > "${APP_DIR}/AppRun"
-#!/bin/sh
-SELF=$(readlink -f "$0")
-HERE=${SELF%/*}
-export PATH="${HERE}/usr/bin:${PATH}"
-export LD_LIBRARY_PATH="${HERE}/usr/lib:${HERE}/usr/lib/x86_64-linux-gnu:${LD_LIBRARY_PATH:-}"
-export QT_PLUGIN_PATH="${HERE}/usr/plugins:${QT_PLUGIN_PATH:-}"
-export QML2_IMPORT_PATH="${HERE}/usr/qml:${QML2_IMPORT_PATH:-}"
-exec "${HERE}/usr/bin/pdfinity" "$@"
-EOF
-chmod +x "${APP_DIR}/AppRun"
-
-# 4. Packaging execution via linuxdeploy and linuxdeploy-plugin-qt
-export OUTPUT="${APPIMAGE_NAME}"
-export VERSION="${VERSION}"
-
-if command -v linuxdeploy >/dev/null 2>&1; then
-    echo "Running linuxdeploy to bundle Qt and library dependencies..."
-    linuxdeploy --appdir "${APP_DIR}" \
-        --executable "${APP_DIR}/usr/bin/pdfinity" \
-        --desktop-file "${APP_DIR}/usr/share/applications/com.stacksyncsolutions.pdfinity.desktop" \
-        --icon-file "${APP_DIR}/usr/share/icons/hicolor/scalable/apps/pdfinity.svg" \
-        --plugin qt \
-        --output appimage
-    mv "${OUTPUT}" "${OUTPUT_DIR}/${APPIMAGE_NAME}"
-    echo "[+] Generated AppImage via linuxdeploy: ${OUTPUT_DIR}/${APPIMAGE_NAME}"
-elif command -v appimagetool >/dev/null 2>&1; then
-    echo "linuxdeploy not found. Packaging with appimagetool..."
-    appimagetool "${APP_DIR}" "${OUTPUT_DIR}/${APPIMAGE_NAME}"
-    echo "[+] Generated AppImage via appimagetool: ${OUTPUT_DIR}/${APPIMAGE_NAME}"
-else
-    echo "ERROR: native AppImage packager missing" >&2
-    exit 1
-fi
+export APPIMAGE_EXTRACT_AND_RUN=1
+export QMAKE="$(command -v qmake6)"
+export EXTRA_QT_MODULES=svg
+export VERSION
+export SOURCE_DATE_EPOCH="$(git show -s --format=%ct HEAD)"
+# linuxdeploy's default exclusion assumes HarfBuzz exists on every target host.
+HARFBUZZ="$(ldconfig -p | awk '$1 == "libharfbuzz.so.0" && /x86-64/ {print $NF}')"
+[ -f "${HARFBUZZ}" ] || { echo "ERROR: native x86_64 HarfBuzz missing or ambiguous" >&2; exit 1; }
+# Keep deployment of transitive library copyrights enabled in both tools.
+unset DISABLE_COPYRIGHT_FILES_DEPLOYMENT
+"${TOOLS}/linuxdeploy-x86_64.AppImage" --appdir "${APP_DIR}" \
+    --executable "${APP_DIR}/usr/bin/pdfinity" \
+    --executable "${APP_DIR}/usr/bin/pdfinity-cli" \
+    --library "${APP_DIR}/usr/lib/libpdfium.so" \
+    --library "${HARFBUZZ}" \
+    --desktop-file "${APP_DIR}/usr/share/applications/com.stacksyncsolutions.pdfinity.desktop" \
+    --icon-file "${APP_DIR}/usr/share/icons/hicolor/scalable/apps/com.stacksyncsolutions.pdfinity.svg" \
+    --plugin qt
+# An explicit locked runtime prevents appimagetool's automatic latest download.
+ARCH=x86_64 "${TOOLS}/appimagetool-x86_64.AppImage" \
+    --runtime-file "${TOOLS}/runtime-x86_64" "${APP_DIR}" "${OUTPUT}"
+test -s "${OUTPUT}"
+echo "Built ${OUTPUT}; clean native runtime qualification remains required"
