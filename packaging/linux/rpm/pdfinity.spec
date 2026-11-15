@@ -8,11 +8,13 @@ Summary:        Professional, modular, offline-first PDF productivity suite
 License:        MPL-2.0
 URL:            https://www.stacksyncsolutions.com/
 Source0:        https://github.com/jakepanlilio2000/PDFinity/archive/v%{tag_version}.tar.gz
+Source1:        pdfium-linux-x64.tgz
 
 BuildRequires:  cmake >= 3.25
 BuildRequires:  ninja-build
 BuildRequires:  gcc-c++ >= 11
 BuildRequires:  qt6-qtbase-devel >= 6.5.0
+BuildRequires:  python3
 Requires:       qt6-qtbase >= 6.5.0
 Requires:       qt6-qtbase-gui >= 6.5.0
 Requires:       hicolor-icon-theme
@@ -27,6 +29,7 @@ offline with zero telemetry.
 
 %prep
 %autosetup -n PDFinity-%{tag_version}
+python3 scripts/download_pdfium.py --platform linux --archive %{SOURCE1} --target-dir third_party/pdfium
 
 %build
 %cmake -G Ninja -DCMAKE_BUILD_TYPE=Release

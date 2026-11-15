@@ -216,10 +216,6 @@ jobs:
       - name: Package Red Hat / Fedora (.rpm)
         if: inputs.mode != 'verify-deb'
         run: |
-          if [ "${{ inputs.mode }}" = verify-rpm ]; then
-            sudo apt-get update
-            sudo apt-get install -y rpm
-          fi
           TAG_VER="$RELEASE_VERSION"
           bash packaging/linux/rpm/build_rpm.sh "${TAG_VER:-1.1.0}"
 
