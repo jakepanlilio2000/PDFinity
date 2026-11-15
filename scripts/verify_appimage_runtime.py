@@ -63,8 +63,10 @@ def verify(package, version, expected_hash):
             if not path.is_file() or path.is_symlink() or path.read_bytes()[:4] != b'\x7fELF':
                 continue
             links = run('ldd', str(path), env=env)
-            if 'not found' in links or '/home/runner/' in links or '/checks/' in links:
-                raise RuntimeError('Unresolved/build-tree AppImage dependency: ' + str(path) + '\n' + links)
+            invalid = [line for line in links.splitlines()
+                       if any(marker in line for marker in ('not found', '/home/runner/', '/checks/'))]
+            if invalid:
+                raise RuntimeError('Unresolved/build-tree AppImage dependency: ' + str(path) + '\n' + '\n'.join(invalid))
             for line in links.splitlines():
                 if ('libQt6' in line or 'libpdfium' in line) and str(app) not in line:
                     raise RuntimeError('AppImage resolved Qt/PDFium outside its payload: ' + line)

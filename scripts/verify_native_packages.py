@@ -32,7 +32,8 @@ class Verifier:
         self.commands.append(safe)
         result = subprocess.run(list(map(str, command)), env=env, stdout=subprocess.PIPE,
                                 stderr=subprocess.STDOUT, text=True, errors='replace', timeout=timeout)
-        detail = '' if sensitive else '\n' + result.stdout[-6000:]
+        output = result.stdout if len(result.stdout) <= 6000 else result.stdout[:3000] + '\n[... truncated ...]\n' + result.stdout[-3000:]
+        detail = '' if sensitive else '\n' + output
         require(result.returncode == 0, f'Native command failed: {safe} (exit {result.returncode}){detail}')
         return result.stdout
 

@@ -264,6 +264,7 @@ jobs:
           bash packaging/linux/rpm/build_rpm.sh "${TAG_VER:-1.1.0}"
 
       - name: Package Portable AppImage
+        id: appimage-package
         if: inputs.mode != 'verify-deb' && inputs.mode != 'verify-rpm'
         run: |
           TAG_VER="$RELEASE_VERSION"
@@ -368,6 +369,15 @@ jobs:
           path: |
             dist/PDFinity-${{ needs.preflight.outputs.version }}-x86_64.AppImage
             verification/receipts/linux-appimage.json
+          if-no-files-found: error
+          retention-days: 14
+
+      - name: Retain failed AppImage only for dependency inspection
+        if: failure() && inputs.mode == 'verify-appimage' && steps.appimage-package.outcome == 'success'
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: failed-appimage-inspection-${{ needs.preflight.outputs.version }}-${{ needs.preflight.outputs.sha }}-linux-x86_64
+          path: dist/PDFinity-${{ needs.preflight.outputs.version }}-x86_64.AppImage
           if-no-files-found: error
           retention-days: 14
 
