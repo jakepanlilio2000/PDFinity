@@ -102,7 +102,7 @@ class Verifier:
             failed = True
             try:
                 self.run('docker', 'run', '--detach', '--name', name, '--platform', runtime['platform'],
-                    '--mount', f'type=bind,src={path.parent},dst=/incoming,readonly',
+                    '--mount', f'type=bind,src={path},dst=/incoming/{path.name},readonly',
                     '--mount', f'type=bind,src={ROOT / "scripts"},dst=/checks,readonly',
                     '--mount', f'type=bind,src={root},dst=/evidence', runtime['image'], 'sleep', 'infinity')
                 self.run('docker', 'exec', name, 'dnf', '-y', 'install', 'python3', 'xorg-x11-server-Xvfb', 'xauth', timeout=600)

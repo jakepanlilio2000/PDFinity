@@ -89,7 +89,10 @@ def verify(package, version, expected_hash, prepare_only):
     finally:
         state = subprocess.run(['rpm', '-q', 'pdfinity'], capture_output=True)
         if state.returncode == 0:
-            commands.append(['dnf', '-y', *([] if prepare_only else ['--cacheonly']), 'remove', 'pdfinity'])
+            # DNF autoremove defaults to true. Retain the resolved runtime
+            # dependencies for the subsequent disconnected installation only.
+            options = ['--setopt=clean_requirements_on_remove=False'] if prepare_only else ['--cacheonly']
+            commands.append(['dnf', '-y', *options, 'remove', 'pdfinity'])
             try:
                 run(*commands[-1], timeout=180)
             except Exception as error:
