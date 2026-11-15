@@ -50,6 +50,7 @@ def verify(package, version, expected_hash):
             if data[:6] != b'\x7fELF\x02\x01' or data[18:20] != b'\x3e\x00':
                 raise RuntimeError('Missing/wrong architecture AppImage payload: ' + str(path))
         for relative in ('AppRun', 'usr/bin/qt.conf', 'usr/plugins/platforms/libqxcb.so',
+                         'usr/lib/libharfbuzz.so.0', 'usr/share/doc/libharfbuzz0b/copyright',
                          'usr/plugins/imageformats/libqsvg.so', 'usr/share/licenses/pdfinity/LICENSE',
                          'usr/share/licenses/pdfinity/pdfium/pdfium.txt',
                          'usr/share/licenses/pdfinity/TYPE2_RUNTIME_LICENSE',

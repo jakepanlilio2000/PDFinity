@@ -271,6 +271,9 @@ def main():
                     records[-1]['toolchain']['build_packages'] = pathlib.Path('dist/rpmbuild/build-packages.tsv').read_text()
                     records[-1]['toolchain']['native_build_image'] = verifier.runtime_proofs[path.name]['image']
                     records[-1]['dependency_source_build'] = json.loads(pathlib.Path('dist/rpmbuild/SOURCES/pdfium-source-build.json').read_text())
+                elif spec['type'] == 'appimage':
+                    records[-1]['toolchain']['build_packages'] = verifier.run('dpkg-query', '-W',
+                        '-f=${binary:Package}\t${Version}\t${Architecture}\t${source:Package}\t${source:Version}\n')
                 else:
                     records[-1]['toolchain']['build_packages'] = verifier.run('dpkg-query', '-W',
                         '-f=${binary:Package}\t${Version}\t${Architecture}\n',

@@ -35,12 +35,16 @@ export QMAKE="$(command -v qmake6)"
 export EXTRA_QT_MODULES=svg
 export VERSION
 export SOURCE_DATE_EPOCH="$(git show -s --format=%ct HEAD)"
+# linuxdeploy's default exclusion assumes HarfBuzz exists on every target host.
+HARFBUZZ="$(ldconfig -p | awk '$1 == "libharfbuzz.so.0" && /x86-64/ {print $NF}')"
+[ -f "${HARFBUZZ}" ] || { echo "ERROR: native x86_64 HarfBuzz missing or ambiguous" >&2; exit 1; }
 # Keep deployment of transitive library copyrights enabled in both tools.
 unset DISABLE_COPYRIGHT_FILES_DEPLOYMENT
 "${TOOLS}/linuxdeploy-x86_64.AppImage" --appdir "${APP_DIR}" \
     --executable "${APP_DIR}/usr/bin/pdfinity" \
     --executable "${APP_DIR}/usr/bin/pdfinity-cli" \
     --library "${APP_DIR}/usr/lib/libpdfium.so" \
+    --library "${HARFBUZZ}" \
     --desktop-file "${APP_DIR}/usr/share/applications/com.stacksyncsolutions.pdfinity.desktop" \
     --icon-file "${APP_DIR}/usr/share/icons/hicolor/scalable/apps/com.stacksyncsolutions.pdfinity.svg" \
     --plugin qt

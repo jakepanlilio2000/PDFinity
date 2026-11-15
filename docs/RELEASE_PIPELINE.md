@@ -181,3 +181,13 @@ proof; a build-host smoke check cannot replace it.
 For extraction without FUSE, run the versioned AppImage with `--appimage-extract`.
 The extracted `squashfs-root/AppRun` launches the GUI and
 `squashfs-root/usr/bin/pdfinity-cli --version` invokes the companion CLI.
+
+
+AppImage clean run79ed627 [43768247770](https://github.com/jakepanlilio2000/PDFinity/actions/runs/43768247770)
+exposed `libOpenGL.so.0` and `libharfbuzz.so.0` missing from the minimal runtime.
+The OpenGL host prerequisite is queued as a separate focused correction.
+HarfBuzz is explicitly bundled through linuxdeploy's `--library` (its default
+exclusion assumed a host copy), with its copyright required in native inspection.
+The AppImage receipt records the complete build distribution package/source-version
+inventory in addition to the clean runtime inventory. No host Qt is installed to
+satisfy these checks; absent libraries still fail ldd before startup.
