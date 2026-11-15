@@ -210,7 +210,7 @@ def main():
     parser.add_argument('--lane', choices=('windows', 'linux', 'macos', 'android'), required=True)
     parser.add_argument('--version', required=True)
     parser.add_argument('--sha', required=True)
-    parser.add_argument('--package-type', choices=('deb', 'rpm'), help='Development-only partial qualification, not release eligible')
+    parser.add_argument('--package-type', choices=('deb', 'rpm', 'appimage'), help='Development-only partial qualification, not release eligible')
     args = parser.parse_args()
     suffix = '-' + args.package_type if args.package_type else ''
     receipt = pathlib.Path('verification/receipts') / (args.lane + suffix + '.json')
