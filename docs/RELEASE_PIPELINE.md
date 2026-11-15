@@ -169,7 +169,7 @@ plugins, Qt configuration and distribution copyright files; PDFium's locked
 notices, application and metadata licenses, and runtime notice are included.
 
 The native verifier uses the same immutable Ubuntu24.04 amd64 image declared in
-`packaging/linux/deb-runtime.json`. Only Python, Xvfb/Xauth, GL/EGL and fonts are
+`packaging/linux/deb-runtime.json`. Only Python, Xvfb/Xauth, GL/EGL/OpenGL and fonts are
 acquired as host prerequisites; no host Qt/PDFium or build SDK is mounted. After
 network disconnection it requires only loopback, extracts the actual AppImage,
 checks library/plugin discovery, CLI version, QApplication/context XCB startup,
@@ -185,7 +185,7 @@ The extracted `squashfs-root/AppRun` launches the GUI and
 
 AppImage clean run79ed627 [43768247770](https://github.com/jakepanlilio2000/PDFinity/actions/runs/43768247770)
 exposed `libOpenGL.so.0` and `libharfbuzz.so.0` missing from the minimal runtime.
-The OpenGL host prerequisite is queued as a separate focused correction.
+The host contract now explicitly includes libopengl0 alongside GL/EGL drivers.
 HarfBuzz is explicitly bundled through linuxdeploy's `--library` (its default
 exclusion assumed a host copy), with its copyright required in native inspection.
 The AppImage receipt records the complete build distribution package/source-version

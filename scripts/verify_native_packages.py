@@ -142,7 +142,7 @@ class Verifier:
                 # Only platform/display/font prerequisites; no host Qt or PDFium.
                 self.run('docker', 'exec', name, 'bash', '-euc',
                     'apt-get update\napt-get install -y --no-install-recommends python3 xvfb xauth '
-                    'libgl1 libegl1 libfontconfig1 fonts-dejavu-core', timeout=600)
+                    'libgl1 libegl1 libopengl0 libfontconfig1 fonts-dejavu-core', timeout=600)
                 networks = json.loads(self.run('docker', 'inspect', '--format', '{{json .NetworkSettings.Networks}}', name))
                 for network in networks:
                     self.run('docker', 'network', 'disconnect', network, name)
