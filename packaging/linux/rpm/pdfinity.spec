@@ -1,6 +1,6 @@
 Name:           pdfinity
 Version:        1.1.0
-Release:        1%{?dist}
+Release:        1
 Summary:        Professional, modular, offline-first PDF productivity suite
 
 %global tag_version 1.1.0
@@ -40,6 +40,15 @@ python3 scripts/download_pdfium.py --platform linux --archive %{SOURCE1} --targe
 
 %install
 %cmake_install
+# CMake installs the GUI with its target name; desktop/CLI entry points and
+# the package contract use lowercase pdfinity on Linux.
+mv %{buildroot}%{_bindir}/PDFinity %{buildroot}%{_bindir}/pdfinity
+install -m 755 third_party/pdfium/lib/libpdfium.so %{buildroot}%{_prefix}/lib/libpdfium.so
+# Static development archives are not application runtime payloads.
+rm %{buildroot}%{_prefix}/lib/libpdfinity_core.a %{buildroot}%{_prefix}/lib/libpdfinity_ui.a
+mkdir -p %{buildroot}%{_datadir}/licenses/pdfinity/pdfium
+install -m 644 third_party/pdfium/LICENSE %{buildroot}%{_datadir}/licenses/pdfinity/pdfium/LICENSE
+cp -r third_party/pdfium/licenses %{buildroot}%{_datadir}/licenses/pdfinity/pdfium/
 mkdir -p %{buildroot}%{_datadir}/applications
 mkdir -p %{buildroot}%{_datadir}/metainfo
 mkdir -p %{buildroot}%{_datadir}/icons/hicolor/scalable/apps
@@ -65,8 +74,11 @@ gtk-update-icon-cache %{_datadir}/icons/hicolor &>/dev/null || :
 
 %files
 %license LICENSE packaging/linux/METADATA_LICENSE
-%doc README.md THIRDPARTY_NOTICES.txt THIRD_PARTY_LICENSES.md
+%doc README.md THIRDPARTY_NOTICES.txt THIRD_PARTY_LICENSES.md NOTICE
 %{_bindir}/pdfinity
+%{_bindir}/pdfinity-cli
+%{_prefix}/lib/libpdfium.so
+%license %{_datadir}/licenses/pdfinity/pdfium/
 %{_datadir}/applications/com.stacksyncsolutions.pdfinity.desktop
 %{_datadir}/applications/pdfinity.desktop
 %{_datadir}/metainfo/com.stacksyncsolutions.pdfinity.metainfo.xml
