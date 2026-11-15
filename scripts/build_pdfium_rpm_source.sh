@@ -47,7 +47,9 @@ bash steps/04-install-extras.sh
 bash steps/05-configure.sh
 # Chromium's supported official-build setting uses SHA-1 instead of the
 # eight-byte LLD fast ID. Keep all normal RPM and runtime checks enabled.
-printf 'is_official_build = true\n' >> "$PDFium_BUILD_DIR/args.gn"
+# Standalone PDFium has no Chromium PGO profile updater. Retain the
+# upstream non-profiled optimization mode while selecting the SHA-1 ID.
+printf 'is_official_build = true\nchrome_pgo_phase = 0\n' >> "$PDFium_BUILD_DIR/args.gn"
 (cd pdfium && gn gen "$PDFium_BUILD_DIR" --fail-on-unused-args)
 ninja -C "$PDFium_BUILD_DIR" -j2 pdfium
 mkdir -p /work/output
