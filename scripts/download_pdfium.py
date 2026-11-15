@@ -95,6 +95,8 @@ def install_pdfium(target_dir, plat, force=False, verify_only=False, archive_pat
         return True
     if verify_only:
         raise RuntimeError('Missing or corrupt pinned PDFium files. Run scripts/download_pdfium.py --platform ' + plat)
+    if not archive_path and cfg.get('acquisition') == 'source-build':
+        raise RuntimeError('This variant requires the locked source build archive; run scripts/build_pdfium_rpm.py first')
     data = pathlib.Path(archive_path).read_bytes() if archive_path else download_with_retry(cfg.get('url', BASE_URL + '/' + cfg['archive']))
     # Validate the complete archive and all pinned members before any target write.
     contents = verified_members(data, cfg)
@@ -123,7 +125,7 @@ def install_pdfium(target_dir, plat, force=False, verify_only=False, archive_pat
 
 def main():
     parser = argparse.ArgumentParser(description="Download & extract PDFium precompiled binaries")
-    parser.add_argument("--platform", choices=["win", "linux", "mac", "all"], default=None,
+    parser.add_argument("--platform", choices=[*PLATFORM_ARCHIVES, "all"], default=None,
                         help="Target platform (default: auto-detect)")
     parser.add_argument("--target-dir", default=None,
                         help="Target destination directory (default: third_party/pdfium)")

@@ -94,19 +94,7 @@ jobs:
           ref: ${{ needs.preflight.outputs.sha }}
           persist-credentials: false
       - name: Build immutable source with pinned recipe and tool bootstrap
-        run: |
-          test ! -e build/pdfium-rpm-source
-          mkdir -p build/pdfium-rpm-source
-          image=$(python3 -c 'import json; print(json.load(open("packaging/linux/rpm/pdfium-source.json"))["image"])')
-          [[ "$image" =~ @sha256:[0-9a-f]{64}$ ]]
-          docker run --rm --platform linux/amd64 \
-            --env PDFINITY_RECIPE_SHA=${{ needs.preflight.outputs.sha }} \
-            --env PDFINITY_RUN_ID="$GITHUB_RUN_ID" --env PDFINITY_RUN_ATTEMPT="$GITHUB_RUN_ATTEMPT" \
-            --mount "type=bind,src=$PWD/build/pdfium-rpm-source,dst=/work" \
-            --mount "type=bind,src=$PWD/scripts,dst=/checks,readonly" \
-            --mount "type=bind,src=$PWD/packaging/linux/rpm/pdfium-source.json,dst=/input/source-lock.json,readonly" \
-            --mount "type=bind,src=$PWD/third_party/pdfium/dependency-lock.json,dst=/input/binary-lock.json,readonly" \
-            "$image" bash /checks/build_pdfium_rpm_source.sh
+        run: python3 scripts/build_pdfium_rpm.py
       - name: Retain source-built dependency rehearsal and provenance
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
@@ -209,6 +197,26 @@ jobs:
           ref: ${{ needs.preflight.outputs.sha }}
           persist-credentials: false
 
+      - name: Select the reviewed dependency rehearsal for RPM qualification
+        if: inputs.mode == 'verify-rpm'
+        id: rpm-dependency
+        run: |
+          python3 - <<'PY' >> "$GITHUB_OUTPUT"
+          import json
+          q = json.load(open('third_party/pdfium/dependency-lock.json'))['platforms']['linux-rpm']['qualification']
+          print('run_id=' + q['run_id'])
+          print('artifact_name=' + q['artifact_name'])
+          PY
+      - name: Reuse the checksum-locked source dependency rehearsal
+        if: inputs.mode == 'verify-rpm'
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          name: ${{ steps.rpm-dependency.outputs.artifact_name }}
+          run-id: ${{ steps.rpm-dependency.outputs.run_id }}
+          github-token: ${{ github.token }}
+          repository: jakepanlilio2000/PDFinity
+          path: rehearsal-rpm-dependency
+
       - name: Install System Toolchain & Distro Packagers
         if: inputs.mode != 'verify-rpm'
         run: |
@@ -249,6 +257,9 @@ jobs:
       - name: Package Red Hat / Fedora (.rpm)
         if: inputs.mode != 'verify-deb'
         run: |
+          if [ "${{ inputs.mode }}" = verify-rpm ]; then
+            export PDFINITY_RPM_PDFIUM_ARCHIVE="$PWD/rehearsal-rpm-dependency/pdfium-linux-x64-rpm-source.tgz"
+          fi
           TAG_VER="$RELEASE_VERSION"
           bash packaging/linux/rpm/build_rpm.sh "${TAG_VER:-1.1.0}"
 

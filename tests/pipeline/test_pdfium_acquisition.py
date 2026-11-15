@@ -27,6 +27,12 @@ def archive(files):
 
 
 class PdfiumAcquisitionTests(unittest.TestCase):
+    def test_source_built_variant_never_invents_an_upstream_binary_url(self):
+        with tempfile.TemporaryDirectory() as work, mock.patch.object(pdfium, 'download_with_retry', return_value=b'untrusted') as download:
+            with self.assertRaisesRegex(RuntimeError, 'source build archive'):
+                pdfium.install_pdfium(work, 'linux-rpm')
+            download.assert_not_called()
+
     def test_cmake_rechecks_local_hashes_even_with_a_stale_library_cache(self):
         environment = None
         cmake = shutil.which('cmake')
