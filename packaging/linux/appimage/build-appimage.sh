@@ -51,6 +51,8 @@ install -m 755 "${BUILD_DIR}/bin/pdfinity-cli" "${APP_DIR}/usr/bin/pdfinity-cli"
 # 2. Desktop and icon integration
 install -m 644 packaging/linux/com.stacksyncsolutions.pdfinity.desktop "${APP_DIR}/usr/share/applications/com.stacksyncsolutions.pdfinity.desktop"
 install -m 644 packaging/linux/com.stacksyncsolutions.pdfinity.metainfo.xml "${APP_DIR}/usr/share/metainfo/com.stacksyncsolutions.pdfinity.metainfo.xml"
+mkdir -p "${APP_DIR}/usr/share/licenses/pdfinity"
+install -m 644 packaging/linux/METADATA_LICENSE "${APP_DIR}/usr/share/licenses/pdfinity/METADATA_LICENSE"
 install -m 644 packaging/resources/pdfinity.svg "${APP_DIR}/usr/share/icons/hicolor/scalable/apps/pdfinity.svg"
 install -m 644 packaging/resources/pdfinity.svg "${APP_DIR}/usr/share/icons/hicolor/scalable/apps/com.stacksyncsolutions.pdfinity.svg"
 
