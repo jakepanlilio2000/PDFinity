@@ -178,11 +178,13 @@ class ReleaseGateTests(unittest.TestCase):
                 check()
             proof = {'package_sha256': record['sha256'], 'network_interfaces': ['lo'], 'docker_networks': {},
                      'offline_pdf_roundtrip': 'passed', 'host_qt_packages': [],
+                     'image': json.loads((ROOT / 'packaging/linux/appimage/runtime.json').read_text())['image'],
                      'install': 'passed', 'runtime': 'passed', 'uninstall': 'passed'}
             record['clean_runtime'] = proof
             self.assertEqual(len(check()), 1)
             for field, value in [('package_sha256', 'stale'), ('network_interfaces', ['lo', 'eth0']),
                                  ('docker_networks', {'bridge': {}}), ('host_qt_packages', ['libqt6core6']),
+                                 ('image', 'ubuntu:24.04@sha256:' + 'a' * 64),
                                  ('offline_pdf_roundtrip', 'not tested')]:
                 with self.subTest(field=field):
                     record['clean_runtime'] = {**proof, field: value}

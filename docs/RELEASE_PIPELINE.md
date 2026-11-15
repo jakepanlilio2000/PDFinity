@@ -168,8 +168,10 @@ executables receive deployment RPATHs. The Qt deployer bundles transitive librar
 plugins, Qt configuration and distribution copyright files; PDFium's locked
 notices, application and metadata licenses, and runtime notice are included.
 
-The native verifier uses the same immutable Ubuntu24.04 amd64 image declared in
-`packaging/linux/deb-runtime.json`. Only Python, Xvfb/Xauth, GL/EGL/OpenGL and fonts are
+The AppImage native verifier now requires the immutable Ubuntu22.04 amd64
+baseline in `packaging/linux/appimage/runtime.json`; DEB keeps its separate
+Ubuntu24.04 runtime. Earlier Ubuntu24-only AppImage proof remains scoped to its
+exact old candidate and cannot satisfy the new baseline gate. Only Python, Xvfb/Xauth, GL/EGL/OpenGL and fonts are
 acquired as host prerequisites; no host Qt/PDFium or build SDK is mounted. After
 network disconnection it requires only loopback, extracts the actual AppImage,
 checks library/plugin discovery, CLI version, QApplication/context XCB startup,
@@ -191,3 +193,31 @@ exclusion assumed a host copy), with its copyright required in native inspection
 The AppImage receipt records the complete build distribution package/source-version
 inventory in addition to the clean runtime inventory. No host Qt is installed to
 satisfy these checks; absent libraries still fail ldd before startup.
+
+
+D07-A3-06 is a release-blocking ABI prerequisite. The d030610 AppImage was genuinely
+qualified on Ubuntu24.04 in [run43769200140](https://github.com/jakepanlilio2000/PDFinity/actions/runs/43769200140),
+including downloaded-payload checks, but its GUI/CLI ELF version requirements include
+GLIBC_2.38 and GLIBCXX_3.4.32. The documented Ubuntu22.04/Debian12/glibc2.31 baseline
+is not established by that run. The aggregate previously accepted proof from any
+image; a regression now rejects an Ubuntu24-only receipt for the declared Ubuntu22
+baseline. Required native execution will expose the original loader failure before
+repairing the build toolchain. Do not lower support claims, disable ldd checks, or
+attribute the earlier successful package to this later candidate. General glibc2.31,
+Debian12 and other distribution support still need their own evidence.
+
+
+The baseline guard's parent [run43770556331](https://github.com/jakepanlilio2000/PDFinity/actions/runs/43770556331)
+reproduced real Ubuntu22 loader failures for GLIBC_2.38/GLIBCXX_3.4.32, including
+newer bundled transitive libraries. The focused build repair compiles the entire
+AppImage application and dependencies in the pinned Ubuntu22 build environment,
+using distro Qt with security updates, an official checksum-locked CMake3.31.6,
+verified PDFium, and all C++ tests. The existing workflow calls
+`python3 scripts/build_appimage_baseline.py --version <mapped-version>`; it does not
+reuse the newer DEB build tree or mount a host SDK, Git directory or credentials.
+The exact Git source archive, commit timestamp, image, CMake digest, compiler,
+complete native package/source-version inventory and output checksum are recorded
+in `dist/appimage-build.json` and bound into the native receipt. Source/toolchain
+mismatch or a missing/failed C++ test result prevents qualification. Newer-host
+runtime, full glibc2.31 coverage and complete static dependency provenance still
+require separate evidence; no support claims are silently removed.

@@ -181,6 +181,8 @@ def validate(directory, version, sha, run_id, attempt, lane=None):
             if spec['type'] == 'appimage':
                 proof = record.get('clean_runtime', {})
                 require(proof.get('package_sha256') == record['sha256'], 'AppImage runtime proof checksum mismatch')
+                baseline = json.loads((ROOT / 'packaging/linux/appimage/runtime.json').read_text())
+                require(proof.get('image') == baseline['image'], 'AppImage baseline image proof mismatch')
                 require(proof.get('network_interfaces') == ['lo'] and proof.get('docker_networks') == {} and
                         proof.get('host_qt_packages') == [] and proof.get('offline_pdf_roundtrip') == 'passed',
                         'AppImage clean offline runtime proof missing/incomplete')
