@@ -25,7 +25,7 @@ on:
         required: true
         default: rehearsal
         type: choice
-        options: [rehearsal, verify-deb, verify-rpm, release]
+        options: [rehearsal, verify-deb, verify-rpm, verify-pdfium-rpm, release]
 
 permissions:
   contents: read
@@ -61,7 +61,7 @@ jobs:
           SOURCE_SHA: ${{ inputs.source_sha || github.sha }}
           MODE: ${{ inputs.mode || 'release' }}
         run: |
-          if [ "$MODE" = verify-deb ] || [ "$MODE" = verify-rpm ]; then
+          if [ "$MODE" = verify-deb ] || [ "$MODE" = verify-rpm ] || [ "$MODE" = verify-pdfium-rpm ]; then
             python3 scripts/release_gate.py qualify --sha "$SOURCE_SHA"
           else
             args=()
@@ -81,6 +81,39 @@ jobs:
             echo 'ERROR: missing assets were accepted'
             exit 1
           fi
+
+  build-pdfium-rpm-dependency:
+    name: Rehearse exact-source RPM-compatible PDFium dependency
+    needs: preflight
+    if: inputs.mode == 'verify-pdfium-rpm'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          ref: ${{ needs.preflight.outputs.sha }}
+          persist-credentials: false
+      - name: Build immutable source with pinned recipe and tool bootstrap
+        run: |
+          test ! -e build/pdfium-rpm-source
+          mkdir -p build/pdfium-rpm-source
+          image=$(python3 -c 'import json; print(json.load(open("packaging/linux/rpm/pdfium-source.json"))["image"])')
+          [[ "$image" =~ @sha256:[0-9a-f]{64}$ ]]
+          docker run --rm --platform linux/amd64 \
+            --env PDFINITY_RECIPE_SHA=${{ needs.preflight.outputs.sha }} \
+            --env PDFINITY_RUN_ID="$GITHUB_RUN_ID" --env PDFINITY_RUN_ATTEMPT="$GITHUB_RUN_ATTEMPT" \
+            --mount "type=bind,src=$PWD/build/pdfium-rpm-source,dst=/work" \
+            --mount "type=bind,src=$PWD/scripts,dst=/checks,readonly" \
+            --mount "type=bind,src=$PWD/packaging/linux/rpm/pdfium-source.json,dst=/input/source-lock.json,readonly" \
+            --mount "type=bind,src=$PWD/third_party/pdfium/dependency-lock.json,dst=/input/binary-lock.json,readonly" \
+            "$image" bash /checks/build_pdfium_rpm_source.sh
+      - name: Retain source-built dependency rehearsal and provenance
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: qualified-pdfium-159.0.8152.0-linux-x86_64-rpm-dependency-${{ needs.preflight.outputs.sha }}
+          path: build/pdfium-rpm-source/output/*
+          if-no-files-found: error
+          retention-days: 14
 
   build-windows:
     needs: preflight
@@ -162,7 +195,7 @@ jobs:
 
   build-linux:
     needs: preflight
-    if: inputs.mode != 'rehearsal'
+    if: inputs.mode != 'rehearsal' && inputs.mode != 'verify-pdfium-rpm'
     timeout-minutes: 60
     env:
       RELEASE_VERSION: ${{ needs.preflight.outputs.version }}
@@ -486,21 +519,21 @@ jobs:
           PARENT_RUN: ${{ inputs.probe_parent }}
         run: echo "GITHUB_TOKEN workflow_dispatch child executed; parent=$PARENT_RUN; no release writes."
       - name: Checkout verified release source
-        if: inputs.mode != 'rehearsal'
+        if: inputs.mode != 'rehearsal' && inputs.mode != 'verify-pdfium-rpm'
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
           ref: ${{ needs.preflight.outputs.sha }}
           fetch-depth: 0
           persist-credentials: false
       - name: Download all build artifacts without flattening
-        if: inputs.mode != 'rehearsal'
+        if: inputs.mode != 'rehearsal' && inputs.mode != 'verify-pdfium-rpm'
         uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
         with:
           pattern: pdfinity-${{ needs.preflight.outputs.version }}-*
           path: release-input/
           merge-multiple: false
       - name: Validate entire contract, upload draft, verify, then promote
-        if: inputs.mode != 'rehearsal'
+        if: inputs.mode != 'rehearsal' && inputs.mode != 'verify-pdfium-rpm'
         env:
           GH_TOKEN: ${{ github.token }}
           RELEASE_TAG: ${{ needs.preflight.outputs.tag }}
