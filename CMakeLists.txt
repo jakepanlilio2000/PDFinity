@@ -68,7 +68,7 @@ find_package(Qt6 6.2 REQUIRED COMPONENTS
 
 # Locate Google PDFium
 set(PDFium_DIR "${PROJECT_SOURCE_DIR}/third_party/pdfium")
-find_package(PDFium REQUIRED)
+find_package(PDFium CONFIG REQUIRED PATHS "${PDFium_DIR}" NO_DEFAULT_PATH)
 
 # Output directories
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)

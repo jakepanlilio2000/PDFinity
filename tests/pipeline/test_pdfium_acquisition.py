@@ -5,6 +5,7 @@ import pathlib
 import json
 import shutil
 import subprocess
+import re
 import sys
 import tarfile
 import tempfile
@@ -49,17 +50,23 @@ class PdfiumAcquisitionTests(unittest.TestCase):
                 path.write_bytes(b'configure-only fixture')
                 files[name] = hashlib.sha256(path.read_bytes()).hexdigest()
             (dependency / 'include/cpp').mkdir()
+            (root / 'modules').mkdir()
+            (root / 'modules/FindPDFium.cmake').write_text('message(FATAL_ERROR "Untrusted global PDFium module selected")\n')
+            project_find = re.search(r'find_package\(PDFium\b[^)]*\)',
+                (source_config.parents[2] / 'CMakeLists.txt').read_text()).group(0)
             (dependency / 'dependency-lock.json').write_text(json.dumps({'version': '159.0.8152.0',
                 'platforms': {p: {'files': files} for p in ('win', 'mac', 'linux')}}))
             (root / 'CMakeLists.txt').write_text('''cmake_minimum_required(VERSION 3.25)
 project(PinnedConfigure NONE)
 set(CMAKE_SYSTEM_PROCESSOR x86_64)
-find_package(PDFium CONFIG REQUIRED PATHS "${CMAKE_SOURCE_DIR}/pdfium" NO_DEFAULT_PATH)
+set(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/modules")
+set(PDFium_DIR "${CMAKE_SOURCE_DIR}/pdfium")
+PROJECT_PDFIUM_FIND
 get_target_property(location pdfium IMPORTED_LOCATION)
 if(NOT location MATCHES "^${CMAKE_SOURCE_DIR}/pdfium/")
   message(FATAL_ERROR "External library cache leaked into imported target")
 endif()
-''')
+'''.replace('PROJECT_PDFIUM_FIND', project_find))
             command = [cmake, '-G', 'Ninja', '-S', str(root), '-B', str(root / 'build'), '-DPDFium_LIBRARY=/stale/developer/library']
             result = subprocess.run(command, env=environment, capture_output=True, text=True)
             self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
