@@ -14,6 +14,7 @@ import subprocess
 import sys
 import tempfile
 import zipfile
+import uuid
 
 from release_assets import contract, digest, inspect, require
 from release_versions import validate as validate_versions
@@ -93,15 +94,40 @@ class Verifier:
                     'Incomplete clean runtime proof')
             self.runtime_proofs[path.name] = {**proof, 'image': runtime['image']}
         elif kind == 'rpm':
-            self.run('rpm', '--checksig', '--nosignature', path)
-            metadata = self.run('rpm', '-qp', '--queryformat', '%{VERSION} %{ARCH}', path)
-            require(metadata.strip() == self.version + ' x86_64', 'Wrong RPM version/architecture')
-            self.run('sudo', 'rpm', '-i', path)  # Never --nodeps; use a compatible native distro runner.
+            runtime = json.loads((ROOT / 'packaging/linux/rpm/native-runtime.json').read_text())
+            require('@sha256:' in runtime['image'], 'RPM runtime image must be immutable')
+            name = 'pdfinity-rpm-' + uuid.uuid4().hex
+            arguments = ['python3', '/checks/verify_rpm_runtime.py', '--package', '/incoming/' + path.name,
+                '--version', self.version, '--expected-sha256', digest(path), '--output', '/evidence/rpm-runtime.json']
+            failed = True
             try:
-                self.smoke('/usr/bin/pdfinity', '/usr/bin/pdfinity-cli')
+                self.run('docker', 'run', '--detach', '--name', name, '--platform', runtime['platform'],
+                    '--mount', f'type=bind,src={path.parent},dst=/incoming,readonly',
+                    '--mount', f'type=bind,src={ROOT / "scripts"},dst=/checks,readonly',
+                    '--mount', f'type=bind,src={root},dst=/evidence', runtime['image'], 'sleep', 'infinity')
+                self.run('docker', 'exec', name, 'dnf', '-y', 'install', 'python3', 'xorg-x11-server-Xvfb', 'xauth', timeout=600)
+                # Networked acquisition is separate from offline installed runtime.
+                # Preparation installs/removes PDFinity so all runtime dependencies
+                # are available without mounting any compiler or development SDK.
+                self.run('docker', 'exec', name, *arguments, '--prepare-only', timeout=900)
+                networks = json.loads(self.run('docker', 'inspect', '--format', '{{json .NetworkSettings.Networks}}', name))
+                for network in networks:
+                    self.run('docker', 'network', 'disconnect', network, name)
+                require(json.loads(self.run('docker', 'inspect', '--format', '{{json .NetworkSettings.Networks}}', name)) == {},
+                        'RPM runtime is still connected to a network')
+                self.run('docker', 'exec', name, *arguments, timeout=600)
+                proof = json.loads((root / 'rpm-runtime.json').read_text())
+                require(proof['package_sha256'] == digest(path), 'RPM runtime evidence checksum mismatch')
+                require(all(proof.get(c) == 'passed' for c in ('install', 'runtime', 'uninstall', 'offline_pdf_roundtrip')),
+                        'Incomplete RPM runtime proof')
+                require(proof['network_interfaces'] == ['lo'], 'Offline RPM proof has an external interface')
+                self.runtime_proofs[path.name] = {**proof, 'image': runtime['image'], 'docker_networks': {}}
+                failed = False
             finally:
-                self.run('sudo', 'rpm', '-e', 'pdfinity')
-            require(not pathlib.Path('/usr/bin/pdfinity').exists(), 'RPM uninstall incomplete')
+                cleanup = subprocess.run(['docker', 'rm', '--force', name], capture_output=True, text=True)
+                if cleanup.returncode and not failed:
+                    raise ValueError('RPM runtime container cleanup failed: ' + cleanup.stderr)
+
         else:
             local = root / path.name
             shutil.copyfile(path, local)
@@ -184,12 +210,12 @@ def main():
     parser.add_argument('--lane', choices=('windows', 'linux', 'macos', 'android'), required=True)
     parser.add_argument('--version', required=True)
     parser.add_argument('--sha', required=True)
-    parser.add_argument('--package-type', choices=('deb',), help='Development-only partial qualification, not release eligible')
+    parser.add_argument('--package-type', choices=('deb', 'rpm'), help='Development-only partial qualification, not release eligible')
     args = parser.parse_args()
     suffix = '-' + args.package_type if args.package_type else ''
     receipt = pathlib.Path('verification/receipts') / (args.lane + suffix + '.json')
     try:
-        require(not args.package_type or args.lane == 'linux', 'DEB qualification requires the Linux lane')
+        require(not args.package_type or args.lane == 'linux', 'Partial package qualification requires the Linux lane')
         require(not receipt.exists(), 'Stale native receipt exists; use a clean runner')
         require(subprocess.check_output(['git', 'rev-parse', 'HEAD'], text=True).strip() == args.sha, 'Native check SHA mismatch')
         validate_versions(expected=args.version)
@@ -218,16 +244,20 @@ def main():
                 'checks': {k: 'passed' for k in ('native_format', 'version', 'architecture', 'runtime', 'install', 'uninstall')}})
             if path.name in verifier.runtime_proofs:
                 records[-1]['clean_runtime'] = verifier.runtime_proofs[path.name]
-                records[-1]['toolchain']['build_packages'] = verifier.run('dpkg-query', '-W',
-                    '-f=${binary:Package}\t${Version}\t${Architecture}\n',
-                    'qt6-base-dev', 'g++', 'libc6', 'libstdc++6', 'dpkg-dev')
+                if spec['type'] == 'rpm':
+                    records[-1]['toolchain']['build_packages'] = pathlib.Path('dist/rpmbuild/build-packages.tsv').read_text()
+                    records[-1]['toolchain']['native_build_image'] = verifier.runtime_proofs[path.name]['image']
+                else:
+                    records[-1]['toolchain']['build_packages'] = verifier.run('dpkg-query', '-W',
+                        '-f=${binary:Package}\t${Version}\t${Architecture}\n',
+                        'qt6-base-dev', 'g++', 'libc6', 'libstdc++6', 'dpkg-dev')
         result = {'schema': 1, 'repository': 'jakepanlilio2000/PDFinity', 'lane': args.lane,
             'version': args.version, 'source_sha': args.sha, 'run_id': os.environ['GITHUB_RUN_ID'],
             'run_attempt': os.environ['GITHUB_RUN_ATTEMPT'], 'assets': records}
         if args.package_type:
             result.update(scope=args.package_type, release_eligible=False)
         for record in records:
-            record['toolchain']['cmake'] = verifier.run('cmake', '--version').splitlines()[0]
+            record['toolchain']['verifier_cmake' if args.package_type == 'rpm' else 'cmake'] = verifier.run('cmake', '--version').splitlines()[0]
             record['toolchain']['pdfium_declared_version'] = pathlib.Path('third_party/pdfium/VERSION').read_text().strip()
         receipt.parent.mkdir(parents=True, exist_ok=True)
         receipt.write_text(json.dumps(result, indent=2) + '\n', encoding='utf-8')

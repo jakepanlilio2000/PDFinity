@@ -6,6 +6,7 @@ import pathlib
 import struct
 import tempfile
 import unittest
+from unittest import mock
 import zipfile
 
 ROOT = pathlib.Path(__file__).resolve().parents[2]
@@ -123,6 +124,36 @@ class ReleaseGateTests(unittest.TestCase):
         self.save()
         with self.assertRaisesRegex(ValueError, 'not release evidence'):
             self.check()
+
+    def test_rpm_requires_checksum_bound_offline_runtime_proof(self):
+        # Schema-only RPM fixture; never install, qualify or publish these bytes.
+        with tempfile.TemporaryDirectory() as work:
+            root = pathlib.Path(work)
+            name = 'pdfinity-1.1.0-1.x86_64.rpm'
+            data = bytearray(5000)
+            data[:4] = b'\xed\xab\xee\xdb'
+            data[96:100] = b'\x8e\xad\xe8\x01'
+            path = root / name
+            path.write_bytes(data)
+            record = copy.deepcopy(self.receipt['assets'][0])
+            record.update(name=name, size=len(data), sha256=gate.digest(path))
+            record['clean_runtime'] = {'package_sha256': record['sha256'], 'network_interfaces': ['lo'],
+                'docker_networks': {}, 'offline_pdf_roundtrip': 'passed',
+                'install': 'passed', 'runtime': 'passed', 'uninstall': 'passed'}
+            receipt = {**self.receipt, 'lane': 'linux', 'assets': [record]}
+            spec = {'lane': 'linux', 'arch': 'x86_64', 'type': 'rpm', 'name': name}
+            def check():
+                (root / 'linux.json').write_text(json.dumps(receipt))
+                with mock.patch.object(gate, 'contract', return_value=[spec]):
+                    return gate.validate(root, self.version, self.sha, '123', '1', 'linux')
+            self.assertEqual(len(check()), 1)
+            proof = copy.deepcopy(record['clean_runtime'])
+            for field, value in [('package_sha256', 'stale'), ('network_interfaces', ['lo', 'eth0']),
+                                 ('docker_networks', {'bridge': {}}), ('offline_pdf_roundtrip', 'not tested')]:
+                with self.subTest(field=field):
+                    record['clean_runtime'] = {**proof, field: value}
+                    with self.assertRaisesRegex(ValueError, 'RPM.*proof'):
+                        check()
 
     def test_host_runtime_cannot_hide_missing_packaged_crt(self):
         p = self.root / self.assets[0]['name']

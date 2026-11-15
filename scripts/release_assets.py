@@ -171,6 +171,13 @@ def validate(directory, version, sha, run_id, attempt, lane=None):
             if current == 'android':
                 require(record['signing'] == 'verified', 'Android release package must be signed')
             require(bool(record.get('toolchain')) and bool(record.get('commands')), 'Missing native toolchain/command provenance')
+            if spec['type'] == 'rpm':
+                proof = record.get('clean_runtime', {})
+                require(proof.get('package_sha256') == record['sha256'], 'RPM runtime proof checksum mismatch')
+                require(proof.get('network_interfaces') == ['lo'] and proof.get('docker_networks') == {} and
+                        proof.get('offline_pdf_roundtrip') == 'passed', 'RPM offline runtime proof missing/incomplete')
+                require(all(proof.get(check) == 'passed' for check in ('install', 'runtime', 'uninstall')),
+                        'RPM native runtime proof incomplete')
             inspect(path, {**spec, 'version': version})
             validated.append({**record, 'lane': current, 'source_sha': sha})
     return sorted(validated, key=lambda a: a['name'])
