@@ -8,7 +8,8 @@ Summary:        Professional, modular, offline-first PDF productivity suite
 License:        MPL-2.0
 URL:            https://www.stacksyncsolutions.com/
 Source0:        https://github.com/jakepanlilio2000/PDFinity/archive/v%{tag_version}.tar.gz
-Source1:        pdfium-linux-x64.tgz
+Source1:        pdfium-linux-x64-rpm-source.tgz
+Source2:        pdfium-source-build.json
 
 BuildRequires:  cmake >= 3.25
 BuildRequires:  ninja-build
@@ -29,10 +30,10 @@ offline with zero telemetry.
 
 %prep
 %autosetup -n PDFinity-%{tag_version}
-python3 scripts/download_pdfium.py --platform linux --archive %{SOURCE1} --target-dir third_party/pdfium
+python3 scripts/download_pdfium.py --platform linux-rpm --archive %{SOURCE1} --target-dir third_party/pdfium
 
 %build
-%cmake -G Ninja -DCMAKE_BUILD_TYPE=Release
+%cmake -G Ninja -DCMAKE_BUILD_TYPE=Release -DPDFINITY_PDFIUM_VARIANT=linux-rpm
 %cmake_build
 
 %check
@@ -40,6 +41,7 @@ python3 scripts/download_pdfium.py --platform linux --archive %{SOURCE1} --targe
 
 %install
 %cmake_install
+install -m 644 %{SOURCE2} %{buildroot}%{_datadir}/doc/pdfinity/pdfium-source-build.json
 # CMake installs the GUI with its target name; desktop/CLI entry points and
 # the package contract use lowercase pdfinity on Linux.
 mv %{buildroot}%{_bindir}/PDFinity %{buildroot}%{_bindir}/pdfinity
@@ -75,6 +77,7 @@ gtk-update-icon-cache %{_datadir}/icons/hicolor &>/dev/null || :
 %files
 %license LICENSE packaging/linux/METADATA_LICENSE
 %doc README.md THIRDPARTY_NOTICES.txt THIRD_PARTY_LICENSES.md NOTICE
+%doc %{_datadir}/doc/pdfinity/pdfium-source-build.json
 %{_bindir}/pdfinity
 %{_bindir}/pdfinity-cli
 %{_prefix}/lib/libpdfium.so

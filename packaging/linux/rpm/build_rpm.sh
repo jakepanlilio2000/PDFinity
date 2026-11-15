@@ -21,16 +21,12 @@ command -v docker >/dev/null
 # Build the exact checkout, never fetch a mutable version URL or substitute current source.
 git diff --quiet HEAD --
 git archive --format=tar.gz --prefix="PDFinity-${VERSION}/" HEAD > "${TOPDIR}/SOURCES/v${VERSION}.tar.gz"
-python3 - "${TOPDIR}/SOURCES" <<'PY'
-import pathlib, sys
-sys.path.insert(0, 'scripts')
-from download_pdfium import PLATFORM_ARCHIVES, download_with_retry, verified_members
-config = PLATFORM_ARCHIVES['linux']
-data = download_with_retry(config['url'])
-verified_members(data, config)
-(pathlib.Path(sys.argv[1]) / config['archive']).write_bytes(data)
-print('Verified locked PDFium RPM source archive: ' + config['sha256'])
-PY
+dependency_args=(--export-to "${TOPDIR}/SOURCES")
+if [ -n "${PDFINITY_RPM_PDFIUM_ARCHIVE:-}" ]; then
+    dependency_args+=(--archive "$PDFINITY_RPM_PDFIUM_ARCHIVE")
+fi
+python3 scripts/build_pdfium_rpm.py "${dependency_args[@]}"
+
 IMAGE="$(python3 -c 'import json; print(json.load(open("packaging/linux/rpm/native-runtime.json"))["image"])')"
 [[ "${IMAGE}" =~ @sha256:[0-9a-f]{64}$ ]] || { echo "ERROR: RPM image must be pinned" >&2; exit 1; }
 # Only the exact source archive/spec and output directory enter the disposable
