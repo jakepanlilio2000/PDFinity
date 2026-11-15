@@ -1,0 +1,13 @@
+{
+  "schema": 1,
+  "version": "159.0.8152.0",
+  "pdfium_source_url": "https://pdfium.googlesource.com/pdfium.git",
+  "pdfium_source_sha": "6688c576fd851f4159c6fae39396da50939de110",
+  "upstream_recipe_url": "https://github.com/bblanchon/pdfium-binaries.git",
+  "upstream_recipe_sha": "0dc8e9598ab4496f8620043ec2c3f2eabf4eea33",
+  "depot_tools_url": "https://chromium.googlesource.com/chromium/tools/depot_tools.git",
+  "depot_tools_sha": "ec77017fb3e090ff02bffb9c6980ebcdd3006ddc",
+  "image": "ubuntu:24.04@sha256:2198e4c65076e9cb0b3d695219df667c0e3b0072da64ca3c2648aca17dcecaf5",
+  "platform": "linux/amd64",
+  "gn_recipe_correction": "Append a config with -Wl,--build-id=sha1 only to the final PDFium shared-library target; preserve upstream standalone compiler/security defaults. Record the complete source patch and effective link flags. No binary rewriting or RPM checks disabled."
+}
