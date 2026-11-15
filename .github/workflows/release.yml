@@ -367,6 +367,7 @@ jobs:
           path: |
             dist/PDFinity-${{ needs.preflight.outputs.version }}-x86_64.AppImage
             verification/receipts/linux-appimage.json
+            build/appimage-baseline/output/ctest.xml
           if-no-files-found: error
           retention-days: 14
 
