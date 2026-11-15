@@ -28,6 +28,11 @@ git -C depot_tools checkout --detach "$DEPOT_SHA"
 export PATH="/work/depot_tools:$PATH"
 export DEPOT_TOOLS_UPDATE=0
 export DEPOT_TOOLS_WIN_TOOLCHAIN=0
+# Initialize pinned bootstrap packages explicitly. Root-container execution
+# skips update_depot_tools, including its normal Python bootstrap side effect.
+# ensure_bootstrap documents that it never updates the repository checkout.
+bash /work/depot_tools/ensure_bootstrap
+[ "$(git -C /work/depot_tools rev-parse HEAD)" = "$DEPOT_SHA" ]
 export PDFium_TARGET_OS=linux PDFium_TARGET_CPU=x64 PDFium_TARGET_ENVIRONMENT=""
 export PDFium_ENABLE_V8=false PDFium_IS_DEBUG=false PDFium_BUILD_TYPE=shared
 cd builder
