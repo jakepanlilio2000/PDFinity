@@ -25,6 +25,8 @@ class NativeDebArchiveTests(unittest.TestCase):
             shutil.copytree(ROOT / 'packaging', root / 'packaging')
             for name in ('LICENSE', 'README.md', 'THIRD_PARTY_LICENSES.md'):
                 shutil.copyfile(ROOT / name, root / name)
+            (root / 'scripts').mkdir()
+            shutil.copyfile(ROOT / 'scripts/release_versions.py', root / 'scripts/release_versions.py')
             # Real minimal ELF files, generated independently of Qt/the application.
             (root / 'fixture.c').write_text('int main(void) { return 0; }\n')
             (root / 'CMakeLists.txt').write_text('''cmake_minimum_required(VERSION 3.25)

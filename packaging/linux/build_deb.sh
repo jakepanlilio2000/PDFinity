@@ -6,13 +6,21 @@ set -euo pipefail
 # Lead Programmer: Jake Ashley Panlilio (https://github.com/jakepanlilio2000)
 
 BUILD_DIR="${1:-build/linux-x64-release}"
-VERSION="${2:-1.1.0}"
+SOURCE_VERSION="$(python3 scripts/release_versions.py --print)"
+VERSION="${2:-${SOURCE_VERSION}}"
 ARCH="${3:-amd64}"
 DIST_DIR="dist"
 STAGE_DIR="dist/deb-staging"
 DEB_NAME="pdfinity_${VERSION}_${ARCH}.deb"
 
 echo "=== Building Debian Package: ${DEB_NAME} ==="
+[ "${VERSION}" = "${SOURCE_VERSION}" ] || { echo "ERROR: package/source version mismatch" >&2; exit 1; }
+[ "${ARCH}" = "$(dpkg --print-architecture)" ] || { echo "ERROR: package/native architecture mismatch" >&2; exit 1; }
+
+# Use CMake's installed executables: raw build-tree copies retain development RPATHs.
+INSTALL_ROOT="$(mktemp -d "$(realpath "${BUILD_DIR}")/deb-install.XXXXXX")"
+trap 'rm -rf -- "${INSTALL_ROOT}"' EXIT
+cmake --install "${BUILD_DIR}" --prefix "${INSTALL_ROOT}/usr" --strip
 
 rm -rf "${STAGE_DIR}"
 mkdir -p "${STAGE_DIR}/DEBIAN"
@@ -36,20 +44,20 @@ if [ -f packaging/linux/deb/postrm ]; then
 fi
 
 # 2. Main binary
-if [ -f "${BUILD_DIR}/bin/PDFinity" ]; then
-    install -m 755 "${BUILD_DIR}/bin/PDFinity" "${STAGE_DIR}/usr/bin/pdfinity"
+if [ -f "${INSTALL_ROOT}/usr/bin/PDFinity" ]; then
+    install -m 755 "${INSTALL_ROOT}/usr/bin/PDFinity" "${STAGE_DIR}/usr/bin/pdfinity"
 else
     echo "ERROR: native PDFinity executable missing; no placeholder will be generated" >&2
     exit 1
 fi
 
 test -s "third_party/pdfium/lib/libpdfium.so"
-test -s "${BUILD_DIR}/bin/pdfinity-cli"
+test -s "${INSTALL_ROOT}/usr/bin/pdfinity-cli"
 if [ -f "third_party/pdfium/lib/libpdfium.so" ]; then
     install -m 755 "third_party/pdfium/lib/libpdfium.so" "${STAGE_DIR}/usr/lib/libpdfium.so"
 fi
 
-install -m 755 "${BUILD_DIR}/bin/pdfinity-cli" "${STAGE_DIR}/usr/bin/pdfinity-cli"
+install -m 755 "${INSTALL_ROOT}/usr/bin/pdfinity-cli" "${STAGE_DIR}/usr/bin/pdfinity-cli"
 
 # 3. Desktop integration & AppStream metainfo
 install -m 644 packaging/linux/com.stacksyncsolutions.pdfinity.desktop "${STAGE_DIR}/usr/share/applications/com.stacksyncsolutions.pdfinity.desktop"
@@ -72,6 +80,32 @@ install -m 644 LICENSE "${STAGE_DIR}/usr/share/doc/pdfinity/copyright"
 install -m 644 README.md "${STAGE_DIR}/usr/share/doc/pdfinity/README.md"
 install -m 644 THIRD_PARTY_LICENSES.md "${STAGE_DIR}/usr/share/doc/pdfinity/THIRD_PARTY_LICENSES.md"
 install -m 644 packaging/linux/METADATA_LICENSE "${STAGE_DIR}/usr/share/doc/pdfinity/METADATA_LICENSE"
+
+# Derive ABI/version dependencies from all shipped ELF files, including PDFium.
+# SDK-only libraries with no dpkg ownership must fail; never ignore missing info.
+STAGE_ABS="$(realpath "${STAGE_DIR}")"
+mkdir -p "${INSTALL_ROOT}/dependency-work/debian"
+cat > "${INSTALL_ROOT}/dependency-work/debian/control" <<'EOF'
+Source: pdfinity
+Maintainer: StackSync Solutions <support@stacksyncsolutions.com>
+Section: text
+Priority: optional
+
+Package: pdfinity
+Architecture: any
+Depends: ${shlibs:Depends}
+Description: PDFinity runtime dependency analysis
+EOF
+DEPENDENCIES="$(cd "${INSTALL_ROOT}/dependency-work" && dpkg-shlibdeps -O \
+    -l"${STAGE_ABS}/usr/lib" -S"${STAGE_ABS}" -xpdfinity \
+    -e"${STAGE_ABS}/usr/bin/pdfinity" -e"${STAGE_ABS}/usr/bin/pdfinity-cli" \
+    -e"${STAGE_ABS}/usr/lib/libpdfium.so" | sed -n 's/^shlibs:Depends=//p')"
+test -n "${DEPENDENCIES}"
+INSTALLED_SIZE="$(du -sk "${STAGE_DIR}/usr" | cut -f1)"
+sed -e "s|^Depends:.*|Depends: ${DEPENDENCIES}, qt6-qpa-plugins|" \
+    -e "s|^Installed-Size:.*|Installed-Size: ${INSTALLED_SIZE}|" \
+    "${STAGE_DIR}/DEBIAN/control" > "${STAGE_DIR}/DEBIAN/control.generated"
+mv "${STAGE_DIR}/DEBIAN/control.generated" "${STAGE_DIR}/DEBIAN/control"
 
 # 6. Build and validate package
 if command -v dpkg-deb >/dev/null 2>&1; then
