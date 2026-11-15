@@ -150,6 +150,8 @@ def validate(directory, version, sha, run_id, attempt, lane=None):
     validated = []
     for current in lanes:
         receipt = json.loads(by_name[f'{current}.json'].read_text())
+        require(receipt.get('release_eligible', True) is not False,
+                'Partial development qualification is not release evidence')
         for key, value in {'schema': 1, 'repository': 'jakepanlilio2000/PDFinity', 'version': version,
                            'source_sha': sha, 'run_id': str(run_id), 'run_attempt': str(attempt), 'lane': current}.items():
             require(receipt.get(key) == value, f'Stale/wrong {key} in {current} receipt')

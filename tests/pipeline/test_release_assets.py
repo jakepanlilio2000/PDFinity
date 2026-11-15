@@ -118,6 +118,12 @@ class ReleaseGateTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, 'runtime'):
             self.check()
 
+    def test_partial_development_qualification_is_not_release_evidence(self):
+        self.receipt.update(scope='deb', release_eligible=False)
+        self.save()
+        with self.assertRaisesRegex(ValueError, 'not release evidence'):
+            self.check()
+
     def test_host_runtime_cannot_hide_missing_packaged_crt(self):
         p = self.root / self.assets[0]['name']
         with zipfile.ZipFile(p) as z:

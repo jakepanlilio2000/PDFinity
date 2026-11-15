@@ -29,7 +29,8 @@ class Verifier:
         self.commands.append(safe)
         result = subprocess.run(list(map(str, command)), env=env, stdout=subprocess.PIPE,
                                 stderr=subprocess.STDOUT, text=True, errors='replace', timeout=timeout)
-        require(result.returncode == 0, f'Native command failed: {safe} (exit {result.returncode})')
+        detail = '' if sensitive else '\n' + result.stdout[-6000:]
+        require(result.returncode == 0, f'Native command failed: {safe} (exit {result.returncode}){detail}')
         return result.stdout
 
     def smoke(self, gui, cli, env=None):
@@ -170,14 +171,18 @@ def main():
     parser.add_argument('--lane', choices=('windows', 'linux', 'macos', 'android'), required=True)
     parser.add_argument('--version', required=True)
     parser.add_argument('--sha', required=True)
+    parser.add_argument('--package-type', choices=('deb',), help='Development-only partial qualification, not release eligible')
     args = parser.parse_args()
-    receipt = pathlib.Path('verification/receipts') / (args.lane + '.json')
+    suffix = '-' + args.package_type if args.package_type else ''
+    receipt = pathlib.Path('verification/receipts') / (args.lane + suffix + '.json')
     try:
+        require(not args.package_type or args.lane == 'linux', 'DEB qualification requires the Linux lane')
         require(not receipt.exists(), 'Stale native receipt exists; use a clean runner')
         require(subprocess.check_output(['git', 'rev-parse', 'HEAD'], text=True).strip() == args.sha, 'Native check SHA mismatch')
         validate_versions(expected=args.version)
         verifier, records = Verifier(args.version), []
-        for spec in [s for s in contract(args.version) if s['lane'] == args.lane]:
+        for spec in [s for s in contract(args.version) if s['lane'] == args.lane and
+                     (not args.package_type or s['type'] == args.package_type)]:
             path = (pathlib.Path('dist') / spec['name']).resolve()
             inspect(path, {**spec, 'version': args.version})
             before = digest(path)
@@ -201,6 +206,8 @@ def main():
         result = {'schema': 1, 'repository': 'jakepanlilio2000/PDFinity', 'lane': args.lane,
             'version': args.version, 'source_sha': args.sha, 'run_id': os.environ['GITHUB_RUN_ID'],
             'run_attempt': os.environ['GITHUB_RUN_ATTEMPT'], 'assets': records}
+        if args.package_type:
+            result.update(scope=args.package_type, release_eligible=False)
         for record in records:
             record['toolchain']['cmake'] = verifier.run('cmake', '--version').splitlines()[0]
             record['toolchain']['pdfium_declared_version'] = pathlib.Path('third_party/pdfium/VERSION').read_text().strip()

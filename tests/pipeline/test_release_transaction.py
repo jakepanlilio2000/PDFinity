@@ -125,6 +125,24 @@ class TransactionTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, 'Workflow source differs'):
                 REAL_IDENTITY(RecordingAPI(), 'v1.1.0', 'a' * 40)
 
+    def test_development_qualification_uses_exact_checkout_and_only_reads(self):
+        api = RecordingAPI()
+        reads = []
+        def read(url, method='GET', **kwargs):
+            self.assertEqual(method, 'GET')
+            reads.append(url)
+            return {'full_name': gate.REPO, 'default_branch': 'main'} if url == '' else {'sha': 'a' * 40}
+        api.request = read
+        with patch.object(gate, 'git', side_effect=lambda *args: 'a' * 40 if args[0] == 'rev-parse' else 'https://github.com/' + gate.REPO), \
+             patch.object(gate, 'validate_versions', return_value='1.1.0'):
+            self.assertEqual(gate.qualification_identity(api, 'a' * 40), '1.1.0')
+        self.assertEqual(reads, ['', '/commits/' + 'a' * 40])
+
+    def test_development_qualification_cannot_substitute_source_sha(self):
+        with patch.object(gate, 'git', return_value='b' * 40):
+            with self.assertRaisesRegex(ValueError, 'checkout differs'):
+                gate.qualification_identity(RecordingAPI(), 'a' * 40)
+
     def test_read_only_rehearsal_records_separate_recipe(self):
         api = RecordingAPI()
         def read(url, **kwargs):
