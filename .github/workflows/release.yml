@@ -218,32 +218,32 @@ jobs:
           path: rehearsal-rpm-dependency
 
       - name: Install System Toolchain & Distro Packagers
-        if: inputs.mode != 'verify-rpm'
+        if: inputs.mode != 'verify-rpm' && inputs.mode != 'verify-appimage'
         run: |
           sudo apt-get update
           sudo apt-get install -y build-essential cmake ninja-build xvfb xauth rpm dpkg-dev qt6-base-dev qt6-base-dev-tools qt6-qpa-plugins libgl1-mesa-dev libxkbcommon-dev libcups2-dev \
             libqt6svg6 qt6-image-formats-plugins libxcb-cursor0 libxcb-icccm4 libxcb-image0 libxcb-keysyms1 libxcb-randr0 libxcb-render-util0 libxcb-shape0 libxcb-xfixes0 libxkbcommon-x11-0
 
-      - name: Use Python 3.11 with native distribution Qt
+      - name: Use Python 3.11 for native verification
         if: inputs.mode != 'verify-rpm'
         uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
         with:
           python-version: '3.11'
 
       - name: Provision PDFium Binaries
-        if: inputs.mode != 'verify-rpm'
+        if: inputs.mode != 'verify-rpm' && inputs.mode != 'verify-appimage'
         run: python3 scripts/download_pdfium.py --platform linux
 
       - name: Configure CMake
-        if: inputs.mode != 'verify-rpm'
+        if: inputs.mode != 'verify-rpm' && inputs.mode != 'verify-appimage'
         run: cmake --preset linux-x64-release
 
       - name: Build PDFinity
-        if: inputs.mode != 'verify-rpm'
+        if: inputs.mode != 'verify-rpm' && inputs.mode != 'verify-appimage'
         run: cmake --build --preset linux-x64-release
 
       - name: Run CTest Suite under Xvfb
-        if: inputs.mode != 'verify-rpm'
+        if: inputs.mode != 'verify-rpm' && inputs.mode != 'verify-appimage'
         run: |
           export QT_QPA_PLATFORM=offscreen
           xvfb-run -a ctest --preset linux-x64-release --output-on-failure
@@ -266,9 +266,7 @@ jobs:
       - name: Package Portable AppImage
         id: appimage-package
         if: inputs.mode != 'verify-deb' && inputs.mode != 'verify-rpm'
-        run: |
-          TAG_VER="$RELEASE_VERSION"
-          bash packaging/linux/appimage/build-appimage.sh build/linux-x64-release "${TAG_VER:-1.1.0}"
+        run: python3 scripts/build_appimage_baseline.py --version "$RELEASE_VERSION"
 
       - name: Verify Arch Linux PKGBUILD & .SRCINFO
         if: inputs.mode != 'verify-deb' && inputs.mode != 'verify-rpm' && inputs.mode != 'verify-appimage'

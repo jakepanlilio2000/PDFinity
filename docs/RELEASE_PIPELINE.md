@@ -205,3 +205,19 @@ baseline. Required native execution will expose the original loader failure befo
 repairing the build toolchain. Do not lower support claims, disable ldd checks, or
 attribute the earlier successful package to this later candidate. General glibc2.31,
 Debian12 and other distribution support still need their own evidence.
+
+
+The baseline guard's parent [run43770556331](https://github.com/jakepanlilio2000/PDFinity/actions/runs/43770556331)
+reproduced real Ubuntu22 loader failures for GLIBC_2.38/GLIBCXX_3.4.32, including
+newer bundled transitive libraries. The focused build repair compiles the entire
+AppImage application and dependencies in the pinned Ubuntu22 build environment,
+using distro Qt with security updates, an official checksum-locked CMake3.31.6,
+verified PDFium, and all C++ tests. The existing workflow calls
+`python3 scripts/build_appimage_baseline.py --version <mapped-version>`; it does not
+reuse the newer DEB build tree or mount a host SDK, Git directory or credentials.
+The exact Git source archive, commit timestamp, image, CMake digest, compiler,
+complete native package/source-version inventory and output checksum are recorded
+in `dist/appimage-build.json` and bound into the native receipt. Source/toolchain
+mismatch or a missing/failed C++ test result prevents qualification. Newer-host
+runtime, full glibc2.31 coverage and complete static dependency provenance still
+require separate evidence; no support claims are silently removed.

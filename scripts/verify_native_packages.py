@@ -272,8 +272,14 @@ def main():
                     records[-1]['toolchain']['native_build_image'] = verifier.runtime_proofs[path.name]['image']
                     records[-1]['dependency_source_build'] = json.loads(pathlib.Path('dist/rpmbuild/SOURCES/pdfium-source-build.json').read_text())
                 elif spec['type'] == 'appimage':
-                    records[-1]['toolchain']['build_packages'] = verifier.run('dpkg-query', '-W',
-                        '-f=${binary:Package}\t${Version}\t${Architecture}\t${source:Package}\t${source:Version}\n')
+                    build = json.loads(pathlib.Path('dist/appimage-build.json').read_text())
+                    require(build['source_sha'] == args.sha and build['package_sha256'] == before and
+                            build['cpp_tests'] == 'passed' and build['cpp_test_suites'] >= 51,
+                            'AppImage native build provenance mismatch')
+                    records[-1]['package_build'] = build
+                    records[-1]['toolchain'].update(build_packages=build['build_packages'],
+                        native_build_image=build['toolchain']['image'], cmake=build['cmake_version'],
+                        compiler=build['compiler_version'])
                 else:
                     records[-1]['toolchain']['build_packages'] = verifier.run('dpkg-query', '-W',
                         '-f=${binary:Package}\t${Version}\t${Architecture}\n',
@@ -284,7 +290,8 @@ def main():
         if args.package_type:
             result.update(scope=args.package_type, release_eligible=False)
         for record in records:
-            record['toolchain']['verifier_cmake' if args.package_type == 'rpm' else 'cmake'] = verifier.run('cmake', '--version').splitlines()[0]
+            key = 'verifier_cmake' if args.package_type == 'rpm' or 'package_build' in record else 'cmake'
+            record['toolchain'][key] = verifier.run('cmake', '--version').splitlines()[0]
             record['toolchain']['pdfium_declared_version'] = pathlib.Path('third_party/pdfium/VERSION').read_text().strip()
         receipt.parent.mkdir(parents=True, exist_ok=True)
         receipt.write_text(json.dumps(result, indent=2) + '\n', encoding='utf-8')
