@@ -1,0 +1,2 @@
+# Keep reviewed upstream notice bytes stable across Windows and Linux checkouts.
+packaging/linux/appimage/runtime-notices/*.txt -text

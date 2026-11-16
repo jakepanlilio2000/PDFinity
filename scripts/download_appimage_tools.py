@@ -8,6 +8,19 @@ import sys
 import urllib.request
 
 ROOT = pathlib.Path(__file__).resolve().parents[1]
+STATIC_DEPENDENCIES = {'musl', 'libfuse', 'squashfuse', 'zstd', 'zlib', 'mimalloc'}
+
+
+def verify_notices(directory, dependencies):
+    if not isinstance(dependencies, list):
+        raise ValueError('Invalid static AppImage runtime dependency inventory')
+    names = [item.get('name') for item in dependencies if isinstance(item, dict)]
+    if len(dependencies) != 6 or len(names) != 6 or set(names) != STATIC_DEPENDENCIES:
+        raise ValueError('Incomplete/duplicate static AppImage runtime dependency inventory')
+    for item in dependencies:
+        path = directory / (item['name'] + '.txt')
+        if not path.is_file() or hashlib.sha256(path.read_bytes()).hexdigest() != item.get('notice_sha256'):
+            raise ValueError('Missing/changed static runtime notice: ' + item['name'])
 
 
 def verify(data, tool):
@@ -43,6 +56,7 @@ def main():
     args = parser.parse_args()
     try:
         lock = json.loads((ROOT / 'packaging/linux/appimage/toolchain.json').read_text())
+        verify_notices(ROOT / 'packaging/linux/appimage/runtime-notices', lock['static_dependencies'])
         acquire(args.directory, lock['tools'])
         return 0
     except (ValueError, OSError) as error:

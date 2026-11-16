@@ -12,7 +12,7 @@ PDFinity is an open-source, modular, offline-first PDF productivity suite releas
 
 1. **Weak Copyleft at File Boundary (MPL-2.0):** Core application source files are governed by MPL-2.0. Modifications to existing PDFinity source files remain open under MPL-2.0, while larger works combining PDFinity with independent modules or external proprietary plugins retain their independent licensing.
 2. **Dynamic Linking Compliance (LGPLv3):** Where LGPLv3 dependencies are utilized (specifically the Qt 6 framework), the architecture strictly enforces dynamic linking and relocatable libraries to satisfy all LGPLv3 Section 4 requirements.
-3. **Permissive Third-Party Foundation:** All external dependencies are governed by permissive licenses (Apache 2.0, BSD-3-Clause, MIT, and Public Domain).
+3. **Third-Party Evidence:** Actual package notices and build provenance identify the dependencies in each package. The AppImage runtime includes LGPL libfuse as well as permissive libraries; its inventory appears below.
 4. **Strict Copyleft Prohibition:** Libraries governed by **GPLv2, GPLv3, or AGPLv3** (such as Poppler, Ghostscript, or MuPDF) are strictly excluded from the application to prevent copyleft viral contamination.
 
 ---
@@ -105,3 +105,34 @@ in the Software without restriction.
 Copyright (C) 1995-2026 Jean-loup Gailly and Mark Adler.
 This software is provided 'as-is', without any express or implied warranty.
 ```
+
+
+## AppImage runtime dependency evidence
+
+The application retains MPL-2.0. The runtime project's own MIT license appears in
+`packaging/linux/appimage/TYPE2_RUNTIME_LICENSE`. Its statically linked dependencies
+have separate notices in `packaging/linux/appimage/runtime-notices/`:
+
+| Dependency | Original build version | Included notice |
+|---|---|---|
+| musl | 1.2.5-r11 | musl.txt (MIT and component notices) |
+| libfuse | 3.15.0 | libfuse.txt (LGPL 2.1 text) |
+| squashfuse | 0.5.2 | squashfuse.txt (BSD terms) |
+| zstd | 1.5.6-r2 | zstd.txt (BSD terms) |
+| zlib | 1.3.2-r1 | zlib.txt |
+| mimalloc | 2.1.7-r0 | mimalloc.txt (MIT) |
+
+The exact-version notice URLs, hashes, original source commit, compiler and
+producer artifact are in `packaging/linux/appimage/toolchain.json`. The original
+[build39320578745](https://github.com/AppImage/type2-runtime/actions/runs/39320578745)
+artifact was recovered and its runtime binary matched the pinned input SHA256.
+Alpine package revisions above come from that build's logs; libfuse and squashfuse
+come from its checksum-verified source downloads. Corresponding source and relink
+material verification remains unfinished in the A3 ledger. The assembled AppImage
+is unsigned; an upstream runtime input does not sign the application package.
+
+The Qt deployer copies distribution copyright files. AppImages also include the
+standard license texts these files reference under `usr/share/common-licenses`.
+Historical inventory tables above describe license policies; direct linkage and
+actual shipped components must be checked against the current source and package
+receipts rather than inferred from that table.
